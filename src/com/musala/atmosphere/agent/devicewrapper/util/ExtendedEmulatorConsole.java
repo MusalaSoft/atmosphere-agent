@@ -171,8 +171,7 @@ public class ExtendedEmulatorConsole
 	protected synchronized boolean ping() throws EmulatorConnectionFailedException
 	{
 		String command = String.format(COMMAND_PING_FORMAT);
-		sendCommand(command);
-		return responseIsFine();
+		return executeCommand(command);
 	}
 
 	/**
@@ -192,8 +191,7 @@ public class ExtendedEmulatorConsole
 			throw new IllegalArgumentException("Battery level should be in the range [0, 100].");
 		}
 		String command = String.format(COMMAND_POWER_CAPACITY_FORMAT, level);
-		sendCommand(command);
-		return responseIsFine();
+		return executeCommand(command);
 	}
 
 	/**
@@ -207,8 +205,7 @@ public class ExtendedEmulatorConsole
 	public synchronized boolean setBatteryState(BatteryStatus status) throws EmulatorConnectionFailedException
 	{
 		String command = String.format(COMMAND_POWER_STATUS_FORMAT, status.toString());
-		sendCommand(command);
-		return responseIsFine();
+		return executeCommand(command);
 	}
 
 	/**
@@ -223,6 +220,25 @@ public class ExtendedEmulatorConsole
 		throws EmulatorConnectionFailedException
 	{
 		String command = String.format(COMMAND_NETOWRK_SPEED_FORMAT, uploadSpeed, downloadSpeed);
+		return executeCommand(command);
+	}
+
+	/**
+	 * Sends a string to the emulator console and returns a value indicating if the response was OK or KO.
+	 * 
+	 * @param command
+	 *        The command string.
+	 * @return true if OK was found, false if KO was found.
+	 * @throws EmulatorConnectionFailedException
+	 */
+	protected synchronized boolean executeCommand(String command) throws EmulatorConnectionFailedException
+	{
+		// if the command does not end with a newline, this call will block.
+		// so we make sure this never happens.
+		if (command.endsWith("\n") == false)
+		{
+			command = command + "\n";
+		}
 		sendCommand(command);
 		return responseIsFine();
 	}
@@ -234,7 +250,7 @@ public class ExtendedEmulatorConsole
 	 *        The command string. <b>MUST BE TERMINATED BY \n</b>.
 	 * @throws EmulatorConnectionFailedException
 	 */
-	protected void sendCommand(String command) throws EmulatorConnectionFailedException
+	private void sendCommand(String command) throws EmulatorConnectionFailedException
 	{
 		try
 		{
@@ -304,7 +320,7 @@ public class ExtendedEmulatorConsole
 	 * @return true if we found OK, false if we found KO.
 	 * @throws EmulatorConnectionFailedException
 	 */
-	protected boolean responseIsFine() throws EmulatorConnectionFailedException
+	private boolean responseIsFine() throws EmulatorConnectionFailedException
 	{
 		try
 		{
