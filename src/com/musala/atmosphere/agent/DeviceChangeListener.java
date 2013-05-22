@@ -4,7 +4,6 @@ import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
-import java.util.List;
 
 import com.android.ddmlib.AndroidDebugBridge.IDeviceChangeListener;
 import com.android.ddmlib.IDevice;
@@ -19,7 +18,7 @@ import com.musala.atmosphere.commons.sa.RmiStringConstants;
  */
 class DeviceChangeListener implements IDeviceChangeListener
 {
-	private List<IDevice> devicesListReference;
+	private AgentManager agentManagerRefference;
 
 	private String serverIPAddress;
 
@@ -51,12 +50,12 @@ class DeviceChangeListener implements IDeviceChangeListener
 	public DeviceChangeListener(String serverIPAddress,
 			int serverRmiPort,
 			String agentId,
-			List<IDevice> devicesListReference) throws RemoteException
+			AgentManager agentManagerRefference) throws RemoteException
 	{
 		this.serverIPAddress = serverIPAddress;
 		this.serverRmiPort = serverRmiPort;
 		this.agentId = agentId;
-		this.devicesListReference = devicesListReference;
+		this.agentManagerRefference = agentManagerRefference;
 
 		// If the server is set, get it's AgentEventSender so we can notify the server about changes in the device list.
 		if (serverIPAddress.isEmpty() || serverIPAddress == null)
@@ -93,9 +92,9 @@ class DeviceChangeListener implements IDeviceChangeListener
 	 * @param devicesListReference
 	 * @throws RemoteException
 	 */
-	public DeviceChangeListener(List<IDevice> devicesListReference) throws RemoteException
+	public DeviceChangeListener(AgentManager agentManagerRefference) throws RemoteException
 	{
-		this("", 0, "", devicesListReference);
+		this("", 0, "", agentManagerRefference);
 	}
 
 	/**
@@ -116,8 +115,9 @@ class DeviceChangeListener implements IDeviceChangeListener
 	@Override
 	public void deviceConnected(IDevice connectedDevice)
 	{
-		// Add the newly connected device to the devicesList
-		devicesListReference.add(connectedDevice);
+		// Register the newly connected device on the AgentManager
+		agentManagerRefference.registerDeviceOnAgent(connectedDevice);
+
 		onDeviceListChanged();
 	}
 
@@ -127,13 +127,9 @@ class DeviceChangeListener implements IDeviceChangeListener
 	@Override
 	public void deviceDisconnected(IDevice disconnectedDevice)
 	{
-		// Remove the device from the devicesList if it is there
-		if (devicesListReference.contains(disconnectedDevice) == false)
-		{
-			return;
-		}
+		// Unregister the device from the AgentManager
+		agentManagerRefference.unregisterDeviceOnAgent(disconnectedDevice);
 
-		devicesListReference.remove(disconnectedDevice);
 		onDeviceListChanged();
 	}
 

@@ -1,12 +1,13 @@
 package com.musala.atmosphere.agent;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.rmi.Naming;
+import java.rmi.AccessException;
+import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -61,7 +62,9 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 
 	private Registry rmiRegistry;
 
-	private volatile List<IDevice> devicesList;
+	// CopyOnWriteArrayList, as we will not have many devices (more than 10 or 15 practically) connected on a single
+	// agent and we are concerned about the DeviceChangeListener not to break things.
+	private volatile List<IDevice> devicesList = new CopyOnWriteArrayList<IDevice>();
 
 	private DeviceChangeListener currentDeviceChangeListener;
 
@@ -98,20 +101,23 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 		AndroidDebugBridge.init(false /* debugger support */);
 		androidDebugBridge = AndroidDebugBridge.createBridge(adbPath, false);
 
-		// Get the initial devices list
-		devicesList = getInitialDeviceList();
-
-		// Set up a device change listener that will update the devices list, but not connect to any server.
-		// Server connection will be established later, when a server registers itself.
-		currentDeviceChangeListener = new DeviceChangeListener(devicesList);
-		AndroidDebugBridge.addDeviceChangeListener(currentDeviceChangeListener);
-
 		// Publish this AgentManager in the RMI registry
 		rmiRegistry = LocateRegistry.createRegistry(rmiPort);
 		rmiRegistry.rebind(RmiStringConstants.AGENT_MANAGER.toString(), this);
 
 		rmiRegistryPort = rmiPort;
 
+		// Get the initial devices list
+		List<IDevice> initialDevicesList = getInitialDeviceList();
+		for (IDevice initialDevice : initialDevicesList)
+		{
+			registerDeviceOnAgent(initialDevice);
+		}
+
+		// Set up a device change listener that will update this agent, but not connect to any server.
+		// Server connection will be established later, when a server registers itself.
+		currentDeviceChangeListener = new DeviceChangeListener(this);
+		AndroidDebugBridge.addDeviceChangeListener(currentDeviceChangeListener);
 	}
 
 	/**
@@ -149,11 +155,7 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 
 		IDevice[] devicesArray = androidDebugBridge.getDevices();
 
-		// CopyOnWriteArrayList. Because we wont have more than 15 devices on a single Agent
-		// and the device change listener will not be able to mess things up this way.
-		List<IDevice> devicesList = new CopyOnWriteArrayList<IDevice>(devicesArray);
-
-		return devicesList;
+		return Arrays.asList(devicesArray);
 	}
 
 	/**
@@ -204,11 +206,78 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 		return deviceInfoList;
 	}
 
-	@Override
-	public String createWrapperForDevice(String serialNumber) throws RemoteException, DeviceNotFoundException
+	/**
+	 * Registers a newly connected device on this AgentManager (adds it to the internal list of devices and creates a
+	 * wrapper for it in the RMI registry). Gets invoked by the DeviceChangeListener.
+	 * 
+	 * @param connectedDevice
+	 *        the newly connected device.
+	 */
+	void registerDeviceOnAgent(IDevice connectedDevice)
+	{
+		if (devicesList.contains(connectedDevice))
+		{
+			// The device is already registered, nothing to do here.
+			// This should not normally happen!
+			LOGGER.log(Level.WARNING, "Trying to register a device that is already registered.");
+			return;
+		}
+
+		devicesList.add(connectedDevice);
+
+		try
+		{
+			createWrapperForDevice(connectedDevice);
+		}
+		catch (RemoteException e)
+		{
+			LOGGER.log(Level.SEVERE, "Could not publish a wrapper for a device in the RMI registry.", e);
+			e.printStackTrace();
+		}
+	}
+
+	/**
+	 * Unregisters a disconnected device on this AgentManager (removes it from the internal list of devices and unbinds
+	 * it's wrapper from the RMI registry). Gets invoked by the DeviceChangeListener.
+	 * 
+	 * @param disconnectedDevice
+	 *        the disconnected device.
+	 */
+	void unregisterDeviceOnAgent(IDevice disconnectedDevice)
+	{
+		if (devicesList.contains(disconnectedDevice) == false)
+		{
+			// The device was never registered, so nothing to do here.
+			// This should not normally happen!
+			LOGGER.log(Level.WARNING, "Trying to unregister a device that is was not registered at all.");
+			return;
+		}
+
+		devicesList.remove(disconnectedDevice);
+
+		try
+		{
+			removeWrapperForDevice(disconnectedDevice);
+		}
+		catch (RemoteException e)
+		{
+			LOGGER.log(Level.SEVERE, "Could not unbind a device wrapper from the RMI registry.", e);
+			e.printStackTrace();
+		}
+	}
+
+	/**
+	 * Creates a wrapper for a device with specific serial number.
+	 * 
+	 * @param serialNumber
+	 *        serial number of the device
+	 * @return
+	 * @throws RemoteException
+	 */
+	private void createWrapperForDevice(IDevice device) throws RemoteException
 	{
 		IWrapDevice deviceWrapper = null;
-		IDevice device = getDeviceBySerialNumber(serialNumber);
+		String deviceSerialNumber = device.getSerialNumber();
 
 		// Create a device wrapper depending on the device type (emulator/real)
 		try
@@ -229,21 +298,46 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 			e.printStackTrace();
 		}
 
-		// Register the wrapper in the RMI registry under the device's serial number
-		// This code resulted in an exception : this.rmiRegistry.rebind(serialNumber, deviceWrapper);
-		// It was understood as "bind the deviceWrapper on the invoking machine's registry"
-		// This is a workaround.
+		rmiRegistry.rebind(deviceSerialNumber, deviceWrapper);
+
+		// TODO remove this old code when it will surely not be needed any more, even as a refference.
+		/*
+		 * Old code
+		 * 
+		 * // Register the wrapper in the RMI registry under the device's serial number // This code resulted in an
+		 * exception : this.rmiRegistry.rebind(serialNumber, deviceWrapper); // It was understood as
+		 * "bind the deviceWrapper on the invoking machine's registry" // This is a workaround. try {
+		 * Naming.rebind("//localhost:" + rmiRegistryPort + "/" + deviceSerialNumber, deviceWrapper); } catch
+		 * (MalformedURLException e) { throw new RemoteException(
+		 * "Exception occured when rebinding the device wrapper. See the enclosed exception.", e); }
+		 */
+	}
+
+	/**
+	 * Unbinds a device wrapper from the RMI registry.
+	 * 
+	 * @param device
+	 *        the device with the wrapper to be removed.
+	 * @throws RemoteException
+	 */
+	private void removeWrapperForDevice(IDevice device) throws RemoteException
+	{
+		String deviceSerialNumber = device.getSerialNumber();
+
 		try
 		{
-			Naming.rebind("//localhost:" + rmiRegistryPort + "/" + serialNumber, deviceWrapper);
+			rmiRegistry.unbind(deviceSerialNumber);
 		}
-		catch (MalformedURLException e)
+		catch (NotBoundException e)
 		{
-			throw new RemoteException(	"Exception occured when rebinding the device wrapper. See the enclosed exception.",
-										e);
+			// Wrapper for the device was never published, so we have nothing to unbind.
+			// Nothing to do here.
+			e.printStackTrace();
 		}
-
-		return device.getSerialNumber();
+		catch (AccessException e)
+		{
+			throw new RemoteException("Unbinding a device wrapper resulted in an unexpected exception (enclosed).", e);
+		}
 	}
 
 	@Override
@@ -415,7 +509,7 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 		DeviceChangeListener newDeviceChangeListener = new DeviceChangeListener(serverIPAddress,
 																				serverRmiPort,
 																				getAgentId(),
-																				devicesList);
+																				this);
 
 		// And if everything went well, unsubscribe the old device change listener
 		AndroidDebugBridge.removeDeviceChangeListener(currentDeviceChangeListener);
