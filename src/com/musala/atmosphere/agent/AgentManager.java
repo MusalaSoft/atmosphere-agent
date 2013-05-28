@@ -36,7 +36,6 @@ import com.musala.atmosphere.commons.sa.RmiStringConstants;
 import com.musala.atmosphere.commons.sa.exceptions.ADBridgeFailException;
 import com.musala.atmosphere.commons.sa.exceptions.DeviceNotFoundException;
 import com.musala.atmosphere.commons.sa.exceptions.NotPossibleForDeviceException;
-import com.musala.atmosphere.commons.sa.util.Pair;
 
 /**
  * 
@@ -50,13 +49,10 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 	 */
 	private static final long serialVersionUID = 8467038223162311366L;
 
-	private static final String FALLBACK_DISPLAY_DENSITY = "0";
-
-	private static final String FALLBACK_RAM_AMOUNT = "0";
-
-	private static final Pair<Integer, Integer> FALLBACK_SCREEN_RESOLUTION = new Pair<Integer, Integer>(0, 0);
-
 	private final static Logger LOGGER = Logger.getLogger(AgentManager.class.getName());
+
+	// FIXME extract to config file
+	private final static int ADBRIDGE_TIMEOUT_MS = 10000; // milliseconds
 
 	private AndroidDebugBridge androidDebugBridge;
 
@@ -98,17 +94,53 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 		LOGGER.setLevel(Level.ALL);
 
 		// Start the bridge
-		AndroidDebugBridge.init(false /* debugger support */);
-		androidDebugBridge = AndroidDebugBridge.createBridge(adbPath, false);
+		try
+		{
+			AndroidDebugBridge.init(false /* debugger support */);
+			androidDebugBridge = AndroidDebugBridge.createBridge(adbPath, false /*
+																				 * force new bridge, no need for that
+																				 */);
+		}
+		catch (IllegalStateException e)
+		{
+			// The debug bridge library was already init-ed.
+			// This means we are creating a new AgentManager while another is active, which is not okay.
+			close();
+			throw new ADBridgeFailException("The debug bridge failed to init, see the enclosed exception for more information.",
+											e);
+		}
+		catch (NullPointerException e)
+		{
+			// The debug bridge creation failed internally.
+			close();
+			throw new ADBridgeFailException("The debug bridge failed to init, see the enclosed exception for more information.",
+											e);
+		}
 
 		// Publish this AgentManager in the RMI registry
-		rmiRegistry = LocateRegistry.createRegistry(rmiPort);
-		rmiRegistry.rebind(RmiStringConstants.AGENT_MANAGER.toString(), this);
-
+		try
+		{
+			rmiRegistry = LocateRegistry.createRegistry(rmiPort);
+			rmiRegistry.rebind(RmiStringConstants.AGENT_MANAGER.toString(), this);
+		}
+		catch (RemoteException e)
+		{
+			close();
+			throw e;
+		}
 		rmiRegistryPort = rmiPort;
 
 		// Get the initial devices list
-		List<IDevice> initialDevicesList = getInitialDeviceList();
+		List<IDevice> initialDevicesList = null;
+		try
+		{
+			initialDevicesList = getInitialDeviceList();
+		}
+		catch (ADBridgeFailException e)
+		{
+			close();
+			throw e;
+		}
 		for (IDevice initialDevice : initialDevicesList)
 		{
 			registerDeviceOnAgent(initialDevice);
@@ -144,8 +176,8 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 			catch (InterruptedException e)
 			{
 			}
-			// let's not wait > 10 seconds.
-			if (timeout > 100)
+			// let's not wait > timeout milliseconds.
+			if (timeout * 100 > ADBRIDGE_TIMEOUT_MS)
 			{
 				LOGGER.severe("Timeout getting initial device list.");
 
@@ -174,6 +206,10 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 	{
 		try
 		{
+			// We close the bridge and adb service, so bridge creation wont fail next time we try. This is a workaround,
+			// ddmlib is bugged.
+			AndroidDebugBridge.disconnectBridge();
+
 			// Terminate the bridge connection
 			AndroidDebugBridge.terminate();
 
@@ -300,7 +336,7 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 
 		rmiRegistry.rebind(deviceSerialNumber, deviceWrapper);
 
-		// TODO remove this old code when it will surely not be needed any more, even as a refference.
+		// TODO remove this old code when it will surely not be needed any more, even as a reference.
 		/*
 		 * Old code
 		 * 
@@ -388,12 +424,26 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 	 */
 	private DeviceInformation getDeviceInformation(IDevice device)
 	{
+		// TODO surround all data set procedures with try/catch
 		DeviceInformation deviceInformation = new DeviceInformation();
 
+		// Serial number
+		deviceInformation.setSerialNumber(device.getSerialNumber());
+
+		// isEmulator
+		deviceInformation.setEmulator(device.isEmulator());
+
+		// If the device will not give us it's valid properties, return the structure with the fallback values set.
+		if (device.isOffline() || device.arePropertiesSet() == false)
+		{
+			return deviceInformation;
+		}
+
+		// Attempt to get the device properties only if the device is online.
 		Map<String, String> devicePropertiesMap = device.getProperties();
 
 		// Density
-		String lcdDensityString = FALLBACK_DISPLAY_DENSITY;
+		String lcdDensityString = DeviceInformation.FALLBACK_DISPLAY_DENSITY.toString();
 		if (device.isEmulator())
 		{
 			lcdDensityString = devicePropertiesMap.get(DevicePropertyStringConstants.PROPERTY_EMUDEVICE_LCD_DENSITY.toString());
@@ -404,9 +454,6 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 		}
 		deviceInformation.setDpi(Integer.parseInt(lcdDensityString));
 
-		// isEmulator
-		deviceInformation.setEmulator(device.isEmulator());
-
 		// Model
 		deviceInformation.setModel(devicePropertiesMap.get(DevicePropertyStringConstants.PROPERTY_PRODUCT_MODEL.toString()));
 
@@ -414,25 +461,27 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 		deviceInformation.setOs(devicePropertiesMap.get(DevicePropertyStringConstants.PROPERTY_OS_VERSION.toString()));
 
 		// RAM
-		String ramMemoryString = FALLBACK_RAM_AMOUNT;
+		String ramMemoryString = DeviceInformation.FALLBACK_RAM_AMOUNT.toString();
 		if (device.isEmulator())
 		{
 			// FIXME get the ram for emulators too.
 		}
 		else
 		{
-			devicePropertiesMap.get(DevicePropertyStringConstants.PROPERTY_REALDEVICE_RAM.toString());
+			ramMemoryString = devicePropertiesMap.get(DevicePropertyStringConstants.PROPERTY_REALDEVICE_RAM.toString());
 		}
 		deviceInformation.setRam(MemoryUnitConverter.convertMemoryToMB(ramMemoryString));
 
 		// Resolution
-		deviceInformation.setResolution(FALLBACK_SCREEN_RESOLUTION);
+		deviceInformation.setResolution(DeviceInformation.FALLBACK_SCREEN_RESOLUTION);
 		try
 		{
 			CollectingOutputReceiver outputReceiver = new CollectingOutputReceiver();
 			device.executeShellCommand("dumpsys window policy", outputReceiver);
+
 			String shellResponse = outputReceiver.getOutput();
 			deviceInformation.setResolution(DeviceScreenResolutionParser.parseScreenResolutionFromShell(shellResponse));
+
 		}
 		catch (ShellCommandUnresponsiveException | TimeoutException | AdbCommandRejectedException | IOException e)
 		{
@@ -440,15 +489,17 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 			e.printStackTrace();
 			LOGGER.log(Level.SEVERE, "Shell command execution failed.", e);
 		}
+		catch (StringIndexOutOfBoundsException e)
+		{
+			LOGGER.log(Level.WARNING, "Parsing shell response failed when attempting to get device screen size.");
+		}
+
 		/*
 		 * catch (ShellCommandUnresponsiveException e) { // The shell does not respond. e.printStackTrace(); } catch
 		 * (TimeoutException e) { // Adb does not respond. Wut. e.printStackTrace(); } catch
 		 * (AdbCommandRejectedException e) { // ADB will not send commands to the device. Maybe it's offline?
 		 * e.printStackTrace(); } catch (IOException e) { // luck life. Socket connection is bad. e.printStackTrace(); }
 		 */
-
-		// Serial number
-		deviceInformation.setSerialNumber(device.getSerialNumber());
 
 		return deviceInformation;
 	}
