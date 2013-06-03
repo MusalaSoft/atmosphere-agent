@@ -4,11 +4,13 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,11 +24,14 @@ import com.android.ddmlib.DdmPreferences;
 import com.android.ddmlib.IDevice;
 import com.android.ddmlib.Log;
 import com.musala.atmosphere.commons.sa.DeviceInformation;
+import com.musala.atmosphere.commons.sa.IWrapDevice;
 import com.musala.atmosphere.commons.sa.exceptions.DeviceNotFoundException;
 
 public class AgentManagerTest
 {
 	private AgentManager agentManager;
+
+	private static final int RMI_PORT = 1989;
 
 	@Before
 	public void setUp() throws Exception
@@ -38,7 +43,7 @@ public class AgentManagerTest
 		Log.setLogOutput(new DdmLibLogListener(Level.ALL, false /* do no log to a file */));
 
 		// TODO Extract to config file
-		agentManager = new AgentManager("C:\\Android Development Tools\\sdk\\platform-tools\\adb", 1999);
+		agentManager = new AgentManager("C:\\Android Development Tools\\sdk\\platform-tools\\adb", RMI_PORT);
 	}
 
 	@After
@@ -51,9 +56,9 @@ public class AgentManagerTest
 	}
 
 	@Test
-	public void testGetAllDevicesInformation() throws RemoteException
+	public void testGetAllDeviceWrappers() throws RemoteException
 	{
-		List<DeviceInformation> list = agentManager.getAllDevicesInformation();
+		List<String> list = agentManager.getAllDeviceWrappers();
 		assertNotNull("The devices information list should never be 'null'.", list);
 	}
 
@@ -85,24 +90,27 @@ public class AgentManagerTest
 				+ "' should not be present as we just unregistered it.", present);
 	}
 
-	@Test(expected = DeviceNotFoundException.class)
-	public void testGetDeviceInformationWithNull() throws RemoteException, DeviceNotFoundException
+	@Test
+	public void testIsDevicePresentWithNull() throws RemoteException, DeviceNotFoundException
 	{
 		@SuppressWarnings("unused")
-		DeviceInformation info = agentManager.getDeviceInformation(null);
-		fail("DeviceNotFoundException should have been thrown.");
-	}
-
-	@Test(expected = DeviceNotFoundException.class)
-	public void testGetDeviceInformationWithEmpty() throws RemoteException, DeviceNotFoundException
-	{
-		@SuppressWarnings("unused")
-		DeviceInformation info = agentManager.getDeviceInformation("");
-		fail("DeviceNotFoundException should have been thrown.");
+		boolean present = agentManager.isDevicePresent(null);
+		assertFalse("Device with serial number null can never be present.", present);
 	}
 
 	@Test
-	public void testGetDeviceInformationWithValidSerialNumber() throws RemoteException, DeviceNotFoundException
+	public void testIsDevicePresentWithEmpty() throws RemoteException, DeviceNotFoundException
+	{
+		@SuppressWarnings("unused")
+		boolean present = agentManager.isDevicePresent("");
+		assertFalse("Device with empty serial number can never be present.", present);
+	}
+
+	@Test
+	public void testGetDeviceInformationWithValidSerialNumber()
+		throws RemoteException,
+			DeviceNotFoundException,
+			NotBoundException
 	{
 		String mockDeviceSerialNumber = "lol";
 		boolean mockDeviceEmulator = false;
@@ -110,6 +118,7 @@ public class AgentManagerTest
 		String mockDeviceModel = "hello";
 		String mockDeviceOS = "mockos";
 		Integer mockDeviceRam = 123; // mb
+		String mockDeviceCpu = "megacpu";
 		/*
 		 * Integer mockDeviceScreenH = 123; Integer mockDeviceScreenW = 22; String mockScreenCmdResponse =
 		 * "mUnrestrictedScreen " + mockDeviceScreenW + "x" + mockDeviceScreenH + "\n";
@@ -122,6 +131,7 @@ public class AgentManagerTest
 		mockPropMap.put(DevicePropertyStringConstants.PROPERTY_OS_VERSION.toString(), mockDeviceOS);
 		mockPropMap.put(DevicePropertyStringConstants.PROPERTY_REALDEVICE_RAM.toString(), mockDeviceRam.toString()
 				+ " mb");
+		mockPropMap.put(DevicePropertyStringConstants.PROPERTY_CPU_TYPE.toString(), mockDeviceCpu);
 
 		IDevice mockDevice = mock(IDevice.class);
 		when(mockDevice.getSerialNumber()).thenReturn(mockDeviceSerialNumber);
@@ -131,7 +141,10 @@ public class AgentManagerTest
 
 		agentManager.registerDeviceOnAgent(mockDevice);
 
-		DeviceInformation info = agentManager.getDeviceInformation(mockDeviceSerialNumber);
+		Registry agentRegistry = LocateRegistry.getRegistry("localhost", RMI_PORT);
+		IWrapDevice device = (IWrapDevice) agentRegistry.lookup(mockDeviceSerialNumber);
+
+		DeviceInformation info = device.getDeviceInformation();
 		assertEquals(	"Mock device creation / .getDeviceInformation() data mismatch. (serial number)",
 						info.getSerialNumber(),
 						mockDeviceSerialNumber);
@@ -156,6 +169,8 @@ public class AgentManagerTest
 		assertEquals(	"Mock device creation / .getDeviceInformation() data mismatch. (device screen width)",
 						info.getResolution().getValue(),
 						DeviceInformation.FALLBACK_SCREEN_RESOLUTION.getValue());
-
+		assertEquals(	"Mock device creation / .getDeviceInformation() data mismatch. (device CPU identifier)",
+						info.getCpu(),
+						mockDeviceCpu);
 	}
 }

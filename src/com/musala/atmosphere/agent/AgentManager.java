@@ -10,24 +10,17 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.FileHandler;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.android.ddmlib.AdbCommandRejectedException;
 import com.android.ddmlib.AndroidDebugBridge;
-import com.android.ddmlib.CollectingOutputReceiver;
 import com.android.ddmlib.EmulatorConsole;
 import com.android.ddmlib.IDevice;
-import com.android.ddmlib.ShellCommandUnresponsiveException;
-import com.android.ddmlib.TimeoutException;
 import com.musala.atmosphere.agent.devicewrapper.EmulatorWrapDevice;
 import com.musala.atmosphere.agent.devicewrapper.RealWrapDevice;
-import com.musala.atmosphere.agent.util.DeviceScreenResolutionParser;
-import com.musala.atmosphere.agent.util.MemoryUnitConverter;
 import com.musala.atmosphere.commons.sa.DeviceInformation;
 import com.musala.atmosphere.commons.sa.DeviceParameters;
 import com.musala.atmosphere.commons.sa.IAgentManager;
@@ -228,18 +221,16 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 	}
 
 	@Override
-	public List<DeviceInformation> getAllDevicesInformation() throws RemoteException
+	public List<String> getAllDeviceWrappers() throws RemoteException
 	{
-		List<DeviceInformation> deviceInfoList = new LinkedList<DeviceInformation>();
+		List<String> wrappersList = new LinkedList<>();
 
-		// For each device, get it's device info structure and add it to the list
 		for (IDevice device : devicesList)
 		{
-			DeviceInformation thisDeviceDeviceInfo = getDeviceInformation(device);
-			deviceInfoList.add(thisDeviceDeviceInfo);
+			wrappersList.add(device.getSerialNumber());
 		}
 
-		return deviceInfoList;
+		return wrappersList;
 	}
 
 	/**
@@ -259,11 +250,10 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 			return;
 		}
 
-		devicesList.add(connectedDevice);
-
 		try
 		{
 			createWrapperForDevice(connectedDevice);
+			devicesList.add(connectedDevice);
 		}
 		catch (RemoteException e)
 		{
@@ -406,102 +396,6 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 			}
 		}
 		throw new DeviceNotFoundException("Device with serial number " + serialNumber + " not found on this agent.");
-	}
-
-	@Override
-	public DeviceInformation getDeviceInformation(String serialNumber) throws RemoteException, DeviceNotFoundException
-	{
-		IDevice device = getDeviceBySerialNumber(serialNumber);
-		DeviceInformation deviceInformation = getDeviceInformation(device);
-		return deviceInformation;
-	}
-
-	/**
-	 * Gets a {@link DeviceInformation DeviceInformation} structure for a specific IDevice.
-	 * 
-	 * @param device
-	 * @return The populated {@link DeviceInformation DeviceInformation}.
-	 */
-	private DeviceInformation getDeviceInformation(IDevice device)
-	{
-		// TODO surround all data set procedures with try/catch
-		DeviceInformation deviceInformation = new DeviceInformation();
-
-		// Serial number
-		deviceInformation.setSerialNumber(device.getSerialNumber());
-
-		// isEmulator
-		deviceInformation.setEmulator(device.isEmulator());
-
-		// If the device will not give us it's valid properties, return the structure with the fallback values set.
-		if (device.isOffline() || device.arePropertiesSet() == false)
-		{
-			return deviceInformation;
-		}
-
-		// Attempt to get the device properties only if the device is online.
-		Map<String, String> devicePropertiesMap = device.getProperties();
-
-		// Density
-		String lcdDensityString = DeviceInformation.FALLBACK_DISPLAY_DENSITY.toString();
-		if (device.isEmulator())
-		{
-			lcdDensityString = devicePropertiesMap.get(DevicePropertyStringConstants.PROPERTY_EMUDEVICE_LCD_DENSITY.toString());
-		}
-		else
-		{
-			lcdDensityString = devicePropertiesMap.get(DevicePropertyStringConstants.PROPERTY_REALDEVICE_LCD_DENSITY.toString());
-		}
-		deviceInformation.setDpi(Integer.parseInt(lcdDensityString));
-
-		// Model
-		deviceInformation.setModel(devicePropertiesMap.get(DevicePropertyStringConstants.PROPERTY_PRODUCT_MODEL.toString()));
-
-		// OS
-		deviceInformation.setOs(devicePropertiesMap.get(DevicePropertyStringConstants.PROPERTY_OS_VERSION.toString()));
-
-		// RAM
-		String ramMemoryString = DeviceInformation.FALLBACK_RAM_AMOUNT.toString();
-		if (device.isEmulator())
-		{
-			// FIXME get the ram for emulators too.
-		}
-		else
-		{
-			ramMemoryString = devicePropertiesMap.get(DevicePropertyStringConstants.PROPERTY_REALDEVICE_RAM.toString());
-		}
-		deviceInformation.setRam(MemoryUnitConverter.convertMemoryToMB(ramMemoryString));
-
-		// Resolution
-		deviceInformation.setResolution(DeviceInformation.FALLBACK_SCREEN_RESOLUTION);
-		try
-		{
-			CollectingOutputReceiver outputReceiver = new CollectingOutputReceiver();
-			device.executeShellCommand("dumpsys window policy", outputReceiver);
-
-			String shellResponse = outputReceiver.getOutput();
-			deviceInformation.setResolution(DeviceScreenResolutionParser.parseScreenResolutionFromShell(shellResponse));
-
-		}
-		catch (ShellCommandUnresponsiveException | TimeoutException | AdbCommandRejectedException | IOException e)
-		{
-			// Shell command execution failed.
-			e.printStackTrace();
-			LOGGER.log(Level.SEVERE, "Shell command execution failed.", e);
-		}
-		catch (StringIndexOutOfBoundsException e)
-		{
-			LOGGER.log(Level.WARNING, "Parsing shell response failed when attempting to get device screen size.");
-		}
-
-		/*
-		 * catch (ShellCommandUnresponsiveException e) { // The shell does not respond. e.printStackTrace(); } catch
-		 * (TimeoutException e) { // Adb does not respond. Wut. e.printStackTrace(); } catch
-		 * (AdbCommandRejectedException e) { // ADB will not send commands to the device. Maybe it's offline?
-		 * e.printStackTrace(); } catch (IOException e) { // luck life. Socket connection is bad. e.printStackTrace(); }
-		 */
-
-		return deviceInformation;
 	}
 
 	@Override

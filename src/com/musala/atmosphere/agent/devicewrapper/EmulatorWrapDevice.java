@@ -11,6 +11,7 @@ import com.android.ddmlib.IDevice;
 import com.musala.atmosphere.agent.AgentManager;
 import com.musala.atmosphere.agent.devicewrapper.util.EmulatorConnectionFailedException;
 import com.musala.atmosphere.agent.devicewrapper.util.ExtendedEmulatorConsole;
+import com.musala.atmosphere.commons.sa.BatteryState;
 import com.musala.atmosphere.commons.sa.exceptions.NotPossibleForDeviceException;
 import com.musala.atmosphere.commons.sa.util.Pair;
 
@@ -114,6 +115,26 @@ public class EmulatorWrapDevice extends AbstractWrapDevice
 			e.printStackTrace();
 		}
 
+	}
+
+	@Override
+	public int getNetworkLatency() throws RemoteException
+	{
+		// TODO implement get network latency
+		return 0;
+	}
+
+	@Override
+	public void setNetworkLatency(int latency) throws RemoteException
+	{
+		// TODO implement set network latency
+
+	}
+
+	@Override
+	public void setBatteryState(BatteryState state) throws RemoteException
+	{
+		// TODO implement set battery state
 	}
 
 }

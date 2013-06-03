@@ -11,6 +11,7 @@ import java.util.HashMap;
 
 import com.android.ddmlib.EmulatorConsole;
 import com.android.ddmlib.IDevice;
+import com.musala.atmosphere.commons.sa.BatteryState;
 import com.musala.atmosphere.commons.sa.exceptions.NotPossibleForDeviceException;
 
 /**
@@ -198,11 +199,11 @@ public class ExtendedEmulatorConsole
 	 * Sets the power state of the emulator.
 	 * 
 	 * @param status
-	 *        {@link BatteryStatus BatteryStatus} enumerated constant.
-	 * @return True if setting the power status was successful, false otherwise.
+	 *        {@link BatteryState BatteryState} enumerated constant.
+	 * @return True if setting the power state was successful, false otherwise.
 	 * @throws EmulatorConnectionFailedException
 	 */
-	public synchronized boolean setBatteryState(BatteryStatus status) throws EmulatorConnectionFailedException
+	public synchronized boolean setBatteryState(BatteryState status) throws EmulatorConnectionFailedException
 	{
 		String command = String.format(COMMAND_POWER_STATUS_FORMAT, status.toString());
 		return executeCommand(command);

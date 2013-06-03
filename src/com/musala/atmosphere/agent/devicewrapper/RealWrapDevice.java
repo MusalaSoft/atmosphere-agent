@@ -3,6 +3,7 @@ package com.musala.atmosphere.agent.devicewrapper;
 import java.rmi.RemoteException;
 
 import com.android.ddmlib.IDevice;
+import com.musala.atmosphere.commons.sa.BatteryState;
 import com.musala.atmosphere.commons.sa.exceptions.NotPossibleForDeviceException;
 import com.musala.atmosphere.commons.sa.util.Pair;
 
@@ -26,14 +27,35 @@ public class RealWrapDevice extends AbstractWrapDevice
 	@Override
 	public void setNetworkSpeed(Pair<Integer, Integer> speeds) throws RemoteException
 	{
-		// TODO set network speed
+		// TODO implement set network speed
 
 	}
 
 	@Override
 	public void setBatteryLevel(int level) throws RemoteException
 	{
-		// TODO set battery level
+		// TODO implement set battery level
+
+	}
+
+	@Override
+	public int getNetworkLatency() throws RemoteException
+	{
+		// TODO implement get network latency
+		return 0;
+	}
+
+	@Override
+	public void setNetworkLatency(int latency) throws RemoteException
+	{
+		// TODO implement set network latency
+
+	}
+
+	@Override
+	public void setBatteryState(BatteryState state) throws RemoteException
+	{
+		// TODO implement set battery state
 
 	}
 
