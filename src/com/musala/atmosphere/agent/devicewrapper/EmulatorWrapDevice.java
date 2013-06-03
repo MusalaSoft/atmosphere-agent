@@ -118,13 +118,6 @@ public class EmulatorWrapDevice extends AbstractWrapDevice
 	}
 
 	@Override
-	public int getNetworkLatency() throws RemoteException
-	{
-		// TODO implement get network latency
-		return 0;
-	}
-
-	@Override
 	public void setNetworkLatency(int latency) throws RemoteException
 	{
 		// TODO implement set network latency

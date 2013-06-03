@@ -225,7 +225,11 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 	}
 
 	@Override
-	public abstract int getNetworkLatency() throws RemoteException;
+	public int getNetworkLatency() throws RemoteException
+	{
+		// TODO implement get network latency
+		return 0;
+	}
 
 	@Override
 	public abstract void setNetworkLatency(int latency) throws RemoteException;

@@ -119,10 +119,6 @@ public class AgentManagerTest
 		String mockDeviceOS = "mockos";
 		Integer mockDeviceRam = 123; // mb
 		String mockDeviceCpu = "megacpu";
-		/*
-		 * Integer mockDeviceScreenH = 123; Integer mockDeviceScreenW = 22; String mockScreenCmdResponse =
-		 * "mUnrestrictedScreen " + mockDeviceScreenW + "x" + mockDeviceScreenH + "\n";
-		 */
 
 		Map<String, String> mockPropMap = new HashMap<>();
 		mockPropMap.put(DevicePropertyStringConstants.PROPERTY_REALDEVICE_LCD_DENSITY.toString(),
