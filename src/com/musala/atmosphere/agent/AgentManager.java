@@ -143,6 +143,9 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 		// Server connection will be established later, when a server registers itself.
 		currentDeviceChangeListener = new DeviceChangeListener(this);
 		AndroidDebugBridge.addDeviceChangeListener(currentDeviceChangeListener);
+
+		// Register this AgentManager on the EmulatorManager so it can have access to the devices list.
+		EmulatorManager.registerAgentManagerReference(this);
 	}
 
 	/**
@@ -369,6 +372,7 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 	@Override
 	public boolean isDevicePresent(String serialNumber) throws RemoteException
 	{
+		// FIXME REMOVE THIS METHOD
 		for (IDevice device : devicesList)
 		{
 			if (device.getSerialNumber() == serialNumber)
@@ -401,10 +405,26 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 	@Override
 	public DeviceInformation createEmulator(DeviceParameters parameters) throws RemoteException
 	{
-		// TODO Create emulator method
+		EmulatorManager emulatorManager = EmulatorManager.getInstance();
+		emulatorManager.createAndStartEmulator(parameters);
 		return null;
 	}
 
+	// TODO method used by the emulatorManager
+	// possibly just a temp workaround
+	IDevice getDeviceByEmulatorName(String avdName)
+	{
+		for (IDevice device : devicesList)
+		{
+			if (device.getAvdName().equals(avdName))
+			{
+				return device;
+			}
+		}
+		return null;
+	}
+
+	// FIXME remove/edit this method
 	@Override
 	public void closeEmulator(String serialNumber)
 		throws RemoteException,
@@ -427,6 +447,7 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 	@Override
 	public void wipeEmulator(String serialNumber) throws RemoteException
 	{
+		// FIXME remove / edit this method
 		// TODO wipe emulator method
 		// from emulator.exe help :
 		// -wipe-data reset the user data image (copy it from initdata)
@@ -436,7 +457,10 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 	@Override
 	public void eraseEmulator(String serialNumber) throws RemoteException
 	{
-		// TODO Erase emulator method
+		// FIXME remove/edit this method.
+		EmulatorManager emulatorManager = EmulatorManager.getInstance();
+		emulatorManager.closeAndEraseEmulator();
+		// TODO implement or remove this method
 	}
 
 	@Override
