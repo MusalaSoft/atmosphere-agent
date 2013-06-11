@@ -1,17 +1,24 @@
 package com.musala.atmosphere.agent.devicewrapper;
 
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.List;
 import java.util.Map;
+import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.android.ddmlib.AdbCommandRejectedException;
 import com.android.ddmlib.CollectingOutputReceiver;
 import com.android.ddmlib.IDevice;
+import com.android.ddmlib.InstallException;
 import com.android.ddmlib.ShellCommandUnresponsiveException;
+import com.android.ddmlib.SyncException;
 import com.android.ddmlib.TimeoutException;
 import com.musala.atmosphere.agent.AgentManager;
 import com.musala.atmosphere.agent.DevicePropertyStringConstants;
@@ -29,6 +36,17 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 	 * 
 	 */
 	private static final long serialVersionUID = -9122701818928360023L;
+
+	// WARNING : do not change the remote folder unless you really know what you are doing.
+	private static final String XMLDUMP_REMOTE_FILE_NAME = "/data/local/tmp/uidump.xml";
+
+	private static final String XMLDUMP_LOCAL_FILE_NAME = "uidump.xml";
+
+	private static final String TEMP_APK_FILE_SUFFIX = ".apk";
+
+	private File tempApkFile;
+
+	private OutputStream tempApkFileOutputStream;
 
 	protected IDevice wrappedDevice;
 
@@ -103,6 +121,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 	public DeviceInformation getDeviceInformation() throws RemoteException
 	{
 		// TODO surround all data set procedures with try/catch
+		// TODO just check the propmap and populate it with the fallbacks if something is wrong
 		DeviceInformation deviceInformation = new DeviceInformation();
 
 		// Serial number
@@ -187,28 +206,72 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 	}
 
 	@Override
-	public void initAPKInstall() throws RemoteException
+	public void initAPKInstall() throws RemoteException, IOException
 	{
-		// TODO implement init apk install
+		discardAPK();
+
+		String tempApkFilePrefix = wrappedDevice.getSerialNumber();
+		tempApkFilePrefix = tempApkFilePrefix.replaceAll("\\W+", "_"); // replaces everything that is not a letter,
+																		// number or underscore with an underscore
+
+		tempApkFile = File.createTempFile(tempApkFilePrefix, TEMP_APK_FILE_SUFFIX);
+		tempApkFileOutputStream = new BufferedOutputStream(new FileOutputStream(tempApkFile));
 	}
 
 	@Override
-	public void appendToAPK(Byte[] bytes) throws RemoteException
+	public void appendToAPK(byte[] bytes) throws RemoteException, IOException
 	{
-		// TODO implement append to apk
+		if (tempApkFile == null || tempApkFileOutputStream == null)
+		{
+			throw new IllegalStateException("Temp .apk file should be created (by calling initAPKInstall()) before any calls to appendToAPK() and buildAndInstallAPK().");
+		}
+		tempApkFileOutputStream.write(bytes);
 	}
 
 	@Override
-	public void buildAndInstallAPK() throws RemoteException
+	public void buildAndInstallAPK() throws RemoteException, IOException, CommandFailedException
 	{
-		// TODO build and install apk
+		if (tempApkFile == null || tempApkFileOutputStream == null)
+		{
+			throw new IllegalStateException("Temp .apk file should be created (by calling initAPKInstall()) before any calls to appendToAPK() and buildAndInstallAPK().");
+		}
 
+		try
+		{
+			tempApkFileOutputStream.flush();
+			tempApkFileOutputStream.close();
+			tempApkFileOutputStream = null;
+			String absolutePathToApk = tempApkFile.getAbsolutePath();
+
+			wrappedDevice.installPackage(absolutePathToApk, true /* force reinstall */);
+
+			discardAPK();
+		}
+		catch (InstallException e)
+		{
+			// TODO log this
+			throw new CommandFailedException(	"Installing .apk file failed. See the enclosed exception for more information.",
+												e);
+		}
 	}
 
 	@Override
-	public void discardAPK() throws RemoteException
+	public void discardAPK() throws RemoteException, IOException
 	{
-		// TODO implement discard apk
+		if (tempApkFileOutputStream != null)
+		{
+			tempApkFileOutputStream.close();
+			tempApkFileOutputStream = null;
+		}
+
+		if (tempApkFile != null)
+		{
+			if (tempApkFile.exists())
+			{
+				tempApkFile.delete();
+			}
+			tempApkFile = null;
+		}
 	}
 
 	@Override
@@ -218,10 +281,33 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 	public abstract void setBatteryLevel(int level) throws RemoteException;
 
 	@Override
-	public String getUiXml() throws RemoteException
+	public String getUiXml() throws RemoteException, CommandFailedException
 	{
-		// TODO implement get ui xml dump
-		return null;
+		String dumpCommand = "uiautomator dump " + XMLDUMP_REMOTE_FILE_NAME;
+		executeShellCommand(dumpCommand);
+
+		StringBuilder uiDumpBuilder = new StringBuilder();
+
+		try
+		{
+			wrappedDevice.pullFile(XMLDUMP_REMOTE_FILE_NAME, XMLDUMP_LOCAL_FILE_NAME);
+
+			File xmlDumpFile = new File(XMLDUMP_LOCAL_FILE_NAME);
+			Scanner xmlDumpFileScanner = new Scanner(xmlDumpFile);
+			while (xmlDumpFileScanner.hasNextLine())
+			{
+				String xmlLine = xmlDumpFileScanner.nextLine();
+				uiDumpBuilder.append(xmlLine);
+			}
+		}
+		catch (SyncException | IOException | AdbCommandRejectedException | TimeoutException e)
+		{
+			// TODO log this
+			throw new CommandFailedException("UI dump failed. See the enclosed exception for more information.", e);
+		}
+
+		String uiDumpContents = uiDumpBuilder.toString();
+		return uiDumpContents;
 	}
 
 	@Override
