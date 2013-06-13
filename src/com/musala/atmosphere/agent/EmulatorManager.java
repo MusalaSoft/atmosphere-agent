@@ -36,7 +36,7 @@ public class EmulatorManager
 
 	private final static String LOGGER_FILENAME = "emulatormanager.log";
 
-	private final static String EMULATOR_CPU_ARCHITECTURE = "armeabi";
+	private final static String EMULATOR_CPU_ARCHITECTURE = "armeabi-v7a";
 
 	// TODO only one device is currenty supported, for simplicity.
 	// this will be easily changed.
@@ -51,6 +51,8 @@ public class EmulatorManager
 	private static AgentManager agentManagerReference;
 
 	private DeviceParameters emulatorParameters;
+
+	private Thread emulatorThread;
 
 	public static EmulatorManager getInstance()
 	{
@@ -99,6 +101,8 @@ public class EmulatorManager
 		createCommandBuilder.append(abi);
 		createCommandBuilder.append(" -s ");
 		createCommandBuilder.append(screenResolutionString);
+		createCommandBuilder.append(" --force"); // force emulator creation, overwrite if emulator with this name exists
+													// already.
 		String createCommand = createCommandBuilder.toString();
 
 		List<String> runCommandParameters = new LinkedList<String>();
@@ -110,14 +114,38 @@ public class EmulatorManager
 		{
 			String returnValue = sendCommandToAndroidTool(createCommand, "\n");
 			LOGGER.log(Level.INFO, "sendCommandToAndroidTool returned :\n" + returnValue);
-			returnValue = sendCommandToEmulatorTool(runCommandParameters, "");
-			LOGGER.log(Level.INFO, "sendCommandToEmulatorTool returned :\n" + returnValue);
+
+			// Running the emulator must be done in a separate thread.
+			// Otherwise, our code will block until the emulator is closed because
+			// of the process.waitFor() function that is being called in methods below.
+			final List<String> finalizedRunCommandParameters = runCommandParameters;
+			emulatorThread = new Thread(new Runnable()
+			{
+				@Override
+				public void run()
+				{
+					try
+					{
+						String returnValue = sendCommandToEmulatorTool(finalizedRunCommandParameters, "");
+						LOGGER.log(Level.INFO, "sendCommandToEmulatorTool returned :\n" + returnValue);
+					}
+					catch (IOException e)
+					{
+						LOGGER.log(	Level.SEVERE,
+									"Running the emulator tool in a separate thread resulted in exception.",
+									e);
+						// TODO this will change when emulator creation mechanism is discussed
+						e.printStackTrace();
+					}
+				}
+			});
+			emulatorThread.setName("Emulator starter thread");
+			emulatorThread.start();
 		}
 		catch (Exception e)
 		{
 			e.printStackTrace();
 		}
-
 	}
 
 	public void closeAndEraseEmulator()
@@ -125,6 +153,15 @@ public class EmulatorManager
 		IDevice emulator = agentManagerReference.getDeviceByEmulatorName(emulatorName);
 		EmulatorConsole emulatorConsole = EmulatorConsole.getConsole(emulator);
 		emulatorConsole.kill();
+
+		// wait for the emulator to exit
+		try
+		{
+			emulatorThread.join();
+		}
+		catch (InterruptedException e1)
+		{
+		}
 
 		try
 		{
