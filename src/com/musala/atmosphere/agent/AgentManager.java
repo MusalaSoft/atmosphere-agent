@@ -21,7 +21,6 @@ import com.android.ddmlib.EmulatorConsole;
 import com.android.ddmlib.IDevice;
 import com.musala.atmosphere.agent.devicewrapper.EmulatorWrapDevice;
 import com.musala.atmosphere.agent.devicewrapper.RealWrapDevice;
-import com.musala.atmosphere.commons.sa.DeviceInformation;
 import com.musala.atmosphere.commons.sa.DeviceParameters;
 import com.musala.atmosphere.commons.sa.IAgentManager;
 import com.musala.atmosphere.commons.sa.IWrapDevice;
@@ -139,19 +138,16 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 			registerDeviceOnAgent(initialDevice);
 		}
 
-		// Set up a device change listener that will update this agent, but not connect to any server.
+		// Set up a device change listener that will update this agent, but not connect and notify any server.
 		// Server connection will be established later, when a server registers itself.
 		currentDeviceChangeListener = new DeviceChangeListener(this);
 		AndroidDebugBridge.addDeviceChangeListener(currentDeviceChangeListener);
-
-		// Register this AgentManager on the EmulatorManager so it can have access to the devices list.
-		EmulatorManager.registerAgentManagerReference(this);
 	}
 
 	/**
 	 * Gets the initial devices list (IDevices). Gets called in the AgentManager constructor.
 	 * 
-	 * @return List of IDevices (CopyOnWrite array list, for thread-safety)
+	 * @return List of IDevices
 	 * @throws ADBridgeFailException
 	 */
 	private List<IDevice> getInitialDeviceList() throws ADBridgeFailException
@@ -182,7 +178,6 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 		}
 
 		IDevice[] devicesArray = androidDebugBridge.getDevices();
-
 		return Arrays.asList(devicesArray);
 	}
 
@@ -230,7 +225,8 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 
 		for (IDevice device : devicesList)
 		{
-			wrappersList.add(device.getSerialNumber());
+			String rmiWrapperBindingId = getRmiWrapperBindingIdentifier(device);
+			wrappersList.add(rmiWrapperBindingId);
 		}
 
 		return wrappersList;
@@ -306,7 +302,7 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 	private void createWrapperForDevice(IDevice device) throws RemoteException
 	{
 		IWrapDevice deviceWrapper = null;
-		String deviceSerialNumber = device.getSerialNumber();
+		String rmiWrapperBindingId = getRmiWrapperBindingIdentifier(device);
 
 		// Create a device wrapper depending on the device type (emulator/real)
 		try
@@ -327,19 +323,21 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 			e.printStackTrace();
 		}
 
-		rmiRegistry.rebind(deviceSerialNumber, deviceWrapper);
+		rmiRegistry.rebind(rmiWrapperBindingId, deviceWrapper);
+	}
 
-		// TODO remove this old code when it will surely not be needed any more, even as a reference.
-		/*
-		 * Old code
-		 * 
-		 * // Register the wrapper in the RMI registry under the device's serial number // This code resulted in an
-		 * exception : this.rmiRegistry.rebind(serialNumber, deviceWrapper); // It was understood as
-		 * "bind the deviceWrapper on the invoking machine's registry" // This is a workaround. try {
-		 * Naming.rebind("//localhost:" + rmiRegistryPort + "/" + deviceSerialNumber, deviceWrapper); } catch
-		 * (MalformedURLException e) { throw new RemoteException(
-		 * "Exception occured when rebinding the device wrapper. See the enclosed exception.", e); }
-		 */
+	/**
+	 * Returns a unique identifier for this device, which will be used as a publishing string for the wrapper of the
+	 * device in RMI.
+	 * 
+	 * @param device
+	 *        which we want to get unique identifier for.
+	 * @return unique identifier for the device.
+	 */
+	private String getRmiWrapperBindingIdentifier(IDevice device)
+	{
+		String wrapperId = device.getSerialNumber();
+		return wrapperId;
 	}
 
 	/**
@@ -351,11 +349,11 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 	 */
 	private void removeWrapperForDevice(IDevice device) throws RemoteException
 	{
-		String deviceSerialNumber = device.getSerialNumber();
+		String rmiWrapperBindingId = getRmiWrapperBindingIdentifier(device);
 
 		try
 		{
-			rmiRegistry.unbind(deviceSerialNumber);
+			rmiRegistry.unbind(rmiWrapperBindingId);
 		}
 		catch (NotBoundException e)
 		{
@@ -403,25 +401,10 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 	}
 
 	@Override
-	public DeviceInformation createEmulator(DeviceParameters parameters) throws RemoteException
+	public void createAndStartEmulator(DeviceParameters parameters) throws RemoteException, IOException
 	{
 		EmulatorManager emulatorManager = EmulatorManager.getInstance();
-		emulatorManager.createAndStartEmulator(parameters);
-		return null;
-	}
-
-	// TODO method used by the emulatorManager
-	// possibly just a temp workaround
-	IDevice getDeviceByEmulatorName(String avdName)
-	{
-		for (IDevice device : devicesList)
-		{
-			if (device.getAvdName().equals(avdName))
-			{
-				return device;
-			}
-		}
-		return null;
+		String createdEmulatorName = emulatorManager.createAndStartEmulator(parameters);
 	}
 
 	// FIXME remove/edit this method
@@ -455,12 +438,20 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 	}
 
 	@Override
-	public void eraseEmulator(String serialNumber) throws RemoteException
+	public void eraseEmulator(String serialNumber)
+		throws RemoteException,
+			IOException,
+			DeviceNotFoundException,
+			NotPossibleForDeviceException
 	{
 		// FIXME remove/edit this method.
+		IDevice device = getDeviceBySerialNumber(serialNumber);
+		if (device.isEmulator() == false)
+		{
+			throw new NotPossibleForDeviceException("Cannot close and erase a real device.");
+		}
 		EmulatorManager emulatorManager = EmulatorManager.getInstance();
-		emulatorManager.closeAndEraseEmulator();
-		// TODO implement or remove this method
+		emulatorManager.closeAndEraseEmulator(device);
 	}
 
 	@Override
