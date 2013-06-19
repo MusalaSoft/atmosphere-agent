@@ -11,10 +11,8 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.logging.FileHandler;
-import java.util.logging.Handler;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.apache.log4j.Logger;
 
 import com.android.ddmlib.AndroidDebugBridge;
 import com.android.ddmlib.EmulatorConsole;
@@ -41,7 +39,7 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 	 */
 	private static final long serialVersionUID = 8467038223162311366L;
 
-	private final static Logger LOGGER = Logger.getLogger(AgentManager.class.getName());
+	private final static Logger LOGGER = Logger.getLogger(AgentManager.class.getCanonicalName());
 
 	// FIXME extract to config file
 	private final static int ADBRIDGE_TIMEOUT_MS = 10000; // milliseconds
@@ -70,21 +68,6 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 	 */
 	public AgentManager(String adbPath, int rmiPort) throws RemoteException, ADBridgeFailException
 	{
-		// Set up the logger
-		try
-		{
-			Handler fileHandler = new FileHandler("agentmanager.log");
-			LOGGER.addHandler(fileHandler);
-		}
-		catch (SecurityException | IOException e)
-		{
-			// Could not create the log file.
-			// Well, we can't log this...
-			e.printStackTrace();
-		}
-
-		LOGGER.setLevel(Level.ALL);
-
 		// Start the bridge
 		try
 		{
@@ -133,6 +116,8 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 			close();
 			throw e;
 		}
+
+		LOGGER.info("Initial device list fetched containing " + initialDevicesList.size() + " devices.");
 		for (IDevice initialDevice : initialDevicesList)
 		{
 			registerDeviceOnAgent(initialDevice);
@@ -171,7 +156,7 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 			// let's not wait > timeout milliseconds.
 			if (timeout * 100 > ADBRIDGE_TIMEOUT_MS)
 			{
-				LOGGER.severe("Timeout getting initial device list.");
+				LOGGER.fatal("Timeout getting initial device list.");
 
 				throw new ADBridgeFailException("Bridge timed out.");
 			}
@@ -195,6 +180,7 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 	 */
 	public void close()
 	{
+		LOGGER.info("Closing the AgentManager.");
 		try
 		{
 			// We close the bridge and adb service, so bridge creation wont fail next time we try. This is a workaround,
@@ -245,7 +231,7 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 		{
 			// The device is already registered, nothing to do here.
 			// This should not normally happen!
-			LOGGER.log(Level.WARNING, "Trying to register a device that is already registered.");
+			LOGGER.warn("Trying to register a device that is already registered.");
 			return;
 		}
 
@@ -256,8 +242,7 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 		}
 		catch (RemoteException e)
 		{
-			LOGGER.log(Level.SEVERE, "Could not publish a wrapper for a device in the RMI registry.", e);
-			e.printStackTrace();
+			LOGGER.fatal("Could not publish a wrapper for a device in the RMI registry.", e);
 		}
 	}
 
@@ -274,7 +259,7 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 		{
 			// The device was never registered, so nothing to do here.
 			// This should not normally happen!
-			LOGGER.log(Level.WARNING, "Trying to unregister a device that is was not registered at all.");
+			LOGGER.warn("Trying to unregister a device that is was not registered at all.");
 			return;
 		}
 
@@ -286,7 +271,7 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 		}
 		catch (RemoteException e)
 		{
-			LOGGER.log(Level.SEVERE, "Could not unbind a device wrapper from the RMI registry.", e);
+			LOGGER.fatal("Could not unbind a device wrapper from the RMI registry.", e);
 			e.printStackTrace();
 		}
 	}
@@ -324,6 +309,7 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 		}
 
 		rmiRegistry.rebind(rmiWrapperBindingId, deviceWrapper);
+		LOGGER.info("Created wrapper for device with bindingId = " + rmiWrapperBindingId);
 	}
 
 	/**
@@ -365,6 +351,7 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 		{
 			throw new RemoteException("Unbinding a device wrapper resulted in an unexpected exception (enclosed).", e);
 		}
+		LOGGER.info("Removed wrapper for device with bindingId = " + rmiWrapperBindingId);
 	}
 
 	@Override
@@ -477,5 +464,7 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 		// And subscribe the new one
 		AndroidDebugBridge.addDeviceChangeListener(newDeviceChangeListener);
 		currentDeviceChangeListener = newDeviceChangeListener;
+
+		LOGGER.info("Server registered with IP: " + serverIPAddress);
 	}
 }

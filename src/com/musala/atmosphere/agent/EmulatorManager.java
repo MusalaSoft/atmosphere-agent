@@ -10,10 +10,8 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.logging.FileHandler;
-import java.util.logging.Handler;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.apache.log4j.Logger;
 
 import com.android.ddmlib.AndroidDebugBridge;
 import com.android.ddmlib.AndroidDebugBridge.IDeviceChangeListener;
@@ -36,9 +34,7 @@ public class EmulatorManager implements IDeviceChangeListener
 
 	private final static String ANDROID_WORKDIR_PATH = "";
 
-	private final static Logger LOGGER = Logger.getLogger(EmulatorManager.class.getName());
-
-	private final static String LOGGER_FILENAME = "emulatormanager.log";
+	private final static Logger LOGGER = Logger.getLogger(EmulatorManager.class.getCanonicalName());
 
 	// TODO change code related to abi selection so it can be done by code
 	private final static String EMULATOR_CPU_ARCHITECTURE = "armeabi-v7a";
@@ -66,6 +62,7 @@ public class EmulatorManager implements IDeviceChangeListener
 				if (emulatorManagerInstance == null)
 				{
 					emulatorManagerInstance = new EmulatorManager();
+					LOGGER.info("Emulator manager instance has been created.");
 				}
 			}
 		}
@@ -74,21 +71,6 @@ public class EmulatorManager implements IDeviceChangeListener
 
 	private EmulatorManager()
 	{
-		// Set up the logger
-		try
-		{
-			Handler fileHandler = new FileHandler(LOGGER_FILENAME);
-			LOGGER.addHandler(fileHandler);
-		}
-		catch (SecurityException | IOException e)
-		{
-			// Could not create the log file.
-			// Well, we can't log this...
-			e.printStackTrace();
-		}
-
-		LOGGER.setLevel(Level.ALL);
-
 		// Register the EmulatorManager for device change events so it can keep track of running emulators.
 		AndroidDebugBridge.addDeviceChangeListener(this);
 
@@ -121,6 +103,7 @@ public class EmulatorManager implements IDeviceChangeListener
 		if (connectedDevice.isEmulator())
 		{
 			emulatorList.add(connectedDevice);
+			LOGGER.info("Emulator " + connectedDevice.getAvdName() + " connected.");
 		}
 	}
 
@@ -136,6 +119,7 @@ public class EmulatorManager implements IDeviceChangeListener
 				if (emulatorProcessPair.getKey().equals(removedEmulatorAvdName))
 				{
 					startedEmulatorsProcessList.remove(emulatorProcessPair);
+					LOGGER.info("Emulator " + removedEmulatorAvdName + " disconnected.");
 				}
 			}
 		}
@@ -166,7 +150,7 @@ public class EmulatorManager implements IDeviceChangeListener
 													// already.
 		String createCommand = createCommandBuilder.toString();
 		String createCommandReturnValue = sendCommandToAndroidTool(createCommand, "\n");
-		LOGGER.log(Level.INFO, "sendCommandToAndroidTool returned :\n" + createCommandReturnValue);
+		LOGGER.info("Create AVD shell command printed: " + createCommandReturnValue);
 
 		List<String> runCommandParameters = new LinkedList<String>();
 		runCommandParameters.add("-avd " + emulatorName);
@@ -200,7 +184,7 @@ public class EmulatorManager implements IDeviceChangeListener
 				catch (InterruptedException e)
 				{
 					// waiting for the emulator closing was interrupted. This can not happen?
-					// TODO log this.
+					LOGGER.warn("Waiting for emulator to close was interrupted.", e);
 				}
 				startedEmulatorsProcessList.remove(emulatorProcessPair);
 				break;
@@ -208,7 +192,7 @@ public class EmulatorManager implements IDeviceChangeListener
 		}
 
 		String returnValue = sendCommandToAndroidTool("delete avd -n " + emulatorName, "");
-		LOGGER.log(Level.INFO, "sendCommandToAndroidTool returned :\n" + returnValue);
+		LOGGER.info("Delete AVD shell command printed: " + returnValue);
 	}
 
 	/**
@@ -328,18 +312,17 @@ public class EmulatorManager implements IDeviceChangeListener
 		}
 		catch (InterruptedException e)
 		{
-			LOGGER.log(Level.WARNING, "Process execution wait was interrupted.", e);
+			LOGGER.warn("Process execution wait was interrupted.", e);
 		}
 		catch (IOException e)
 		{
-			LOGGER.log(Level.SEVERE, "Running " + commandDescription + " resulted in an IOException.", e);
+			LOGGER.fatal("Running " + commandDescription + " resulted in an IOException.", e);
 			throw e;
 		}
 
 		if (process.exitValue() != 0)
 		{
-			LOGGER.log(Level.SEVERE, commandDescription + " return code is nonzero for the command line '" + command
-					+ "'.");
+			LOGGER.fatal(commandDescription + " return code is nonzero for the command line '" + command + "'.");
 		}
 
 		StringBuilder responseBuilder = new StringBuilder();
@@ -361,7 +344,7 @@ public class EmulatorManager implements IDeviceChangeListener
 		}
 		catch (IOException e)
 		{
-			LOGGER.log(Level.SEVERE, "Reading the shell response of " + commandDescription + " in an IOException.", e);
+			LOGGER.fatal("Reading the shell response of " + commandDescription + " in an IOException.", e);
 			throw e;
 		}
 
@@ -396,7 +379,7 @@ public class EmulatorManager implements IDeviceChangeListener
 		}
 		catch (IOException e)
 		{
-			LOGGER.log(Level.SEVERE, "Running " + commandDescription + " resulted in an IOException.", e);
+			LOGGER.fatal("Running " + commandDescription + " resulted in an IOException.", e);
 			throw e;
 		}
 		return process;
@@ -429,18 +412,17 @@ public class EmulatorManager implements IDeviceChangeListener
 		}
 		catch (InterruptedException e)
 		{
-			LOGGER.log(Level.WARNING, "Process execution wait was interrupted.", e);
+			LOGGER.warn("Process execution wait was interrupted.", e);
 		}
 		catch (IOException e)
 		{
-			LOGGER.log(Level.SEVERE, "Running " + commandDescription + " resulted in an IOException.", e);
+			LOGGER.fatal("Running " + commandDescription + " resulted in an IOException.", e);
 			throw e;
 		}
 
 		if (process.exitValue() != 0)
 		{
-			LOGGER.log(Level.SEVERE, commandDescription + " return code is nonzero for the command line '" + command
-					+ "'.");
+			LOGGER.fatal(commandDescription + " return code is nonzero for the command line '" + command + "'.");
 		}
 
 		StringBuilder responseBuilder = new StringBuilder();
@@ -473,7 +455,7 @@ public class EmulatorManager implements IDeviceChangeListener
 		}
 		catch (IOException e)
 		{
-			LOGGER.log(Level.SEVERE, "Reading the shell response of " + commandDescription + " in an IOException.", e);
+			LOGGER.fatal("Reading the shell response of " + commandDescription + " in an IOException.", e);
 			throw e;
 		}
 

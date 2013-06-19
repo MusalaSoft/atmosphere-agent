@@ -32,13 +32,13 @@ public class ExtendedEmulatorConsole
 
 	private static final long SOCKET_TIMEOUT = 5000; // maximum socket delay, in ms
 
-	private final static String COMMAND_PING_FORMAT = "help\r\n"; //$NON-NLS-1$
+	private final static String COMMAND_PING_FORMAT = "help\r\n";
 
-	private final static String COMMAND_POWER_CAPACITY_FORMAT = "power capacity %d\r\n"; //$NON-NLS-1$
+	private final static String COMMAND_POWER_CAPACITY_FORMAT = "power capacity %d\r\n";
 
-	private final static String COMMAND_POWER_STATUS_FORMAT = "power status %s\r\n"; //$NON-NLS-1$
+	private final static String COMMAND_POWER_STATUS_FORMAT = "power status %s\r\n";
 
-	private final static String COMMAND_NETOWRK_SPEED_FORMAT = "network speed %d:%d\r\n"; //$NON-NLS-1$
+	private final static String COMMAND_NETOWRK_SPEED_FORMAT = "network speed %d:%d\r\n";
 
 	/**
 	 * Socket read/write buffer.

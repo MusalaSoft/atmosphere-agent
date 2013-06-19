@@ -1,14 +1,10 @@
 package com.musala.atmosphere.agent.devicewrapper;
 
-import java.io.IOException;
 import java.rmi.RemoteException;
-import java.util.logging.FileHandler;
-import java.util.logging.Handler;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.apache.log4j.Logger;
 
 import com.android.ddmlib.IDevice;
-import com.musala.atmosphere.agent.AgentManager;
 import com.musala.atmosphere.agent.devicewrapper.util.EmulatorConnectionFailedException;
 import com.musala.atmosphere.agent.devicewrapper.util.ExtendedEmulatorConsole;
 import com.musala.atmosphere.commons.sa.BatteryState;
@@ -23,33 +19,11 @@ public class EmulatorWrapDevice extends AbstractWrapDevice
 	 */
 	private static final long serialVersionUID = -112607818622127351L;
 
-	private static final String LOG_FILENAME = "emulatorwrapdevice.log";
-
-	private static boolean logFileSet = false;
-
-	private final static Logger LOGGER = Logger.getLogger(AgentManager.class.getName());
+	private final static Logger LOGGER = Logger.getLogger(EmulatorWrapDevice.class.getCanonicalName());
 
 	public EmulatorWrapDevice(IDevice deviceToWrap) throws NotPossibleForDeviceException, RemoteException
 	{
 		super(deviceToWrap);
-
-		if (logFileSet == false)
-		{
-			// Set up the logger
-			try
-			{
-				Handler fileHandler = new FileHandler(LOG_FILENAME);
-				LOGGER.addHandler(fileHandler);
-				logFileSet = true;
-				LOGGER.setLevel(Level.ALL);
-			}
-			catch (SecurityException | IOException e)
-			{
-				// Could not create the log file.
-				// Well, we can't log this...
-				e.printStackTrace();
-			}
-		}
 
 		if (deviceToWrap.isEmulator() == false)
 		{
@@ -66,9 +40,8 @@ public class EmulatorWrapDevice extends AbstractWrapDevice
 			boolean success = emulatorConsole.setNetoworkSpeed(speeds.getKey(), speeds.getValue());
 			if (success == false)
 			{
-				LOGGER.log(	Level.WARNING,
-							"ExtendedEmulatorConsole method .setNetworkSpeed(...) failed for device with serial number '"
-									+ wrappedDevice.getSerialNumber() + "'.");
+				LOGGER.error("ExtendedEmulatorConsole method .setNetworkSpeed(...) failed for device with serial number '"
+						+ wrappedDevice.getSerialNumber() + "'.");
 			}
 		}
 		catch (EmulatorConnectionFailedException e)
@@ -93,9 +66,8 @@ public class EmulatorWrapDevice extends AbstractWrapDevice
 			boolean success = emulatorConsole.setBatteryLevel(level);
 			if (success == false)
 			{
-				LOGGER.log(	Level.WARNING,
-							"ExtendedEmulatorConsole method .setBatteryLevel(...) failed for device with serial number '"
-									+ wrappedDevice.getSerialNumber() + "'.");
+				LOGGER.error("ExtendedEmulatorConsole method .setBatteryLevel(...) failed for device with serial number '"
+						+ wrappedDevice.getSerialNumber() + "'.");
 			}
 		}
 		catch (EmulatorConnectionFailedException e)

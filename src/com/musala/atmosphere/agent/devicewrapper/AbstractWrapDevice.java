@@ -7,11 +7,12 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.apache.log4j.Logger;
 
 import com.android.ddmlib.AdbCommandRejectedException;
 import com.android.ddmlib.CollectingOutputReceiver;
@@ -20,7 +21,6 @@ import com.android.ddmlib.InstallException;
 import com.android.ddmlib.ShellCommandUnresponsiveException;
 import com.android.ddmlib.SyncException;
 import com.android.ddmlib.TimeoutException;
-import com.musala.atmosphere.agent.AgentManager;
 import com.musala.atmosphere.agent.DevicePropertyStringConstants;
 import com.musala.atmosphere.agent.util.DeviceScreenResolutionParser;
 import com.musala.atmosphere.agent.util.MemoryUnitConverter;
@@ -50,12 +50,11 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 
 	protected IDevice wrappedDevice;
 
-	private final static Logger LOGGER = Logger.getLogger(AgentManager.class.getName());
+	private final static Logger LOGGER = Logger.getLogger(AbstractWrapDevice.class.getCanonicalName());
 
 	public AbstractWrapDevice(IDevice deviceToWrap) throws RemoteException
 	{
 		wrappedDevice = deviceToWrap;
-		// TODO Set up logger
 	}
 
 	@Override
@@ -71,7 +70,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 		int level;
 		try
 		{
-			level = wrappedDevice.getBatteryLevel();
+			level = wrappedDevice.getBatteryLevel(0 /* renew value, don't return old one */);
 		}
 		catch (TimeoutException | AdbCommandRejectedException | IOException | ShellCommandUnresponsiveException e)
 		{
@@ -111,10 +110,19 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 	}
 
 	@Override
-	public List<String> executeSequenceOfShellCommands(List<String> commandsList) throws RemoteException
+	public List<String> executeSequenceOfShellCommands(List<String> commandsList)
+		throws RemoteException,
+			CommandFailedException
 	{
-		// TODO implement execute sequence of shell commands
-		return null;
+		List<String> responses = new ArrayList<String>();
+
+		for (String commandForExecution : commandsList)
+		{
+			String responseFromCommandExecution = executeShellCommand(commandForExecution);
+			responses.add(responseFromCommandExecution);
+		}
+
+		return responses;
 	}
 
 	@Override
@@ -140,26 +148,43 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 		Map<String, String> devicePropertiesMap = wrappedDevice.getProperties();
 
 		// CPU
-		String cpu = devicePropertiesMap.get(DevicePropertyStringConstants.PROPERTY_CPU_TYPE.toString());
-		deviceInformation.setCpu(cpu);
+		if (devicePropertiesMap.containsKey(DevicePropertyStringConstants.PROPERTY_CPU_TYPE.toString()))
+		{
+			String cpu = devicePropertiesMap.get(DevicePropertyStringConstants.PROPERTY_CPU_TYPE.toString());
+			deviceInformation.setCpu(cpu);
+		}
 
 		// Density
 		String lcdDensityString = DeviceInformation.FALLBACK_DISPLAY_DENSITY.toString();
 		if (wrappedDevice.isEmulator())
 		{
-			lcdDensityString = devicePropertiesMap.get(DevicePropertyStringConstants.PROPERTY_EMUDEVICE_LCD_DENSITY.toString());
+			if (devicePropertiesMap.containsKey(DevicePropertyStringConstants.PROPERTY_EMUDEVICE_LCD_DENSITY.toString()))
+			{
+				lcdDensityString = devicePropertiesMap.get(DevicePropertyStringConstants.PROPERTY_EMUDEVICE_LCD_DENSITY.toString());
+			}
 		}
 		else
 		{
-			lcdDensityString = devicePropertiesMap.get(DevicePropertyStringConstants.PROPERTY_REALDEVICE_LCD_DENSITY.toString());
+			if (devicePropertiesMap.containsKey(DevicePropertyStringConstants.PROPERTY_REALDEVICE_LCD_DENSITY.toString()))
+			{
+				lcdDensityString = devicePropertiesMap.get(DevicePropertyStringConstants.PROPERTY_REALDEVICE_LCD_DENSITY.toString());
+			}
 		}
 		deviceInformation.setDpi(Integer.parseInt(lcdDensityString));
 
 		// Model
-		deviceInformation.setModel(devicePropertiesMap.get(DevicePropertyStringConstants.PROPERTY_PRODUCT_MODEL.toString()));
+		if (devicePropertiesMap.containsKey(DevicePropertyStringConstants.PROPERTY_PRODUCT_MODEL.toString()))
+		{
+			String productModel = devicePropertiesMap.get(DevicePropertyStringConstants.PROPERTY_PRODUCT_MODEL.toString());
+			deviceInformation.setModel(productModel);
+		}
 
 		// OS
-		deviceInformation.setOs(devicePropertiesMap.get(DevicePropertyStringConstants.PROPERTY_OS_VERSION.toString()));
+		if (devicePropertiesMap.containsKey(DevicePropertyStringConstants.PROPERTY_OS_VERSION.toString()))
+		{
+			String deviceOs = devicePropertiesMap.get(DevicePropertyStringConstants.PROPERTY_OS_VERSION.toString());
+			deviceInformation.setOs(deviceOs);
+		}
 
 		// RAM
 		String ramMemoryString = DeviceInformation.FALLBACK_RAM_AMOUNT.toString();
@@ -169,12 +194,14 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 		}
 		else
 		{
-			ramMemoryString = devicePropertiesMap.get(DevicePropertyStringConstants.PROPERTY_REALDEVICE_RAM.toString());
+			if (devicePropertiesMap.containsKey(DevicePropertyStringConstants.PROPERTY_REALDEVICE_RAM.toString()))
+			{
+				ramMemoryString = devicePropertiesMap.get(DevicePropertyStringConstants.PROPERTY_REALDEVICE_RAM.toString());
+			}
 		}
 		deviceInformation.setRam(MemoryUnitConverter.convertMemoryToMB(ramMemoryString));
 
 		// Resolution
-		deviceInformation.setResolution(DeviceInformation.FALLBACK_SCREEN_RESOLUTION);
 		try
 		{
 			CollectingOutputReceiver outputReceiver = new CollectingOutputReceiver();
@@ -188,11 +215,11 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 		{
 			// Shell command execution failed.
 			e.printStackTrace();
-			LOGGER.log(Level.SEVERE, "Shell command execution failed.", e);
+			LOGGER.fatal("Shell command execution failed.", e);
 		}
 		catch (StringIndexOutOfBoundsException e)
 		{
-			LOGGER.log(Level.WARNING, "Parsing shell response failed when attempting to get device screen size.");
+			LOGGER.warn("Parsing shell response failed when attempting to get device screen size.");
 		}
 
 		return deviceInformation;
@@ -249,7 +276,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 		}
 		catch (InstallException e)
 		{
-			// TODO log this
+			LOGGER.error("Installing apk failed.", e);
 			throw new CommandFailedException(	"Installing .apk file failed. See the enclosed exception for more information.",
 												e);
 		}
@@ -302,7 +329,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 		}
 		catch (SyncException | IOException | AdbCommandRejectedException | TimeoutException e)
 		{
-			// TODO log this
+			LOGGER.error("UI dump failed.", e);
 			throw new CommandFailedException("UI dump failed. See the enclosed exception for more information.", e);
 		}
 
