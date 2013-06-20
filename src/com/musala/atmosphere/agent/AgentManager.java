@@ -28,6 +28,7 @@ import com.musala.atmosphere.commons.sa.exceptions.DeviceNotFoundException;
 import com.musala.atmosphere.commons.sa.exceptions.NotPossibleForDeviceException;
 
 /**
+ * Used for managing all devices on the current Agent.
  * 
  * @author georgi.gaydarov
  * 
