@@ -3,8 +3,8 @@ package com.musala.atmosphere.agent.devicewrapper;
 import java.rmi.RemoteException;
 
 import com.android.ddmlib.IDevice;
+import com.musala.atmosphere.commons.BatteryState;
 import com.musala.atmosphere.commons.Pair;
-import com.musala.atmosphere.commons.sa.BatteryState;
 import com.musala.atmosphere.commons.sa.exceptions.NotPossibleForDeviceException;
 
 public class RealWrapDevice extends AbstractWrapDevice

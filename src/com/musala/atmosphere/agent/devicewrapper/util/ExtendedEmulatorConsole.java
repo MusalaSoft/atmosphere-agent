@@ -11,7 +11,7 @@ import java.util.HashMap;
 
 import com.android.ddmlib.EmulatorConsole;
 import com.android.ddmlib.IDevice;
-import com.musala.atmosphere.commons.sa.BatteryState;
+import com.musala.atmosphere.commons.BatteryState;
 import com.musala.atmosphere.commons.sa.exceptions.NotPossibleForDeviceException;
 
 /**

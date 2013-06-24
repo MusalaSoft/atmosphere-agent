@@ -7,8 +7,8 @@ import org.apache.log4j.Logger;
 import com.android.ddmlib.IDevice;
 import com.musala.atmosphere.agent.devicewrapper.util.EmulatorConnectionFailedException;
 import com.musala.atmosphere.agent.devicewrapper.util.ExtendedEmulatorConsole;
+import com.musala.atmosphere.commons.BatteryState;
 import com.musala.atmosphere.commons.Pair;
-import com.musala.atmosphere.commons.sa.BatteryState;
 import com.musala.atmosphere.commons.sa.exceptions.NotPossibleForDeviceException;
 
 public class EmulatorWrapDevice extends AbstractWrapDevice
