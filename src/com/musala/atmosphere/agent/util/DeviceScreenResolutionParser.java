@@ -50,7 +50,7 @@ public class DeviceScreenResolutionParser
 		int width = Integer.parseInt(widthString);
 		int height = Integer.parseInt(heightString);
 
-		Pair<Integer, Integer> screenResolution = new Pair<Integer, Integer>(width, height);
+		Pair<Integer, Integer> screenResolution = new Pair<Integer, Integer>(height, width);
 		return screenResolution;
 	}
 }

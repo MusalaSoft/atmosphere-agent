@@ -5,6 +5,9 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
@@ -41,6 +44,10 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 	private static final String XMLDUMP_REMOTE_FILE_NAME = "/data/local/tmp/uidump.xml";
 
 	private static final String XMLDUMP_LOCAL_FILE_NAME = "uidump.xml";
+
+	private static final String SCREENSHOT_REMOTE_FILE_NAME = "/data/local/tmp/screen.png";
+
+	private static final String SCREENSHOT_LOCAL_FILE_NAME = "screen.png";
 
 	private static final String TEMP_APK_FILE_SUFFIX = ".apk";
 
@@ -128,8 +135,6 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 	@Override
 	public DeviceInformation getDeviceInformation() throws RemoteException
 	{
-		// TODO surround all data set procedures with try/catch
-		// TODO just check the propmap and populate it with the fallbacks if something is wrong
 		DeviceInformation deviceInformation = new DeviceInformation();
 
 		// Serial number
@@ -208,7 +213,8 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 			wrappedDevice.executeShellCommand("dumpsys window policy", outputReceiver);
 
 			String shellResponse = outputReceiver.getOutput();
-			deviceInformation.setResolution(DeviceScreenResolutionParser.parseScreenResolutionFromShell(shellResponse));
+			Pair<Integer, Integer> screenResolution = DeviceScreenResolutionParser.parseScreenResolutionFromShell(shellResponse);
+			deviceInformation.setResolution(screenResolution);
 
 		}
 		catch (ShellCommandUnresponsiveException | TimeoutException | AdbCommandRejectedException | IOException e)
@@ -226,10 +232,25 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 	}
 
 	@Override
-	public byte[] getScreenshot() throws RemoteException
+	public byte[] getScreenshot() throws RemoteException, CommandFailedException
 	{
-		// TODO implement get screenshot
-		return null;
+		String screenshotCommand = "screencap -p " + SCREENSHOT_REMOTE_FILE_NAME;
+		executeShellCommand(screenshotCommand);
+
+		try
+		{
+			wrappedDevice.pullFile(SCREENSHOT_REMOTE_FILE_NAME, SCREENSHOT_LOCAL_FILE_NAME);
+
+			Path screenshotPath = Paths.get(SCREENSHOT_LOCAL_FILE_NAME);
+			byte[] screenshotData = Files.readAllBytes(screenshotPath);
+			return screenshotData;
+		}
+		catch (IOException | AdbCommandRejectedException | TimeoutException | SyncException e)
+		{
+			LOGGER.error("Screenshot fetching failed.", e);
+			throw new CommandFailedException(	"Screenshot fetching failed. See the enclosed exception for more information.",
+												e);
+		}
 	}
 
 	@Override
