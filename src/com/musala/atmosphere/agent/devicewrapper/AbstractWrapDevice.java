@@ -226,7 +226,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 	}
 
 	@Override
-	public Byte[] getScreenshot() throws RemoteException
+	public byte[] getScreenshot() throws RemoteException
 	{
 		// TODO implement get screenshot
 		return null;

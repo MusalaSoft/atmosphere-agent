@@ -6,6 +6,8 @@ import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
+import java.rmi.server.RemoteServer;
+import java.rmi.server.ServerNotActiveException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -225,26 +227,29 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 	 * 
 	 * @param connectedDevice
 	 *        the newly connected device.
+	 * @return the RMI binding ID of the newly bound wrapper.
 	 */
-	void registerDeviceOnAgent(IDevice connectedDevice)
+	String registerDeviceOnAgent(IDevice connectedDevice)
 	{
 		if (devicesList.contains(connectedDevice))
 		{
 			// The device is already registered, nothing to do here.
 			// This should not normally happen!
 			LOGGER.warn("Trying to register a device that is already registered.");
-			return;
+			return "";
 		}
 
 		try
 		{
-			createWrapperForDevice(connectedDevice);
+			String publishId = createWrapperForDevice(connectedDevice);
 			devicesList.add(connectedDevice);
+			return publishId;
 		}
 		catch (RemoteException e)
 		{
 			LOGGER.fatal("Could not publish a wrapper for a device in the RMI registry.", e);
 		}
+		return "";
 	}
 
 	/**
@@ -253,39 +258,41 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 	 * 
 	 * @param disconnectedDevice
 	 *        the disconnected device.
+	 * @return The RMI binding ID of the unbound device.
 	 */
-	void unregisterDeviceOnAgent(IDevice disconnectedDevice)
+	String unregisterDeviceOnAgent(IDevice disconnectedDevice)
 	{
 		if (devicesList.contains(disconnectedDevice) == false)
 		{
 			// The device was never registered, so nothing to do here.
 			// This should not normally happen!
-			LOGGER.warn("Trying to unregister a device that is was not registered at all.");
-			return;
+			LOGGER.warn("Trying to unregister a device that was not registered at all.");
+			return "";
 		}
-
-		devicesList.remove(disconnectedDevice);
 
 		try
 		{
-			removeWrapperForDevice(disconnectedDevice);
+			String publishId = removeWrapperForDevice(disconnectedDevice);
+			devicesList.remove(disconnectedDevice);
+			return publishId;
 		}
 		catch (RemoteException e)
 		{
 			LOGGER.fatal("Could not unbind a device wrapper from the RMI registry.", e);
 			e.printStackTrace();
 		}
+		return "";
 	}
 
 	/**
 	 * Creates a wrapper for a device with specific serial number.
 	 * 
-	 * @param serialNumber
-	 *        serial number of the device
-	 * @return
+	 * @param device
+	 *        that will be wrapped.
+	 * @return RMI binding ID for the newly created wrapper.
 	 * @throws RemoteException
 	 */
-	private void createWrapperForDevice(IDevice device) throws RemoteException
+	private String createWrapperForDevice(IDevice device) throws RemoteException
 	{
 		IWrapDevice deviceWrapper = null;
 		String rmiWrapperBindingId = getRmiWrapperBindingIdentifier(device);
@@ -311,6 +318,8 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 
 		rmiRegistry.rebind(rmiWrapperBindingId, deviceWrapper);
 		LOGGER.info("Created wrapper for device with bindingId = " + rmiWrapperBindingId);
+
+		return rmiWrapperBindingId;
 	}
 
 	/**
@@ -332,9 +341,10 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 	 * 
 	 * @param device
 	 *        the device with the wrapper to be removed.
+	 * @return the RMI binding ID of the unbound wrapper.
 	 * @throws RemoteException
 	 */
-	private void removeWrapperForDevice(IDevice device) throws RemoteException
+	private String removeWrapperForDevice(IDevice device) throws RemoteException
 	{
 		String rmiWrapperBindingId = getRmiWrapperBindingIdentifier(device);
 
@@ -347,12 +357,16 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 			// Wrapper for the device was never published, so we have nothing to unbind.
 			// Nothing to do here.
 			e.printStackTrace();
+			return "";
 		}
 		catch (AccessException e)
 		{
 			throw new RemoteException("Unbinding a device wrapper resulted in an unexpected exception (enclosed).", e);
 		}
+
 		LOGGER.info("Removed wrapper for device with bindingId = " + rmiWrapperBindingId);
+
+		return rmiWrapperBindingId;
 	}
 
 	@Override
@@ -447,7 +461,22 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 	{
 		// TODO Should discuss what id would be unique for an agent
 		// as selecting IP is a rather difficult process
-		return null;
+		return "tobeimplemented";
+	}
+
+	@Override
+	public String getInvokerIpAddress() throws RemoteException
+	{
+		try
+		{
+			return RemoteServer.getClientHost();
+		}
+		catch (ServerNotActiveException e)
+		{
+			// Thrown when this method is not invoked by RMI. Nothing to do here, this should not happen.
+			LOGGER.warn("The getInvokerIpAddress method was invoked locally and resulted in exception.");
+		}
+		return "";
 	}
 
 	@Override

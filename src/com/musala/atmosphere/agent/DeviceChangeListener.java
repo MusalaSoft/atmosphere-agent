@@ -104,9 +104,19 @@ class DeviceChangeListener implements IDeviceChangeListener
 	public void deviceChanged(IDevice device, int changeMask)
 	{
 		// device is which device has changed, changeMask is what exactly changed in it
-		// we are not using these arguments, as the AgentManager constructs it's
-		// own DeviceInformation structures and doesn't care about the information in changeMask
-		onDeviceListChanged();
+		// If the device became online, we can now use it.
+		// If the device became offline, we can no longer use it.
+		if (changeMask == IDevice.CHANGE_STATE)
+		{
+			if (device.isOnline())
+			{
+				deviceConnected(device);
+			}
+			else if (device.isOffline())
+			{
+				deviceDisconnected(device);
+			}
+		}
 	}
 
 	/**
@@ -115,10 +125,18 @@ class DeviceChangeListener implements IDeviceChangeListener
 	@Override
 	public void deviceConnected(IDevice connectedDevice)
 	{
-		// Register the newly connected device on the AgentManager
-		agentManagerRefference.registerDeviceOnAgent(connectedDevice);
+		if (connectedDevice.isOffline())
+		{
+			// If the device is offline, we have no use for it, so we don't have to register it.
+			return;
+		}
 
-		onDeviceListChanged();
+		// Register the newly connected device on the AgentManager
+		String publishId = agentManagerRefference.registerDeviceOnAgent(connectedDevice);
+		if (publishId.isEmpty() == false)
+		{
+			onDeviceListChanged(publishId, true /* device connected */);
+		}
 	}
 
 	/**
@@ -128,15 +146,22 @@ class DeviceChangeListener implements IDeviceChangeListener
 	public void deviceDisconnected(IDevice disconnectedDevice)
 	{
 		// Unregister the device from the AgentManager
-		agentManagerRefference.unregisterDeviceOnAgent(disconnectedDevice);
-
-		onDeviceListChanged();
+		String publishId = agentManagerRefference.unregisterDeviceOnAgent(disconnectedDevice);
+		if (publishId.isEmpty() == false)
+		{
+			onDeviceListChanged(publishId, false /* device disconnected */);
+		}
 	}
 
 	/**
 	 * Gets called when something in the device list has changed.
+	 * 
+	 * @param deviceRmiBindingId
+	 *        - RMI binding ID of the changed device's wrapper.
+	 * @param connected
+	 *        - true if the device is now available, false if it became unavailable.
 	 */
-	private void onDeviceListChanged()
+	private void onDeviceListChanged(String deviceRmiBindingId, boolean connected)
 	{
 		// If the server is not set return, as we have no one to notify
 		if (isServerSet == false)
@@ -147,7 +172,7 @@ class DeviceChangeListener implements IDeviceChangeListener
 		// Else, notify the server using it's AgentEventSender
 		try
 		{
-			agentEventSender.deviceListChanged(agentId);
+			agentEventSender.deviceListChanged(agentId, deviceRmiBindingId, connected);
 		}
 		catch (RemoteException e)
 		{
