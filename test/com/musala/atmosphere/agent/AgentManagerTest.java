@@ -23,6 +23,8 @@ import org.junit.Test;
 import com.android.ddmlib.DdmPreferences;
 import com.android.ddmlib.IDevice;
 import com.android.ddmlib.Log;
+import com.musala.atmosphere.agent.util.AgentProperties;
+import com.musala.atmosphere.agent.util.AgentPropertiesLoader;
 import com.musala.atmosphere.commons.sa.DeviceInformation;
 import com.musala.atmosphere.commons.sa.IWrapDevice;
 import com.musala.atmosphere.commons.sa.exceptions.DeviceNotFoundException;
@@ -31,7 +33,9 @@ public class AgentManagerTest
 {
 	private AgentManager agentManager;
 
-	private static final int RMI_PORT = 1989;
+	private static final int RMI_PORT = AgentPropertiesLoader.getPropertyInt(AgentProperties.AGENT_RMI_PORT);
+
+	private static final String PATH_TO_ADB = AgentPropertiesLoader.getPropertyString(AgentProperties.PATH_TO_ADB);
 
 	@Before
 	public void setUp() throws Exception
@@ -42,8 +46,7 @@ public class AgentManagerTest
 		DdmPreferences.setLogLevel("warn");
 		Log.setLogOutput(new DdmLibLogListener(Level.ALL, false /* do no log to a file */));
 
-		// TODO Extract to config file
-		agentManager = new AgentManager("C:\\Android Development Tools\\sdk\\platform-tools\\adb", RMI_PORT);
+		agentManager = new AgentManager(PATH_TO_ADB, RMI_PORT);
 	}
 
 	@After

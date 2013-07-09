@@ -21,6 +21,8 @@ import com.android.ddmlib.EmulatorConsole;
 import com.android.ddmlib.IDevice;
 import com.musala.atmosphere.agent.devicewrapper.EmulatorWrapDevice;
 import com.musala.atmosphere.agent.devicewrapper.RealWrapDevice;
+import com.musala.atmosphere.agent.util.AgentProperties;
+import com.musala.atmosphere.agent.util.AgentPropertiesLoader;
 import com.musala.atmosphere.commons.sa.DeviceParameters;
 import com.musala.atmosphere.commons.sa.IAgentManager;
 import com.musala.atmosphere.commons.sa.IWrapDevice;
@@ -44,8 +46,7 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 
 	private final static Logger LOGGER = Logger.getLogger(AgentManager.class.getCanonicalName());
 
-	// FIXME extract to config file
-	private final static int ADBRIDGE_TIMEOUT_MS = 10000; // milliseconds
+	private final static int ADBRIDGE_TIMEOUT_MS = AgentPropertiesLoader.getPropertyInt(AgentProperties.ADBRIDGE_TIMEOUT); // milliseconds
 
 	private AndroidDebugBridge androidDebugBridge;
 
