@@ -25,6 +25,7 @@ import com.android.ddmlib.ShellCommandUnresponsiveException;
 import com.android.ddmlib.SyncException;
 import com.android.ddmlib.TimeoutException;
 import com.musala.atmosphere.agent.DevicePropertyStringConstants;
+import com.musala.atmosphere.agent.devicewrapper.util.DeviceProfiler;
 import com.musala.atmosphere.agent.util.DeviceScreenResolutionParser;
 import com.musala.atmosphere.agent.util.MemoryUnitConverter;
 import com.musala.atmosphere.commons.BatteryState;
@@ -89,10 +90,21 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 	}
 
 	@Override
-	public int getFreeRAM() throws RemoteException
+	public long getFreeRAM() throws RemoteException, CommandFailedException
 	{
-		// TODO implement get free ram
-		return 0;
+		DeviceProfiler profiler = new DeviceProfiler(wrappedDevice);
+		try
+		{
+			Map<String, Long> memUsage = profiler.getMeminfoDataset();
+			long freeMemory = memUsage.get(DeviceProfiler.FREE_MEMORY_ID);
+			return freeMemory;
+		}
+		catch (IOException | TimeoutException | AdbCommandRejectedException | ShellCommandUnresponsiveException e)
+		{
+			LOGGER.warn("Getting device '" + wrappedDevice.getSerialNumber() + "' memory usage resulted in exception.",
+						e);
+			throw new CommandFailedException("Getting device memory usage resulted in exception.", e);
+		}
 	}
 
 	@Override
