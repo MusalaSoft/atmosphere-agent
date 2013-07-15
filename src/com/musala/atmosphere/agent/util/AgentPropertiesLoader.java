@@ -1,7 +1,6 @@
 package com.musala.atmosphere.agent.util;
 
 import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Properties;
 
@@ -20,63 +19,12 @@ public class AgentPropertiesLoader
 
 	private final static Logger LOGGER = Logger.getLogger(AgentPropertiesLoader.class.getCanonicalName());
 
-	private static final String DEFAULT_CONFIG = "./defaultAgent.properties";
-
-	private static Properties defaultPoperties = null;
+	// private static Properties defaultPoperties = null;
 
 	private static Properties configProperties = null;
 
-	/**
-	 * Sets Agent properties in config file.
-	 * 
-	 * @param name
-	 *        the AgentProperty to be set
-	 * @param value
-	 *        the value of the property being set
-	 * @throws IOException
-	 */
-	public synchronized static void setProperty(AgentProperties name, String value) throws IOException
-	{
-		String propertyString = name.toString();
-		try
-		{
-			if (configProperties == null)
-			{
-				configProperties = readInConfigFile(AGENT_PROPERTIES_FILE);
-			}
-			FileWriter writeToPropertiesFile = new FileWriter(AGENT_PROPERTIES_FILE);
-			configProperties.setProperty(propertyString, value);
-			configProperties.store(writeToPropertiesFile, null /* comments on the property stored, not needed */);
-			writeToPropertiesFile.flush();
-			writeToPropertiesFile.close();
-			LOGGER.info("Property has been written to the config file.");
-		}
-		catch (IOException e)
-		{
-			LOGGER.fatal("Could not open load properties file.", e);
-			throw e;
-		}
-	}
-
 	private static Properties readInConfigFile(String fileName)
 	{
-		if (defaultPoperties == null)
-		{
-			try
-			{
-				Properties properties = new Properties();
-				FileReader readInPropertiesFile = new FileReader(DEFAULT_CONFIG);
-				properties.load(readInPropertiesFile);
-				defaultPoperties = properties;
-				LOGGER.info(DEFAULT_CONFIG + " has been loaded.");
-			}
-			catch (IOException e)
-			{
-				LOGGER.warn("Could not load default propeprties file.");
-				throw new RuntimeException("Could not load default config file.");
-			}
-		}
-
 		try
 		{
 			Properties properties = new Properties();
@@ -87,8 +35,8 @@ public class AgentPropertiesLoader
 		}
 		catch (IOException e)
 		{
-			LOGGER.warn(fileName + " loading failed.", e);
-			return defaultPoperties;
+			LOGGER.fatal(fileName + " loading failed.", e);
+			throw new RuntimeException("Could not load config file.");
 		}
 	}
 
@@ -100,7 +48,7 @@ public class AgentPropertiesLoader
 	 *        The Agent property to be returned.
 	 * @return Returns the desired agent property value. Returns String properties only!
 	 */
-	public synchronized static String getPropertyString(AgentProperties property)
+	private synchronized static String getPropertyString(AgentProperties property)
 	{
 		if (configProperties == null)
 		{
@@ -110,30 +58,124 @@ public class AgentPropertiesLoader
 		String agentProperty = configProperties.getProperty(propertyString);
 		if (agentProperty == null)
 		{
-			agentProperty = defaultPoperties.getProperty(propertyString);
-			if (agentProperty == null)
-			{
-				LOGGER.fatal("Property '" + propertyString
-						+ "' could not be found in both the main property file and default properties file.");
-				throw new RuntimeException("Property '" + propertyString
-						+ "' could not be found in both the main property file and default properties file.");
-			}
-			LOGGER.warn("Could not find peroperty " + propertyString + ", loaded from the default properties.");
+			LOGGER.fatal("Property " + propertyString + " could not be found in the properties file.");
+			throw new RuntimeException("Property " + propertyString + " could not be found in the properties file.");
 		}
 		return agentProperty;
 	}
 
 	/**
-	 * Returns the desired agent property in int type.
+	 * Returns the path to ADB from the config file.
 	 * 
-	 * @param property
-	 *        Agent Property to be returned.
-	 * @return Returns integer properties from the Agent Properties config file.
+	 * @return
 	 */
-	public static int getPropertyInt(AgentProperties property)
+	public static String getPathToADB()
 	{
-		String returnValueString = getPropertyString(property);
+		String returnValueString = getPropertyString(AgentProperties.PATH_TO_ADB);
+		return returnValueString;
+	}
+
+	/**
+	 * Returns the timeout for connecting with the Android Debug Bridge from the config file.
+	 * 
+	 * @return
+	 */
+	public static int getADBridgeTimeout()
+	{
+		String returnValueString = getPropertyString(AgentProperties.ADBRIDGE_TIMEOUT);
 		int returnValue = Integer.parseInt(returnValueString);
 		return returnValue;
 	}
+
+	/**
+	 * Returns the Agent RMI port from the config file.
+	 * 
+	 * @return
+	 */
+	public static int getAgentRmiPort()
+	{
+		String returnValueString = getPropertyString(AgentProperties.AGENT_RMI_PORT);
+		int returnValue = Integer.parseInt(returnValueString);
+		return returnValue;
+	}
+
+	/**
+	 * Returns the waiting time for the creation of the emulator from the config file.
+	 * 
+	 * @return
+	 */
+	public static int getEmulatorCreationWait()
+	{
+		String returnValueString = getPropertyString(AgentProperties.EMULATOR_CREATION_WAIT);
+		int returnValue = Integer.parseInt(returnValueString);
+		return returnValue;
+	}
+
+	/**
+	 * Returns the timeout for the creation of the emulator form the config file.
+	 * 
+	 * @return
+	 */
+	public static int getEmulatorCreationWaitTiomeout()
+	{
+		String returnValueString = getPropertyString(AgentProperties.EMULATOR_CREATION_WAIT_TIMEOUT);
+		int returnValue = Integer.parseInt(returnValueString);
+		return returnValue;
+	}
+
+	/**
+	 * Returns the path to android tool from the config file.
+	 * 
+	 * @return
+	 */
+	public static String getAndroidToolPath()
+	{
+		String returnValueString = getPropertyString(AgentProperties.ANDROID_TOOL_PATH);
+		return returnValueString;
+	}
+
+	/**
+	 * Returns the path to the Android tools directory from the config file.
+	 * 
+	 * @return
+	 */
+	public static String getAndroidToolsDirPath()
+	{
+		String returnValueString = getPropertyString(AgentProperties.ANDROID_TOOLSDIR_PATH);
+		return returnValueString;
+	}
+
+	/**
+	 * Returns the path to the Android working directory from the config file.
+	 * 
+	 * @return
+	 */
+	public static String getAndroidWorkDirPath()
+	{
+		String returnValueString = getPropertyString(AgentProperties.ANDROID_WORKDIR_PATH);
+		return returnValueString;
+	}
+
+	/**
+	 * Returns the name of the Android tools class from the config file.
+	 * 
+	 * @return
+	 */
+	public static String getAndroidToolClass()
+	{
+		String returnValueString = getPropertyString(AgentProperties.ANDROIDTOOL_CLASS);
+		return returnValueString;
+	}
+
+	/**
+	 * Returns the path of the emulator executable file from the config file..
+	 * 
+	 * @return
+	 */
+	public static String getEmulatorExecutable()
+	{
+		String returnValueString = getPropertyString(AgentProperties.EMULATOR_EXECUTABLE);
+		return returnValueString;
+	}
+
 }

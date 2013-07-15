@@ -17,7 +17,6 @@ import com.android.ddmlib.AndroidDebugBridge;
 import com.android.ddmlib.AndroidDebugBridge.IDeviceChangeListener;
 import com.android.ddmlib.EmulatorConsole;
 import com.android.ddmlib.IDevice;
-import com.musala.atmosphere.agent.util.AgentProperties;
 import com.musala.atmosphere.agent.util.AgentPropertiesLoader;
 import com.musala.atmosphere.commons.Pair;
 import com.musala.atmosphere.commons.sa.DeviceParameters;
@@ -29,11 +28,11 @@ import com.musala.atmosphere.commons.sa.DeviceParameters;
  */
 public class EmulatorManager implements IDeviceChangeListener
 {
-	private final static String ANDROID_TOOL_PATH = AgentPropertiesLoader.getPropertyString(AgentProperties.ANDROID_TOOL_PATH);
+	private final static String ANDROID_TOOL_PATH = AgentPropertiesLoader.getAndroidToolPath();
 
-	private final static String ANDROID_TOOLSDIR_PATH = AgentPropertiesLoader.getPropertyString(AgentProperties.ANDROID_TOOLSDIR_PATH);
+	private final static String ANDROID_TOOLSDIR_PATH = AgentPropertiesLoader.getAndroidToolsDirPath();
 
-	private final static String ANDROID_WORKDIR_PATH = AgentPropertiesLoader.getPropertyString(AgentProperties.ANDROID_WORKDIR_PATH);
+	private final static String ANDROID_WORKDIR_PATH = AgentPropertiesLoader.getAndroidWorkDirPath();
 
 	private final static Logger LOGGER = Logger.getLogger(EmulatorManager.class.getCanonicalName());
 
@@ -42,9 +41,9 @@ public class EmulatorManager implements IDeviceChangeListener
 
 	private static final String EMULATOR_NAME_PREFIX = "TempEmuDevice";
 
-	private static final String EMULATOR_EXECUTABLE = AgentPropertiesLoader.getPropertyString(AgentProperties.EMULATOR_EXECUTABLE);
+	private static final String EMULATOR_EXECUTABLE = AgentPropertiesLoader.getEmulatorExecutable();
 
-	private static final String ANDROIDTOOL_CLASS = AgentPropertiesLoader.getPropertyString(AgentProperties.ANDROIDTOOL_CLASS);
+	private static final String ANDROIDTOOL_CLASS = AgentPropertiesLoader.getAndroidToolClass();
 
 	private static EmulatorManager emulatorManagerInstance = null;
 

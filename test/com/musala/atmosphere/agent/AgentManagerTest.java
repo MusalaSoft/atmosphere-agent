@@ -23,7 +23,6 @@ import org.junit.Test;
 import com.android.ddmlib.DdmPreferences;
 import com.android.ddmlib.IDevice;
 import com.android.ddmlib.Log;
-import com.musala.atmosphere.agent.util.AgentProperties;
 import com.musala.atmosphere.agent.util.AgentPropertiesLoader;
 import com.musala.atmosphere.commons.sa.DeviceInformation;
 import com.musala.atmosphere.commons.sa.IWrapDevice;
@@ -33,9 +32,9 @@ public class AgentManagerTest
 {
 	private AgentManager agentManager;
 
-	private static final int RMI_PORT = AgentPropertiesLoader.getPropertyInt(AgentProperties.AGENT_RMI_PORT);
+	private static final int RMI_PORT = AgentPropertiesLoader.getAgentRmiPort();
 
-	private static final String PATH_TO_ADB = AgentPropertiesLoader.getPropertyString(AgentProperties.PATH_TO_ADB);
+	private static final String PATH_TO_ADB = AgentPropertiesLoader.getPathToADB();
 
 	@Before
 	public void setUp() throws Exception
