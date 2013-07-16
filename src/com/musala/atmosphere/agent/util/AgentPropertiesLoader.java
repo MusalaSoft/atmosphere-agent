@@ -116,7 +116,7 @@ public class AgentPropertiesLoader
 	 * 
 	 * @return
 	 */
-	public static int getEmulatorCreationWaitTiomeout()
+	public static int getEmulatorCreationWaitTimeout()
 	{
 		String returnValueString = getPropertyString(AgentProperties.EMULATOR_CREATION_WAIT_TIMEOUT);
 		int returnValue = Integer.parseInt(returnValueString);
