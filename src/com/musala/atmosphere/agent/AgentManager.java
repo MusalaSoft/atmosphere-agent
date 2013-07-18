@@ -1,6 +1,9 @@
 package com.musala.atmosphere.agent;
 
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
 import java.rmi.AccessException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
@@ -9,10 +12,15 @@ import java.rmi.registry.Registry;
 import java.rmi.server.RemoteServer;
 import java.rmi.server.ServerNotActiveException;
 import java.rmi.server.UnicastRemoteObject;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
+import java.util.Enumeration;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+
+import javax.xml.bind.annotation.adapters.HexBinaryAdapter;
 
 import org.apache.log4j.Logger;
 
@@ -43,6 +51,8 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 	 */
 	private static final long serialVersionUID = 8467038223162311366L;
 
+	private final static String AGENTID_HASH_ALGORITHM = "md5";
+
 	private final static Logger LOGGER = Logger.getLogger(AgentManager.class.getCanonicalName());
 
 	private final static int ADBRIDGE_TIMEOUT_MS = AgentPropertiesLoader.getADBridgeTimeout(); // milliseconds
@@ -50,6 +60,8 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 	private AndroidDebugBridge androidDebugBridge;
 
 	private Registry rmiRegistry;
+
+	private final String agentId;
 
 	// CopyOnWriteArrayList, as we will not have many devices (more than 10 or 15 practically) connected on a single
 	// agent and we are concerned about the DeviceChangeListener not to break things.
@@ -94,6 +106,9 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 			throw new ADBridgeFailException("The debug bridge failed to init, see the enclosed exception for more information.",
 											e);
 		}
+
+		// Calculate the current Agent ID.
+		agentId = calculateId();
 
 		// Publish this AgentManager in the RMI registry
 		try
@@ -459,9 +474,45 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 	@Override
 	public String getAgentId() throws RemoteException
 	{
-		// TODO Should discuss what id would be unique for an agent
-		// as selecting IP is a rather difficult process
-		return "tobeimplemented";
+		return agentId;
+	}
+
+	private static String calculateId()
+	{
+		try
+		{
+			Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
+			StringBuilder ipConcatBuilder = new StringBuilder();
+			while (interfaces.hasMoreElements())
+			{
+				NetworkInterface netInterface = interfaces.nextElement();
+				Enumeration<InetAddress> addresses = netInterface.getInetAddresses();
+				while (addresses.hasMoreElements())
+				{
+					InetAddress address = addresses.nextElement();
+					String addressString = address.getHostAddress();
+					ipConcatBuilder.append(addressString);
+				}
+			}
+
+			String ipConcatString = ipConcatBuilder.toString();
+			byte[] ipConcatBytes = ipConcatString.getBytes();
+			MessageDigest digest = MessageDigest.getInstance(AGENTID_HASH_ALGORITHM);
+			byte[] hashBytes = digest.digest(ipConcatBytes);
+			String hash = (new HexBinaryAdapter()).marshal(hashBytes);
+
+			return hash;
+		}
+		catch (SocketException e)
+		{
+			LOGGER.fatal("Calculating unique ID failed.", e);
+			throw new RuntimeException("Unique ID for the current Agent calculation failed.", e);
+		}
+		catch (NoSuchAlgorithmException e)
+		{
+			LOGGER.fatal("Could not get instance of MessageDigest for the passed hash algorithm.", e);
+			throw new RuntimeException("Unique ID for the current Agent calculation failed.", e);
+		}
 	}
 
 	@Override

@@ -95,7 +95,6 @@ public class AgentManagerTest
 	@Test
 	public void testIsDevicePresentWithNull() throws RemoteException, DeviceNotFoundException
 	{
-		@SuppressWarnings("unused")
 		boolean present = agentManager.isDevicePresent(null);
 		assertFalse("Device with serial number null can never be present.", present);
 	}
@@ -103,7 +102,6 @@ public class AgentManagerTest
 	@Test
 	public void testIsDevicePresentWithEmpty() throws RemoteException, DeviceNotFoundException
 	{
-		@SuppressWarnings("unused")
 		boolean present = agentManager.isDevicePresent("");
 		assertFalse("Device with empty serial number can never be present.", present);
 	}
@@ -170,5 +168,12 @@ public class AgentManagerTest
 		assertEquals(	"Mock device creation / .getDeviceInformation() data mismatch. (device CPU identifier)",
 						info.getCpu(),
 						mockDeviceCpu);
+	}
+
+	@Test
+	public void testGetUniqueAgentId() throws RemoteException
+	{
+		String agentId = agentManager.getAgentId();
+		assertNotNull("Unique Agent ID can never be null", agentId);
 	}
 }
