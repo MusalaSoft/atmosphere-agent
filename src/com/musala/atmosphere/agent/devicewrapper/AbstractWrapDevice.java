@@ -303,9 +303,15 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 			tempApkFileOutputStream = null;
 			String absolutePathToApk = tempApkFile.getAbsolutePath();
 
-			wrappedDevice.installPackage(absolutePathToApk, true /* force reinstall */);
-
+			String installResult = wrappedDevice.installPackage(absolutePathToApk, true /* force reinstall */);
 			discardAPK();
+
+			if (installResult != null)
+			{
+				LOGGER.error("PacketManager installation returned error code '" + installResult + "'.");
+				throw new CommandFailedException("PacketManager installation returned error code '" + installResult
+						+ "'.");
+			}
 		}
 		catch (InstallException e)
 		{
@@ -344,6 +350,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 	public String getUiXml() throws RemoteException, CommandFailedException
 	{
 		String dumpCommand = "uiautomator dump " + XMLDUMP_REMOTE_FILE_NAME;
+		// TODO VALIDATE GETUIXML on AbstractWrapDevice
 		executeShellCommand(dumpCommand);
 
 		StringBuilder uiDumpBuilder = new StringBuilder();
