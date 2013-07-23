@@ -32,6 +32,7 @@ import com.musala.atmosphere.agent.devicewrapper.RealWrapDevice;
 import com.musala.atmosphere.agent.util.AgentPropertiesLoader;
 import com.musala.atmosphere.commons.sa.DeviceParameters;
 import com.musala.atmosphere.commons.sa.IAgentManager;
+import com.musala.atmosphere.commons.sa.IConnectionRequestReceiver;
 import com.musala.atmosphere.commons.sa.IWrapDevice;
 import com.musala.atmosphere.commons.sa.RmiStringConstants;
 import com.musala.atmosphere.commons.sa.exceptions.ADBridgeFailException;
@@ -546,6 +547,25 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 		AndroidDebugBridge.addDeviceChangeListener(newDeviceChangeListener);
 		currentDeviceChangeListener = newDeviceChangeListener;
 
-		LOGGER.info("Server registered with IP: " + serverIPAddress);
+		LOGGER.info("Server with IP (" + serverIPAddress + ":" + serverRmiPort + ") registered.");
+	}
+
+	/**
+	 * Connects this Agent to a Server.
+	 * 
+	 * @param ipAddress
+	 *        server's IP address.
+	 * @param port
+	 *        server's RMI port.
+	 * @throws NotBoundException
+	 * @throws RemoteException
+	 * @throws AccessException
+	 */
+	public void connectToServer(String ipAddress, int port) throws AccessException, RemoteException, NotBoundException
+	{
+		Registry serverRegistry = LocateRegistry.getRegistry(ipAddress, port);
+		IConnectionRequestReceiver requestReceiver = (IConnectionRequestReceiver) serverRegistry.lookup(RmiStringConstants.CONNECTION_REQUEST_RECEIVER.toString());
+		requestReceiver.postConnectionRequest(rmiRegistryPort);
+		LOGGER.info("Connection request sent to Server with address (" + ipAddress + ":" + port + ")");
 	}
 }
