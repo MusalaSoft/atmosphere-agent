@@ -20,10 +20,13 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.android.ddmlib.AdbCommandRejectedException;
 import com.android.ddmlib.DdmPreferences;
 import com.android.ddmlib.IDevice;
 import com.android.ddmlib.Log;
+import com.android.ddmlib.TimeoutException;
 import com.musala.atmosphere.agent.util.AgentPropertiesLoader;
+import com.musala.atmosphere.commons.CommandFailedException;
 import com.musala.atmosphere.commons.sa.DeviceInformation;
 import com.musala.atmosphere.commons.sa.IWrapDevice;
 import com.musala.atmosphere.commons.sa.exceptions.DeviceNotFoundException;
@@ -75,7 +78,11 @@ public class AgentManagerTest
 	}
 
 	@Test
-	public void testIsDevicePresentWithValidSerialNumber() throws RemoteException
+	public void testIsDevicePresentWithValidSerialNumber()
+		throws RemoteException,
+			TimeoutException,
+			AdbCommandRejectedException,
+			CommandFailedException
 	{
 		final String mockDeviceSerialNumber = "lol";
 		IDevice mockDevice = mock(IDevice.class);
@@ -110,7 +117,10 @@ public class AgentManagerTest
 	public void testGetDeviceInformationWithValidSerialNumber()
 		throws RemoteException,
 			DeviceNotFoundException,
-			NotBoundException
+			NotBoundException,
+			TimeoutException,
+			AdbCommandRejectedException,
+			CommandFailedException
 	{
 		String mockDeviceSerialNumber = "lol";
 		boolean mockDeviceEmulator = false;

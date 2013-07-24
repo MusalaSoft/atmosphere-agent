@@ -14,6 +14,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
 
@@ -52,6 +54,10 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 
 	private static final String TEMP_APK_FILE_SUFFIX = ".apk";
 
+	private static final String BATTERY_STATE_EXTRACTION_REGEX = "status: (\\d)";
+
+	private static final String DUMP_BATTERY_INFO_COMMAND = "dumpsys battery";
+
 	private File tempApkFile;
 
 	private OutputStream tempApkFileOutputStream;
@@ -75,10 +81,10 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 	@Override
 	public int getBatteryLevel() throws RemoteException, CommandFailedException
 	{
-		int level;
 		try
 		{
-			level = wrappedDevice.getBatteryLevel(0 /* renew value, don't return old one */);
+			int level = wrappedDevice.getBatteryLevel(0 /* renew value, don't return old one */);
+			return level;
 		}
 		catch (TimeoutException | AdbCommandRejectedException | IOException | ShellCommandUnresponsiveException e)
 		{
@@ -86,7 +92,6 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 			throw new CommandFailedException(	"getBatteryLevel failed. See the enclosed exception for more information.",
 												e);
 		}
-		return level;
 	}
 
 	@Override
@@ -341,12 +346,6 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 	}
 
 	@Override
-	public abstract void setNetworkSpeed(Pair<Integer, Integer> speeds) throws RemoteException;
-
-	@Override
-	public abstract void setBatteryLevel(int level) throws RemoteException;
-
-	@Override
 	public String getUiXml() throws RemoteException, CommandFailedException
 	{
 		String dumpCommand = "uiautomator dump " + XMLDUMP_REMOTE_FILE_NAME;
@@ -385,15 +384,56 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 	}
 
 	@Override
-	public abstract void setNetworkLatency(int latency) throws RemoteException;
-
-	@Override
-	public BatteryState getBatteryState() throws RemoteException
+	public BatteryState getBatteryState() throws RemoteException, CommandFailedException
 	{
-		// TODO implement get battery state method
-		return null;
+		String response = executeShellCommand(DUMP_BATTERY_INFO_COMMAND);
+		Pattern extractionPattern = Pattern.compile(BATTERY_STATE_EXTRACTION_REGEX);
+		Matcher stateMatch = extractionPattern.matcher(response);
+
+		if (!stateMatch.find())
+		{
+			throw new CommandFailedException("Getting battery state failed.");
+		}
+
+		int stateId = Integer.parseInt(stateMatch.group(1));
+		BatteryState currentBatteryState = BatteryState.getStateById(stateId);
+
+		return currentBatteryState;
 	}
 
 	@Override
-	public abstract void setBatteryState(BatteryState state) throws RemoteException;
+	public boolean getPowerState() throws RemoteException, CommandFailedException
+	{
+		final String DUMP_POWER_INFO_COMMAND = "dumpsys power";
+		String response = executeShellCommand(DUMP_POWER_INFO_COMMAND);
+
+		final String POWER_STATE_EXTRACTION_REGEX = "mPlugType=(\\d)";
+		Pattern extractionPattern = Pattern.compile(POWER_STATE_EXTRACTION_REGEX);
+		Matcher stateMatch = extractionPattern.matcher(response);
+
+		if (!stateMatch.find())
+		{
+			throw new CommandFailedException("Getting power state failed.");
+		}
+
+		int powerStateInt = Integer.parseInt(stateMatch.group(1));
+		boolean powerState;
+		powerState = powerStateInt != 0;
+		return powerState;
+	}
+
+	@Override
+	public abstract void setNetworkSpeed(Pair<Integer, Integer> speeds) throws RemoteException, CommandFailedException;
+
+	@Override
+	public abstract void setBatteryLevel(int level) throws RemoteException, CommandFailedException;
+
+	@Override
+	public abstract void setNetworkLatency(int latency) throws RemoteException;
+
+	@Override
+	public abstract void setBatteryState(BatteryState state) throws RemoteException, CommandFailedException;
+
+	@Override
+	public abstract void setPowerState(boolean state) throws RemoteException, CommandFailedException;
 }

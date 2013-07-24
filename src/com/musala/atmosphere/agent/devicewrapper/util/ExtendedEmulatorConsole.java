@@ -40,6 +40,8 @@ public class ExtendedEmulatorConsole
 
 	private final static String COMMAND_NETOWRK_SPEED_FORMAT = "network speed %d:%d\r\n";
 
+	private final static String COMMAND_POWER_STATE_FORMAT = "power ac %s\r\n";
+
 	/**
 	 * Socket read/write buffer.
 	 */
@@ -206,6 +208,21 @@ public class ExtendedEmulatorConsole
 	public synchronized boolean setBatteryState(BatteryState status) throws EmulatorConnectionFailedException
 	{
 		String command = String.format(COMMAND_POWER_STATUS_FORMAT, status.toString());
+		return executeCommand(command);
+	}
+
+	/**
+	 * Sets the power state of the emulator to connected or disconnected.
+	 * 
+	 * @param state
+	 * @return True if setting the power state was successful and false if not.
+	 * @throws EmulatorConnectionFailedException
+	 */
+	public synchronized boolean setPowerState(boolean state) throws EmulatorConnectionFailedException
+	{
+
+		String stateToAppend = state ? "on" : "off";
+		String command = String.format(COMMAND_POWER_STATE_FORMAT, stateToAppend);
 		return executeCommand(command);
 	}
 

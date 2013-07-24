@@ -8,6 +8,7 @@ import com.android.ddmlib.IDevice;
 import com.musala.atmosphere.agent.devicewrapper.util.EmulatorConnectionFailedException;
 import com.musala.atmosphere.agent.devicewrapper.util.ExtendedEmulatorConsole;
 import com.musala.atmosphere.commons.BatteryState;
+import com.musala.atmosphere.commons.CommandFailedException;
 import com.musala.atmosphere.commons.Pair;
 import com.musala.atmosphere.commons.sa.exceptions.NotPossibleForDeviceException;
 
@@ -32,7 +33,7 @@ public class EmulatorWrapDevice extends AbstractWrapDevice
 	}
 
 	@Override
-	public void setNetworkSpeed(Pair<Integer, Integer> speeds) throws RemoteException
+	public void setNetworkSpeed(Pair<Integer, Integer> speeds) throws RemoteException, CommandFailedException
 	{
 		try
 		{
@@ -42,23 +43,24 @@ public class EmulatorWrapDevice extends AbstractWrapDevice
 			{
 				LOGGER.error("ExtendedEmulatorConsole method .setNetworkSpeed(...) failed for device with serial number '"
 						+ wrappedDevice.getSerialNumber() + "'.");
+				throw new CommandFailedException("ExtendedEmulatorConsole method .setNetworkSpeed(...) failed for device with serial number '"
+						+ wrappedDevice.getSerialNumber() + "'.");
 			}
 		}
 		catch (EmulatorConnectionFailedException e)
 		{
-			throw new RemoteException(	"Connection to the emulator console failed. See the enclosed exception for more information.",
-										e);
+			throw new CommandFailedException(	"Connection to the emulator console failed. See the enclosed exception for more information.",
+												e);
 		}
 		catch (NotPossibleForDeviceException e)
 		{
-			// Not really possible, as this is an EmulatorWrapDevice and if the wrapped device was not an emulator, we
 			// would not have gotten this far.
 			e.printStackTrace();
 		}
 	}
 
 	@Override
-	public void setBatteryLevel(int level) throws RemoteException
+	public void setBatteryLevel(int level) throws RemoteException, CommandFailedException
 	{
 		try
 		{
@@ -68,17 +70,19 @@ public class EmulatorWrapDevice extends AbstractWrapDevice
 			{
 				LOGGER.error("ExtendedEmulatorConsole method .setBatteryLevel(...) failed for device with serial number '"
 						+ wrappedDevice.getSerialNumber() + "'.");
+				throw new CommandFailedException("ExtendedEmulatorConsole method .setBatteryLevel(...) failed for device with serial number '"
+						+ wrappedDevice.getSerialNumber() + "'.");
 			}
 		}
 		catch (EmulatorConnectionFailedException e)
 		{
-			throw new RemoteException(	"Connection to the emulator console failed. See the enclosed exception for more information.",
-										e);
+			throw new CommandFailedException(	"Connection to the emulator console failed. See the enclosed exception for more information.",
+												e);
 		}
 		catch (IllegalArgumentException e)
 		{
-			throw new RemoteException(	"Illegal argument has been passed to the emulator console class. See the enclosed exception for more information.",
-										e);
+			throw new CommandFailedException(	"Illegal argument has been passed to the emulator console class. See the enclosed exception for more information.",
+												e);
 		}
 		catch (NotPossibleForDeviceException e)
 		{
@@ -102,4 +106,37 @@ public class EmulatorWrapDevice extends AbstractWrapDevice
 		// TODO implement set battery state
 	}
 
+	@Override
+	public void setPowerState(boolean state) throws RemoteException, CommandFailedException
+	{
+		try
+		{
+			ExtendedEmulatorConsole emulatorConsole = ExtendedEmulatorConsole.getExtendedEmulatorConsole(wrappedDevice);
+			boolean success = emulatorConsole.setPowerState(state);
+			if (success == false)
+			{
+				LOGGER.error("The setting of the battery state failed for device with serial number '"
+						+ wrappedDevice.getSerialNumber() + "'.");
+				throw new CommandFailedException("The setting of the battery state failed for device with serial number '"
+						+ wrappedDevice.getSerialNumber() + "'.");
+			}
+		}
+		catch (EmulatorConnectionFailedException e)
+		{
+			throw new CommandFailedException(	"Connection to the emulator console failed. See the enclosed exception for more information.",
+												e);
+		}
+		catch (IllegalArgumentException e)
+		{
+			throw new CommandFailedException(	"Illegal argument has been passed to the emulator console class. See the enclosed exception for more information.",
+												e);
+		}
+		catch (NotPossibleForDeviceException e)
+		{
+			// Not really possible, as this is an EmulatorWrapDevice and if the wrapped device was not an emulator, we
+			// would not have gotten this far.
+			e.printStackTrace();
+		}
+
+	}
 }

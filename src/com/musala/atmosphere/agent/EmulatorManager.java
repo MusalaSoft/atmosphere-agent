@@ -28,22 +28,12 @@ import com.musala.atmosphere.commons.sa.DeviceParameters;
  */
 public class EmulatorManager implements IDeviceChangeListener
 {
-	private final static String ANDROID_TOOL_PATH = AgentPropertiesLoader.getAndroidToolPath();
-
-	private final static String ANDROID_TOOLSDIR_PATH = AgentPropertiesLoader.getAndroidToolsDirPath();
-
-	private final static String ANDROID_WORKDIR_PATH = AgentPropertiesLoader.getAndroidWorkDirPath();
-
 	private final static Logger LOGGER = Logger.getLogger(EmulatorManager.class.getCanonicalName());
 
 	// TODO change code related to abi selection so it can be done by code
 	private final static String EMULATOR_CPU_ARCHITECTURE = "armeabi-v7a";
 
 	private static final String EMULATOR_NAME_PREFIX = "TempEmuDevice";
-
-	private static final String EMULATOR_EXECUTABLE = AgentPropertiesLoader.getEmulatorExecutable();
-
-	private static final String ANDROIDTOOL_CLASS = AgentPropertiesLoader.getAndroidToolClass();
 
 	private static EmulatorManager emulatorManagerInstance = null;
 
@@ -211,29 +201,29 @@ public class EmulatorManager implements IDeviceChangeListener
 		androidToolCommandBuilder.append("java"); // The android tool is a java application
 		androidToolCommandBuilder.append(" \"-Dcom.android.sdkmanager.toolsdir="); // We must set this variable to the
 																					// tools SDK folder
-		androidToolCommandBuilder.append(ANDROID_TOOLSDIR_PATH);
+		androidToolCommandBuilder.append(AgentPropertiesLoader.getAndroidToolsDirPath());
 		androidToolCommandBuilder.append("\" \"-Dcom.android.sdkmanager.workdir="); // We must set this variable to a
 																					// desired temp folder
-		androidToolCommandBuilder.append(ANDROID_WORKDIR_PATH);
+		androidToolCommandBuilder.append(AgentPropertiesLoader.getAndroidWorkDirPath());
 		androidToolCommandBuilder.append("\" -classpath \"");
-		androidToolCommandBuilder.append(ANDROID_TOOL_PATH);
+		androidToolCommandBuilder.append(AgentPropertiesLoader.getAndroidToolPath());
 		androidToolCommandBuilder.append(File.separator);
 		androidToolCommandBuilder.append("lib");
 		androidToolCommandBuilder.append(File.separator);
 		androidToolCommandBuilder.append("sdkmanager.jar;");
-		androidToolCommandBuilder.append(ANDROID_TOOL_PATH);
+		androidToolCommandBuilder.append(AgentPropertiesLoader.getAndroidToolPath());
 		androidToolCommandBuilder.append(File.separator);
 		androidToolCommandBuilder.append("lib");
 		androidToolCommandBuilder.append(File.separator);
 		androidToolCommandBuilder.append("swtmenubar.jar;");
-		androidToolCommandBuilder.append(ANDROID_TOOL_PATH);
+		androidToolCommandBuilder.append(AgentPropertiesLoader.getAndroidToolPath());
 		androidToolCommandBuilder.append(File.separator);
 		androidToolCommandBuilder.append("lib");
 		androidToolCommandBuilder.append(File.separator);
 		androidToolCommandBuilder.append("x86");
 		androidToolCommandBuilder.append(File.separator);
 		androidToolCommandBuilder.append("swt.jar\" ");
-		androidToolCommandBuilder.append(ANDROIDTOOL_CLASS);
+		androidToolCommandBuilder.append(AgentPropertiesLoader.getAndroidToolClass());
 		androidToolCommandBuilder.append(" ");
 		androidToolCommandBuilder.append(command);
 
@@ -256,7 +246,8 @@ public class EmulatorManager implements IDeviceChangeListener
 	private String sendCommandToEmulatorTool(List<String> parameters, String commandInput) throws IOException
 	{
 		List<String> command = new LinkedList<String>();
-		command.add(ANDROID_TOOLSDIR_PATH + File.separator + EMULATOR_EXECUTABLE);
+		command.add(AgentPropertiesLoader.getAndroidToolsDirPath() + File.separator
+				+ AgentPropertiesLoader.getEmulatorExecutable());
 		command.addAll(parameters);
 
 		String returnValue = sendCommandViaProcessBuilder(command, commandInput, "emulator.exe tool");
@@ -276,7 +267,8 @@ public class EmulatorManager implements IDeviceChangeListener
 	private Process sendCommandToEmulatorToolAndReturn(List<String> parameters, String commandInput) throws IOException
 	{
 		List<String> command = new LinkedList<String>();
-		command.add(ANDROID_TOOLSDIR_PATH + File.separator + EMULATOR_EXECUTABLE);
+		command.add(AgentPropertiesLoader.getAndroidToolsDirPath() + File.separator
+				+ AgentPropertiesLoader.getEmulatorExecutable());
 		command.addAll(parameters);
 
 		Process returnProcess = sendCommandViaProcessBuilderAndReturn(command, commandInput, "emulator.exe tool");
