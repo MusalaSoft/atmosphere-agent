@@ -25,12 +25,15 @@ import javax.xml.bind.annotation.adapters.HexBinaryAdapter;
 
 import org.apache.log4j.Logger;
 
+import com.android.ddmlib.AdbCommandRejectedException;
 import com.android.ddmlib.AndroidDebugBridge;
 import com.android.ddmlib.EmulatorConsole;
 import com.android.ddmlib.IDevice;
+import com.android.ddmlib.TimeoutException;
 import com.musala.atmosphere.agent.devicewrapper.EmulatorWrapDevice;
 import com.musala.atmosphere.agent.devicewrapper.RealWrapDevice;
 import com.musala.atmosphere.agent.util.AgentPropertiesLoader;
+import com.musala.atmosphere.commons.CommandFailedException;
 import com.musala.atmosphere.commons.sa.DeviceParameters;
 import com.musala.atmosphere.commons.sa.IAgentManager;
 import com.musala.atmosphere.commons.sa.IConnectionRequestReceiver;
@@ -57,8 +60,6 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 
 	private final static Logger LOGGER = Logger.getLogger(AgentManager.class.getCanonicalName());
 
-	private final static int ADBRIDGE_TIMEOUT_MS = AgentPropertiesLoader.getADBridgeTimeout(); // milliseconds
-
 	private AndroidDebugBridge androidDebugBridge;
 
 	private Registry rmiRegistry;
@@ -82,6 +83,9 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 	 *        Port, which will be used for the RMI Registry
 	 * @throws RemoteException
 	 * @throws ADBridgeFailException
+	 * @throws CommandFailedException
+	 * @throws AdbCommandRejectedException
+	 * @throws TimeoutException
 	 */
 	public AgentManager(String adbPath, int rmiPort) throws RemoteException, ADBridgeFailException
 	{
@@ -174,7 +178,7 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 			{
 			}
 			// let's not wait > timeout milliseconds.
-			if (timeout * 100 > ADBRIDGE_TIMEOUT_MS)
+			if (timeout * 100 > AgentPropertiesLoader.getADBridgeTimeout())
 			{
 				LOGGER.fatal("Timeout getting initial device list.");
 
@@ -260,6 +264,9 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 	 * @param connectedDevice
 	 *        the newly connected device.
 	 * @return the RMI binding ID of the newly bound wrapper.
+	 * @throws CommandFailedException
+	 * @throws AdbCommandRejectedException
+	 * @throws TimeoutException
 	 */
 	String registerDeviceOnAgent(IDevice connectedDevice)
 	{
@@ -323,6 +330,9 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 	 *        that will be wrapped.
 	 * @return RMI binding ID for the newly created wrapper.
 	 * @throws RemoteException
+	 * @throws CommandFailedException
+	 * @throws AdbCommandRejectedException
+	 * @throws TimeoutException
 	 */
 	private String createWrapperForDevice(IDevice device) throws RemoteException
 	{

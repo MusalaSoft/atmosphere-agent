@@ -25,8 +25,7 @@ public class AgentPropertiesLoaderTest
 	@Test
 	public void testGetProperty() throws IOException
 	{
-		String pathToADB;
-		pathToADB = AgentPropertiesLoader.getPathToADB();
+		String pathToADB = AgentPropertiesLoader.getPathToADB();
 		assertNotNull("Returns property.", pathToADB);
 	}
 }

@@ -1,13 +1,9 @@
 package com.musala.atmosphere.agent.util;
 
-import java.io.FileReader;
-import java.io.IOException;
-import java.util.Properties;
-
-import org.apache.log4j.Logger;
+import com.musala.atmosphere.commons.PropertiesLoader;
 
 /**
- * Read and writes Agent properties from and to config file.
+ * Reads agent properties from agent properties config file.
  * 
  * @author valyo.yolovski
  * 
@@ -16,29 +12,6 @@ import org.apache.log4j.Logger;
 public class AgentPropertiesLoader
 {
 	private static final String AGENT_PROPERTIES_FILE = "./agent.properties";
-
-	private final static Logger LOGGER = Logger.getLogger(AgentPropertiesLoader.class.getCanonicalName());
-
-	// private static Properties defaultPoperties = null;
-
-	private static Properties configProperties = null;
-
-	private static Properties readInConfigFile(String fileName)
-	{
-		try
-		{
-			Properties properties = new Properties();
-			FileReader readInPropertiesFile = new FileReader(fileName);
-			properties.load(readInPropertiesFile);
-			LOGGER.info(fileName + " has been loaded.");
-			return properties;
-		}
-		catch (IOException e)
-		{
-			LOGGER.fatal(fileName + " loading failed.", e);
-			throw new RuntimeException("Could not load config file.");
-		}
-	}
 
 	/**
 	 * Returns the desired property from the config file in String type. If there is no user config file, default values
@@ -50,18 +23,10 @@ public class AgentPropertiesLoader
 	 */
 	private synchronized static String getPropertyString(AgentProperties property)
 	{
-		if (configProperties == null)
-		{
-			configProperties = readInConfigFile(AGENT_PROPERTIES_FILE);
-		}
+		PropertiesLoader propertiesLoader = PropertiesLoader.getInstance(AGENT_PROPERTIES_FILE);
 		String propertyString = property.toString();
-		String agentProperty = configProperties.getProperty(propertyString);
-		if (agentProperty == null)
-		{
-			LOGGER.fatal("Property " + propertyString + " could not be found in the properties file.");
-			throw new RuntimeException("Property " + propertyString + " could not be found in the properties file.");
-		}
-		return agentProperty;
+		String resultProperty = propertiesLoader.getPropertyString(propertyString);
+		return resultProperty;
 	}
 
 	/**

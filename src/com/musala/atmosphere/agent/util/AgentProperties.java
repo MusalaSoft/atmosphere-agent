@@ -1,12 +1,18 @@
 package com.musala.atmosphere.agent.util;
 
+/**
+ * Enumeration class containing all possible agent properties.
+ * 
+ * @author valyo.yolovski
+ * 
+ */
 public enum AgentProperties
 { // add more if you need
-	PATH_TO_ADB("PATH_TO_ADB"), ADBRIDGE_TIMEOUT("ADBRIDGE_TIMEOUT"), AGENT_RMI_PORT("AGENT_RMI_PORT"), EMULATOR_CREATION_WAIT(
-			"EMULATOR_CREATION_WAIT"), EMULATOR_CREATION_WAIT_TIMEOUT("EMULATOR_CREATION_WAIT_TIMEOUT"), ANDROID_TOOL_PATH(
-			"ANDROID_TOOL_PATH"), ANDROID_TOOLSDIR_PATH("ANDROID_TOOLSDIR_PATH"), ANDROID_WORKDIR_PATH(
-			"ANDROID_WORKDIR_PATH"), ANDROIDTOOL_CLASS("ANDROIDTOOL_CLASS"), EMULATOR_EXECUTABLE("EMULATOR_EXECUTABLE"), RMI_MINIMAL_PORT_VALUE(
-			"RMI_MINIMAL_PORT_VALUE"), RMI_MAXIMAL_PORT_VALUE("RMI_MAXIMAL_PORT_VALUE");
+	PATH_TO_ADB("path.to.adb"), ADBRIDGE_TIMEOUT("adbridge.timeout"), AGENT_RMI_PORT("agent.rmi.port"), EMULATOR_CREATION_WAIT(
+			"emulator.creation.wait"), EMULATOR_CREATION_WAIT_TIMEOUT("emulator.creation.wait.timeout"), ANDROID_TOOL_PATH(
+			"android.tool.path"), ANDROID_TOOLSDIR_PATH("android.toolsdir.path"), ANDROID_WORKDIR_PATH(
+			"android.workdir.path"), ANDROIDTOOL_CLASS("androidtool.class"), EMULATOR_EXECUTABLE("emulator.executable"), RMI_MINIMAL_PORT_VALUE(
+			"rmi.minimal.port.value"), RMI_MAXIMAL_PORT_VALUE("rmi.maximal.port.value");
 
 	private String value;
 
