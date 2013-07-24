@@ -178,4 +178,28 @@ public class AgentPropertiesLoader
 		return returnValueString;
 	}
 
+	/**
+	 * Returns the minimal value for valid RMI port.
+	 * 
+	 * @return - int, which is the smallest value that can be used as number of port in java RMI.
+	 */
+	public static int getRmiMinimalPortValue()
+	{
+		String returnValueString = getPropertyString(AgentProperties.RMI_MINIMAL_PORT_VALUE);
+		int returnValueInt = Integer.parseInt(returnValueString);
+		return returnValueInt;
+	}
+
+	/**
+	 * Returns the maximal value for valid RMI port.
+	 * 
+	 * @return - int, which is the biggest value that can be used as number of port in java RMI.
+	 */
+	public static int getRmiMaximalPortValue()
+	{
+		String returnValueString = getPropertyString(AgentProperties.RMI_MAXIMAL_PORT_VALUE);
+		int returnValueInt = Integer.parseInt(returnValueString);
+		return returnValueInt;
+	}
+
 }
