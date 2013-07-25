@@ -12,17 +12,13 @@ public class AgentConsole
 {
 	private static final String LINE_SEPARATOR = System.getProperty("line.separator");
 
-	// TODO extract to config file
 	private static final String LINE_PREFFIX = ">> ";
-
-	// TODO extract to config file
-	private static final int MAX_NUMBER_OF_FLUSH_TRIES = 50;
 
 	private static final Logger LOGGER = Logger.getLogger(AgentConsole.class.getCanonicalName());
 
-	private BufferedReader consoleReader = null;
+	private BufferedReader consoleReader;
 
-	private BufferedWriter consoleWriter = null;
+	private BufferedWriter consoleWriter;
 
 	/**
 	 * Creates console for the agent. If Agent code is ran through some IDE ( for example Eclipse ) we must use
@@ -59,32 +55,18 @@ public class AgentConsole
 	 * 
 	 * @param message
 	 *        - message or command to be written on the agent console.
-	 * @throws IOException
-	 *         - possible IOException could be thrown when Agent was started through some IDE and an internal error
-	 *         occurs when trying to write to the System.out
 	 */
-	public void write(String message) throws IOException
+	public void write(String message)
 	{
-		System.out.print(LINE_PREFFIX);
-		consoleWriter.write(message);
-		int numberOfFailedFlushes = 0;
-
-		for (int numberOfFlushTries = 0; numberOfFlushTries < MAX_NUMBER_OF_FLUSH_TRIES; numberOfFlushTries++)
+		try
 		{
-			try
-			{
-				consoleWriter.flush();
-				break;
-			}
-			catch (Exception e)
-			{
-				numberOfFailedFlushes++;
-			}
+			consoleWriter.write(message);
+			consoleWriter.flush();
+
 		}
-
-		if (numberOfFailedFlushes == MAX_NUMBER_OF_FLUSH_TRIES)
+		catch (IOException e)
 		{
-			LOGGER.error("Could not flush message: '" + message + "' to console.");
+			LOGGER.error("Error while printing information on the console.", e);
 		}
 	}
 
@@ -94,31 +76,9 @@ public class AgentConsole
 	 * 
 	 * @param message
 	 *        - message or command to be written on the agent console.
-	 * @throws IOException
-	 *         - possible IOException could be thrown when trying to write to the System.out
 	 */
-	public void writeLine(String message) throws IOException
+	public void writeLine(String message)
 	{
-		System.out.print(LINE_PREFFIX);
-		consoleWriter.write(message + LINE_SEPARATOR);
-		int numberOfFailedFlushes = 0;
-
-		for (int numberOfFlushTries = 0; numberOfFlushTries < MAX_NUMBER_OF_FLUSH_TRIES; numberOfFlushTries++)
-		{
-			try
-			{
-				consoleWriter.flush();
-				break;
-			}
-			catch (Exception e)
-			{
-				numberOfFailedFlushes++;
-			}
-		}
-
-		if (numberOfFailedFlushes == MAX_NUMBER_OF_FLUSH_TRIES)
-		{
-			LOGGER.error("Could not flush message: '" + message + "' to console.");
-		}
+		write(message + LINE_SEPARATOR);
 	}
 }

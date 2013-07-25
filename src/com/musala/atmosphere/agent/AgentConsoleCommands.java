@@ -1,6 +1,6 @@
 package com.musala.atmosphere.agent;
 
-import java.util.ArrayList; 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -11,22 +11,26 @@ import java.util.List;
  */
 public enum AgentConsoleCommands
 {
-	AGENT_RUN("run", "Runs the created Agent on localhost."),
-	AGENT_CONNECT("connect","Connects the agent to given ATMOSPHERE Server.\r\n " +
-			"	CONNECT [IP:port]" + "	" + "- Tries to connect the agent to the ATMOSPHERE Server, specified by the given IP and port."),
-	AGENT_HELP("help","prints all usable commands for manipulating the server"), 
-	AGENT_STOP("stop","stops the running agent on localhost");
+	AGENT_RUN("run", "run", "Runs the created Agent on localhost."), AGENT_CONNECT(
+			"connect",
+			"connect [IP] <port>",
+			"Connects the agent to given ATMOSPHERE Server.\n IP - ATMOSPHERE Server IP address (optional, if ommited, localhost is assumed)\n port - ATMOSPHERE Server port."), AGENT_HELP(
+			"help", "help", "prints all usable commands for manipulating the server."), AGENT_STOP("stop", "stop",
+			"stops the running agent on localhost.");
 
 	private static final String DESCRIPTION_PREFFIX = "	 	- ";
 
-	private String value;
+	private String command;
+
+	private String syntax;
 
 	private String description;
 
-	private AgentConsoleCommands(String firsgArgOfShellCommand, String descriptionOfShellCommand)
+	private AgentConsoleCommands(String command, String commmandSyntax, String commandDescription)
 	{
-		this.value = firsgArgOfShellCommand;
-		this.description = descriptionOfShellCommand;
+		this.command = command;
+		this.syntax = commmandSyntax;
+		this.description = commandDescription;
 	}
 
 	/**
@@ -34,9 +38,10 @@ public enum AgentConsoleCommands
 	 * 
 	 * @return
 	 */
-	public String getValue()
+	public String getCommand()
+
 	{
-		return value;
+		return command;
 	}
 
 	/**
@@ -49,19 +54,26 @@ public enum AgentConsoleCommands
 		return description;
 	}
 
+	public String getSyntax()
+	{
+		return syntax;
+	}
+
 	/**
-	 * Gets list with all the commands someone can pass to the console to manage the Agent. For every available command
-	 * there is a String which is in the following format: "<b>Command format</b> - <b>Command Description</b>" where
-	 * <b>"Command format"</b> is pattern how to write the given command and what arguments it can be passed, while the
-	 * <b>"Command description"</b> says what the command does.
+	 * Gets list with all the commands that can be passed to the console to manage the Agent. For every available
+	 * command there is a String which is in the following format: "<b>Command format</b> - <b>Command Description</b>"
+	 * where <b>"Command format"</b> is pattern how to write the given command and what arguments it can be passed,
+	 * while the <b>"Command description"</b> says what the command does.
 	 * 
 	 */
 	public static List<String> getListOfCommands()
 	{
 		List<String> allCommandsFullInformation = new ArrayList<String>();
-		for (AgentConsoleCommands currentState : AgentConsoleCommands.values())
+		for (AgentConsoleCommands currentCommand : AgentConsoleCommands.values())
 		{
-			String currentCommandInfo = currentState.getValue() + DESCRIPTION_PREFFIX + currentState.getDescription();
+			String description = currentCommand.getDescription();
+			String syntax = currentCommand.getSyntax();
+			String currentCommandInfo = String.format("%-25s %s", syntax, description);
 			allCommandsFullInformation.add(currentCommandInfo);
 		}
 		return allCommandsFullInformation;

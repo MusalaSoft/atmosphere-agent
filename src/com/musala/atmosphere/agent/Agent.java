@@ -1,6 +1,7 @@
 package com.musala.atmosphere.agent;
 
 import java.io.IOException;
+import java.rmi.AccessException;
 import java.rmi.ConnectException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
@@ -21,11 +22,11 @@ import com.musala.atmosphere.commons.sa.exceptions.NotPossibleForDeviceException
  * @author vladimir.vladimirov
  * 
  */
-public class Agent implements Runnable
+public class Agent
 {
 	private static final Logger LOGGER = Logger.getLogger(Agent.class.getCanonicalName());
 
-	private AgentManager agentManager = null;
+	private AgentManager agentManager;
 
 	private AgentConsole agentConsole;
 
@@ -38,15 +39,10 @@ public class Agent implements Runnable
 	/**
 	 * Creates an Agent object on the default agent rmi port ( whose value can be seen in the agent.properties file
 	 * under the name ).
-	 * 
-	 * @throws RemoteException
 	 */
 	public Agent()
 	{
-		agentState = AgentState.AGENT_CREATED;
-		agentRmiPort = AgentPropertiesLoader.getAgentRmiPort();
-		agentConsole = new AgentConsole();
-		LOGGER.info("Agent created, but not started on port: " + agentRmiPort);
+		this(AgentPropertiesLoader.getAgentRmiPort());
 	}
 
 	/**
@@ -59,20 +55,19 @@ public class Agent implements Runnable
 	{
 		agentState = AgentState.AGENT_CREATED;
 		this.agentRmiPort = agentRmiPort;
-		LOGGER.info("Agent created, but not started on port: " + agentRmiPort);
+		LOGGER.info("Agent created on port: " + agentRmiPort);
 		agentConsole = new AgentConsole();
 	}
 
 	/**
 	 * Starts the Agent thread.
 	 * 
-	 * @throws InterruptedException
-	 *         - when Agent could not be created and the Thread that runs it, fails to be stopped.
 	 */
-	private void startAgentThread() throws InterruptedException
+	public void startAgentThread()
 	{
-		agentThread = new Thread(this, "AgentThread " + agentRmiPort);
-		agentState = AgentState.AGENT_RUNNING;
+		InnerRunThread innerThread = new InnerRunThread();
+		agentThread = new Thread(innerThread, "AgentRunningWaitThread");
+		// agentState = AgentState.AGENT_RUNNING;
 		agentThread.start();
 
 		try
@@ -81,64 +76,50 @@ public class Agent implements Runnable
 		}
 		catch (RemoteException e)
 		{
-			this.stop();
+			stop();
 			LOGGER.fatal("Error in RMI connection", e);
-			throw new RuntimeException("Agent could not be created");
+			throw new RuntimeException("Agent could not be created", e);
 		}
 		catch (ADBridgeFailException e)
 		{
-			this.stop();
+			stop();
 			LOGGER.fatal("Error while creating AgentManager", e);
-			throw new RuntimeException("Agent could not be created");
+			throw new RuntimeException("Agent could not be created", e);
 		}
 	}
 
-	/**
-	 * Runs the Agent on localhost and port <i>agentRmiPort</i>.
-	 */
-	@Override
-	public void run()
+	private class InnerRunThread implements Runnable
 	{
-		if (agentState == AgentState.AGENT_CREATED)
+		/**
+		 * Runs the Agent on localhost and port <i>agentRmiPort</i>.
+		 */
+		@Override
+		public void run()
 		{
+			agentState = AgentState.AGENT_RUNNING;
+
+			LOGGER.info("Running agent...");
+
 			try
 			{
-				this.startAgentThread();
+				// waiting for action requests
+				while (!isStopped())
+				{
+					Thread.sleep(1000);
+				}
 			}
 			catch (InterruptedException e)
 			{
-				LOGGER.fatal("Cannot create agent: error in starting agent thread.", e);
-				Thread.currentThread().interrupt();
+				LOGGER.fatal("Something has interrupted the current thread.", e);
+				// Thread.currentThread().interrupt();
 			}
-			return;
-		}
-
-		LOGGER.info("Running agent...");
-
-		try
-		{
-			// waiting for action requests
-			while (agentState == AgentState.AGENT_RUNNING)
+			finally
 			{
-				Thread.sleep(1000);
-			}
-		}
-		catch (InterruptedException e)
-		{
-			LOGGER.fatal("Something has interrupted the current thread.", e);
-			Thread.currentThread().interrupt();
-		}
-		finally
-		{
-			try
-			{
-				this.stop();
-				LOGGER.warn("Closed agent on adress [localhost:" + agentRmiPort + "].");
-			}
-			catch (InterruptedException e)
-			{
-				LOGGER.error("Some thread has interrupted agent thread while trying to be stopped.", e);
-				Thread.currentThread().interrupt();
+				if (!isStopped())
+				{
+					stop();
+					LOGGER.warn("Closed agent on address [localhost:" + agentRmiPort + "].");
+				}
 			}
 		}
 	}
@@ -149,17 +130,19 @@ public class Agent implements Runnable
 	 * @throws InterruptedException
 	 *         - this exception occurs when some other thread interrupts the thread in which Agent methods are running.
 	 */
-	public void stop() throws InterruptedException
+	public void stop()
 	{
 		if (agentState != AgentState.AGENT_STOPPED)
 		{
-			agentManager.close();
+			if (agentManager != null)
+			{
+				agentManager.close();
+			}
 			agentState = AgentState.AGENT_STOPPED;
-			agentThread.join();
 		}
 		else
 		{
-			LOGGER.info("The agent is already stopped.");
+			LOGGER.info("The agent is not running.");
 		}
 	}
 
@@ -276,17 +259,17 @@ public class Agent implements Runnable
 	 * @throws InterruptedException
 	 * @throws IOException
 	 */
-	private void parseAndExecuteShellCommand(String passedShellCommand) throws IOException, InterruptedException
+	private void parseAndExecuteShellCommand(String passedShellCommand) throws IOException
 	{
 		// parsing the command where character is ' ' OR ':'
 		String[] args = passedShellCommand.trim().split("[ :]");
-		String command = args[0];
 		int numberOfarguments = args.length - 1;
 		if (numberOfarguments < 0)
 		{
 			LOGGER.error("Empty command or invalid command parsing!");
 			return;
 		}
+		String command = args[0];
 		String[] params = new String[numberOfarguments];
 		for (int indexOfAdditionalArgument = 0; indexOfAdditionalArgument < numberOfarguments; indexOfAdditionalArgument++)
 		{
@@ -295,38 +278,39 @@ public class Agent implements Runnable
 		}
 
 		// executing the command
-		this.executeShellCommand(command, params);
+		executeShellCommand(command, params);
 	}
 
 	/**
 	 * Evaluates passed command and calls appropriate method of the Agent.
 	 * 
-	 * @param firstArgument
+	 * @param commandString
 	 *        - passed command for execution
 	 * @param params
 	 *        - arguments, passed to the command
 	 * @throws InterruptedException
+	 * @throws RemoteException
+	 * @throws AccessException
 	 * @throws IOException
 	 */
-	private void executeShellCommand(String firstArgument, String[] params) throws IOException, InterruptedException
+	private void executeShellCommand(String commandString, String[] params) throws AccessException, RemoteException
 	{
 		AgentConsoleCommands command = null;
 		// Enum.valueOf(String command) doesn't work as expected here
-		for (AgentConsoleCommands possibleFirstArgument : AgentConsoleCommands.values())
+		for (AgentConsoleCommands possibleCommand : AgentConsoleCommands.values())
 		{
-			if (possibleFirstArgument.getValue().equalsIgnoreCase(firstArgument))
+			String possibleCommandString = possibleCommand.getCommand();
+			if (possibleCommandString.equalsIgnoreCase(commandString))
 			{
-				command = possibleFirstArgument;
+				command = possibleCommand;
 				break;
 			}
 		}
 
 		// if the command does not match any of the enum commands
-		if (command == null && firstArgument != "")
+		if (command == null)
 		{
-			// ONLY if the user had written something in the console, print the message. Otherwise the console will
-			// be flooded if empty lines are passed as commands.
-			if (firstArgument.length() > 0)
+			if (!commandString.isEmpty())
 			{
 				agentConsole.writeLine("No such command. Type 'help' to retrieve list of available commands.");
 			}
@@ -364,15 +348,13 @@ public class Agent implements Runnable
 	 * Executes the command for running agent.
 	 * 
 	 * @param params
-	 * @throws IOException
-	 * @throws InterruptedException
 	 */
-	private void executeCommandRun(String[] params) throws IOException, InterruptedException
+	private void executeCommandRun(String[] params)
 	{
 		if (params.length != 0)
 		{
-			agentConsole.writeLine("Command '" + AgentConsoleCommands.AGENT_RUN.getValue()
-					+ "' requires no arguments. Type '" + AgentConsoleCommands.AGENT_HELP.getValue()
+			agentConsole.writeLine("Command '" + AgentConsoleCommands.AGENT_RUN.getCommand()
+					+ "' requires no arguments. Type '" + AgentConsoleCommands.AGENT_HELP.getCommand()
 					+ "' to retrieve list of available commands.");
 		}
 		else
@@ -380,7 +362,7 @@ public class Agent implements Runnable
 			// we should start the agent if it's instantiated
 			if (agentState == AgentState.AGENT_CREATED)
 			{
-				this.startAgentThread();
+				startAgentThread();
 			}
 			else
 			{
@@ -397,10 +379,10 @@ public class Agent implements Runnable
 	 * @param params
 	 *        - should be array of type: { serverIp, serverPort } or {serverPort} in which case the serverIp will be
 	 *        assumed to be "localhost"
-	 * @throws IOException
-	 *         - when writing to agent console fails for some reason.
+	 * @throws RemoteException
+	 * @throws AccessException
 	 */
-	private void executeCommandConnect(String[] params) throws IOException
+	private void executeCommandConnect(String[] params) throws AccessException, RemoteException
 	{
 		if (agentState == AgentState.AGENT_CREATED)
 		{
@@ -424,16 +406,16 @@ public class Agent implements Runnable
 			}
 			default:
 			{
-				agentConsole.writeLine("Bad arguments for command '" + AgentConsoleCommands.AGENT_CONNECT.getValue()
-						+ ". Type '" + AgentConsoleCommands.AGENT_HELP.getValue()
+				agentConsole.writeLine("Bad arguments for command '" + AgentConsoleCommands.AGENT_CONNECT.getCommand()
+						+ ". Type '" + AgentConsoleCommands.AGENT_HELP.getCommand()
 						+ "' to retrieve list of available commands.");
 				return;
 			}
 		}
-		int serverPort = -1;
+
 		try
 		{
-			serverPort = Integer.parseInt(serverPortAsString);
+			int serverPort = Integer.parseInt(serverPortAsString);
 			if (isPortValueValid(serverPort))
 			{
 				agentManager.connectToServer(serverIp, serverPort);
@@ -470,29 +452,21 @@ public class Agent implements Runnable
 	 * 
 	 * @param params
 	 *        - passed arguments to the command
-	 * @throws IOException
-	 *         - when writing to console failed for some reason.
 	 */
-	private void executeCommandHelp(String[] params) throws IOException
+	private void executeCommandHelp(String[] params)
 	{
 		if (params.length != 0)
 		{
-			agentConsole.writeLine("Command '" + AgentConsoleCommands.AGENT_HELP.getValue()
-					+ "' requires no arguments. Type '" + AgentConsoleCommands.AGENT_HELP.getValue()
+			agentConsole.writeLine("Command '" + AgentConsoleCommands.AGENT_HELP.getCommand()
+					+ "' requires no arguments. Type '" + AgentConsoleCommands.AGENT_HELP.getCommand()
 					+ "' to retrieve list of available commands.");
 		}
 		else
 		{
-			try
+			List<String> listOfCommands = AgentConsoleCommands.getListOfCommands();
+			for (String agentConsoleCommand : listOfCommands)
 			{
-				for (String agentConsoleCommand : AgentConsoleCommands.getListOfCommands())
-				{
-					agentConsole.writeLine(agentConsoleCommand);
-				}
-			}
-			catch (IOException e)
-			{
-				LOGGER.error("Error while printing information about all available console commands for agent.", e);
+				agentConsole.writeLine(agentConsoleCommand);
 			}
 		}
 	}
@@ -503,14 +477,13 @@ public class Agent implements Runnable
 	 * @param params
 	 *        - passed arguments to the command
 	 * @throws IOException
-	 * @throws InterruptedException
 	 */
-	private void executeCommandStop(String[] params) throws IOException, InterruptedException
+	private void executeCommandStop(String[] params)
 	{
 		if (params.length != 0)
 		{
-			agentConsole.writeLine("Command '" + AgentConsoleCommands.AGENT_STOP.getValue()
-					+ "' requires no arguments. Type '" + AgentConsoleCommands.AGENT_HELP.getValue()
+			agentConsole.writeLine("Command '" + AgentConsoleCommands.AGENT_STOP.getCommand()
+					+ "' requires no arguments. Type '" + AgentConsoleCommands.AGENT_HELP.getCommand()
 					+ "' to retrieve list of available commands.");
 		}
 		else
@@ -550,7 +523,7 @@ public class Agent implements Runnable
 	 * @throws InterruptedException
 	 * @throws IOException
 	 */
-	public static void main(String[] args) throws IOException, InterruptedException
+	public static void main(String[] args) throws IOException
 	{
 		// First we check if we have been passed an argument which specifies RMI port for the Agent to be ran at.
 		int portToCreateAgentOn = AgentPropertiesLoader.getAgentRmiPort();
