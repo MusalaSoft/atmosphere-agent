@@ -260,7 +260,7 @@ public class ExtendedEmulatorConsole
 		sendCommand(command);
 		return responseIsFine();
 	}
-
+	
 	/**
 	 * Sends a string to the emulator console.
 	 * 
@@ -387,6 +387,7 @@ public class ExtendedEmulatorConsole
 					{
 						return false;
 					}
+					// TODO research for existence of emulator console responses not containing "OK" or "KO"
 				}
 			}
 		}
@@ -426,12 +427,6 @@ public class ExtendedEmulatorConsole
 	 */
 	private boolean endsWithKO(int currentPosition)
 	{
-		// first check that the last 2 characters are CRLF
-		if (buffer[currentPosition - 1] != '\n' || buffer[currentPosition - 2] != '\r')
-		{
-			return false;
-		}
-
 		// now loop backward looking for the previous CRLF, or the beginning of the buffer
 		int i = 0;
 		for (i = currentPosition - 3; i >= 0; i--)
