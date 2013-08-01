@@ -58,6 +58,10 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 
 	private static final String DUMP_BATTERY_INFO_COMMAND = "dumpsys battery";
 
+	private static final String AIRPLANE_MODE_COMMAND = "settings put global airplane_mode_on ";
+
+	private static final String AIRPLANE_MODE_INTENT_COMMAND = "am broadcast -a android.intent.action.AIRPLANE_MODE --ez state ";
+
 	private File tempApkFile;
 
 	private OutputStream tempApkFileOutputStream;
@@ -436,4 +440,60 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 
 	@Override
 	public abstract void setPowerState(boolean state) throws RemoteException, CommandFailedException;
+
+	@Override
+	public void setAirplaneMode(boolean airplaneMode)
+			throws CommandFailedException,
+			RemoteException
+	{
+		String deviceOs = getDeviceInformation().getOS();
+		
+		final String DEVICE_OS_PATTERN = "(4\\.[2-9]+.*)|([5-9]+\\.\\d+.*)";
+		Pattern osPattern = Pattern.compile(DEVICE_OS_PATTERN);
+		Matcher osMatcher = osPattern.matcher(deviceOs);
+		
+		final String INTENT_COMMAND_RESPONSE = "Broadcast completed: result=0";
+		Pattern intentCommandResponsePattern = Pattern.compile(INTENT_COMMAND_RESPONSE);
+		
+		if (osMatcher.find())
+		{
+			List<String> commands = new ArrayList<String>();
+			
+			if (airplaneMode)
+			{
+				commands.add(AIRPLANE_MODE_COMMAND + "1");
+				commands.add(AIRPLANE_MODE_INTENT_COMMAND + "true");
+			}
+			else
+			{
+				commands.add(AIRPLANE_MODE_COMMAND + "0");
+				commands.add(AIRPLANE_MODE_INTENT_COMMAND + "false");
+			}
+			
+			List<String> response = executeSequenceOfShellCommands(commands);
+			
+			String commandResponse = response.get(0);
+			String intentCommandResponse = response.get(1);
+			
+			Matcher intentCommandResponseMatcher = intentCommandResponsePattern.matcher(intentCommandResponse);
+			
+			boolean isCommandSuccessful = commandResponse.isEmpty();
+			boolean isIntentCommandSuccessful = intentCommandResponseMatcher.find();
+			
+			if (!(isCommandSuccessful && isIntentCommandSuccessful))
+			{
+				throw new CommandFailedException("Setting airplane mode failed.");
+			}
+		}
+		else
+		{
+			/*
+			TODO implement setting airplane mode for devices with OS older than Android Jelly Bean 4.2 -
+			can be done by updating a row in /data/data/com.android.providers.settings/databases/settings.db global
+			table, but device needs to be rooted. Installing app on the device is an option.
+			For some helpful resources refer to ticket #2289.
+			*/
+			throw new CommandFailedException("Can not set airplane mode for device with OS " + deviceOs + ".");
+		}
+	}
 }
