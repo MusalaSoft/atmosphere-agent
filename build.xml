@@ -1,38 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<!-- WARNING: Eclipse auto-generated file.
-              Any modifications will be overwritten.
-              To include a user specific buildfile here, simply create one in the same
-              directory with the processing instruction <?eclipse.ant.import?>
-              as the first entry and export the buildfile again. -->
 <project basedir="." default="build" name="AtmosphereAgentManagerCode">
     <import file="../common-build.xml"/>
 
-    <target depends="build-subprojects, export-subprojects-jars, copy-subprojects-jars, build-project" name="build"/>
-
-    <target depends="clean" name="cleanall">
-        <ant antfile="build.xml" dir="${AtmosphereCommons.location}" inheritAll="false" target="cleanall"/>
-        <ant antfile="build.xml" dir="${AtmosphereSACommons.location}" inheritAll="false" target="cleanall"/>
-    </target>
-
-    <target name="build-subprojects">
-        <ant antfile="build.xml" dir="${AtmosphereCommons.location}" inheritAll="false" target="build"/>
-        <ant antfile="build.xml" dir="${AtmosphereSACommons.location}" inheritAll="false" target="build"/>
-    </target>
-
-    <target depends="build-subprojects" name="export-subprojects-jars">
-        <ant antfile="build.xml" dir="${AtmosphereCommons.location}" inheritAll="false" target="jar"/>
-        <ant antfile="build.xml" dir="${AtmosphereSACommons.location}" inheritAll="false" target="jar"/>
-    </target>
-
-    <target depends="export-subprojects-jars" name="copy-subprojects-jars">
-        <mkdir dir="lib"/>
-        <copy todir="lib" flatten="true">
-            <resources>
-                <file file="${AtmosphereCommons.jar}"/>
-                <file file="${AtmosphereSACommons.jar}"/>
-            </resources>
-        </copy>
-    </target>
+    <property name="dependency.projects" value="AtmosphereCommons,AtmosphereSACommons"/>
 
     <target name="init-tests">
         <mkdir dir="${testclasses.dir}"/>
@@ -42,12 +12,5 @@
             </fileset>
         </copy>
         <copy file="${agent.properties.file}" todir="${tests.run.dir}"/>
-    </target>
-
-    <target name="build-tests" depends="jar, init-tests">
-        <javac srcdir="${test.dir}" destdir="${testclasses.dir}" classpathref="test.classpath">
-            <compilerarg value="-Xlint:none"/>
-            <compilerarg value="-verbose"/>
-        </javac>
     </target>
 </project>
