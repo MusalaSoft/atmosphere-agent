@@ -45,11 +45,11 @@ public class ExtendedEmulatorConsole
 	/**
 	 * Socket read/write buffer.
 	 */
-	private byte[] buffer = new byte[1024];
+	private final byte[] buffer = new byte[1024];
 
 	private SocketChannel socketChannel;
 
-	private int port;
+	private final int port;
 
 	/**
 	 * Hash map that maps emulator console ports to ExtendedEmulatorConsole instances. Used for the singleton pattern.
@@ -207,7 +207,15 @@ public class ExtendedEmulatorConsole
 	 */
 	public synchronized boolean setBatteryState(BatteryState status) throws EmulatorConnectionFailedException
 	{
-		String command = String.format(COMMAND_POWER_STATUS_FORMAT, status.toString());
+		String statusString = status.toString();
+
+		// NOT_CHARGING battery state string in emulator console differs from that for real devices
+		if (status.equals(BatteryState.NOT_CHARGING))
+		{
+			statusString = "not-charging";
+		}
+
+		String command = String.format(COMMAND_POWER_STATUS_FORMAT, statusString);
 		return executeCommand(command);
 	}
 
@@ -260,7 +268,7 @@ public class ExtendedEmulatorConsole
 		sendCommand(command);
 		return responseIsFine();
 	}
-	
+
 	/**
 	 * Sends a string to the emulator console.
 	 * 

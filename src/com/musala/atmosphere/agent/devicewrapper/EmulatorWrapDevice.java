@@ -41,16 +41,15 @@ public class EmulatorWrapDevice extends AbstractWrapDevice
 			boolean success = emulatorConsole.setNetoworkSpeed(speeds.getKey(), speeds.getValue());
 			if (success == false)
 			{
-				LOGGER.error("ExtendedEmulatorConsole method .setNetworkSpeed(...) failed for device with serial number '"
-						+ wrappedDevice.getSerialNumber() + "'.");
-				throw new CommandFailedException("ExtendedEmulatorConsole method .setNetworkSpeed(...) failed for device with serial number '"
-						+ wrappedDevice.getSerialNumber() + "'.");
+				LOGGER.error("FAIL: Setting network speed on '" + wrappedDevice.getSerialNumber() + "'.");
+				throw new CommandFailedException("ExtendedEmulatorConsole method .setNetworkSpeed(...) "
+						+ "failed for device with serial number '" + wrappedDevice.getSerialNumber() + "'.");
 			}
 		}
 		catch (EmulatorConnectionFailedException e)
 		{
-			throw new CommandFailedException(	"Connection to the emulator console failed. See the enclosed exception for more information.",
-												e);
+			throw new CommandFailedException("Connection to the emulator console failed. "
+					+ "See the enclosed exception for more information.", e);
 		}
 		catch (NotPossibleForDeviceException e)
 		{
@@ -68,25 +67,25 @@ public class EmulatorWrapDevice extends AbstractWrapDevice
 			boolean success = emulatorConsole.setBatteryLevel(level);
 			if (success == false)
 			{
-				LOGGER.error("ExtendedEmulatorConsole method .setBatteryLevel(...) failed for device with serial number '"
-						+ wrappedDevice.getSerialNumber() + "'.");
+				LOGGER.error("FAIL: Setting battery level on '" + wrappedDevice.getSerialNumber() + "'.");
 				throw new CommandFailedException("ExtendedEmulatorConsole method .setBatteryLevel(...) failed for device with serial number '"
 						+ wrappedDevice.getSerialNumber() + "'.");
 			}
 		}
 		catch (EmulatorConnectionFailedException e)
 		{
-			throw new CommandFailedException(	"Connection to the emulator console failed. See the enclosed exception for more information.",
-												e);
+			throw new CommandFailedException("Connection to the emulator console failed."
+					+ "See the enclosed exception for more information.", e);
 		}
 		catch (IllegalArgumentException e)
 		{
-			throw new CommandFailedException(	"Illegal argument has been passed to the emulator console class. See the enclosed exception for more information.",
-												e);
+			throw new CommandFailedException("Illegal argument has been passed to the emulator console class. "
+					+ "See the enclosed exception for more information.", e);
 		}
 		catch (NotPossibleForDeviceException e)
 		{
-			// Not really possible, as this is an EmulatorWrapDevice and if the wrapped device was not an emulator, we
+			// Not really possible, as this is an EmulatorWrapDevice and if the
+			// wrapped device was not an emulator, we
 			// would not have gotten this far.
 			e.printStackTrace();
 		}
@@ -101,9 +100,36 @@ public class EmulatorWrapDevice extends AbstractWrapDevice
 	}
 
 	@Override
-	public void setBatteryState(BatteryState state) throws RemoteException
+	public void setBatteryState(BatteryState state) throws RemoteException, CommandFailedException
 	{
-		// TODO implement set battery state
+		try
+		{
+			ExtendedEmulatorConsole emulatorConsole = ExtendedEmulatorConsole.getExtendedEmulatorConsole(wrappedDevice);
+			boolean success = emulatorConsole.setBatteryState(state);
+			if (success == false)
+			{
+				LOGGER.error("FAIL: Setting battery state on '" + wrappedDevice.getSerialNumber() + "'.");
+				throw new CommandFailedException("ExtendedEmulatorConsole method .setBatteryState(...) "
+						+ "failed for device with serial number '" + wrappedDevice.getSerialNumber() + "'.");
+			}
+		}
+		catch (EmulatorConnectionFailedException e)
+		{
+			throw new CommandFailedException("Connection to the emulator console failed. "
+					+ "See the enclosed exception for more information.", e);
+		}
+		catch (IllegalArgumentException e)
+		{
+			throw new CommandFailedException("Illegal argument has been passed to the emulator console class. "
+					+ "See the enclosed exception for more information.", e);
+		}
+		catch (NotPossibleForDeviceException e)
+		{
+			// Not really possible, as this is an EmulatorWrapDevice and if the
+			// wrapped device was not an emulator, we
+			// would not have gotten this far.
+			e.printStackTrace();
+		}
 	}
 
 	@Override
@@ -115,25 +141,25 @@ public class EmulatorWrapDevice extends AbstractWrapDevice
 			boolean success = emulatorConsole.setPowerState(state);
 			if (success == false)
 			{
-				LOGGER.error("The setting of the battery state failed for device with serial number '"
-						+ wrappedDevice.getSerialNumber() + "'.");
-				throw new CommandFailedException("The setting of the battery state failed for device with serial number '"
+				LOGGER.error("FAIL: Setting power state on '" + wrappedDevice.getSerialNumber() + "'.");
+				throw new CommandFailedException("The setting of the power state failed for device with serial number '"
 						+ wrappedDevice.getSerialNumber() + "'.");
 			}
 		}
 		catch (EmulatorConnectionFailedException e)
 		{
-			throw new CommandFailedException(	"Connection to the emulator console failed. See the enclosed exception for more information.",
-												e);
+			throw new CommandFailedException("Connection to the emulator console failed. "
+					+ "See the enclosed exception for more information.", e);
 		}
 		catch (IllegalArgumentException e)
 		{
-			throw new CommandFailedException(	"Illegal argument has been passed to the emulator console class. See the enclosed exception for more information.",
-												e);
+			throw new CommandFailedException("Illegal argument has been passed to the emulator console class. "
+					+ "See the enclosed exception for more information.", e);
 		}
 		catch (NotPossibleForDeviceException e)
 		{
-			// Not really possible, as this is an EmulatorWrapDevice and if the wrapped device was not an emulator, we
+			// Not really possible, as this is an EmulatorWrapDevice and if the
+			// wrapped device was not an emulator, we
 			// would not have gotten this far.
 			e.printStackTrace();
 		}
