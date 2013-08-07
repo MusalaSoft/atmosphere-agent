@@ -108,6 +108,7 @@ public class Agent
 	{
 		InnerRunThread innerThread = new InnerRunThread();
 		agentThread = new Thread(innerThread, "AgentRunningWaitThread");
+		// agentState = AgentState.AGENT_RUNNING;
 		agentThread.start();
 
 		try
@@ -353,11 +354,11 @@ public class Agent
 		// First we check if we have been passed an argument which specifies RMI port for the Agent to be ran at.
 		int portToCreateAgentOn = 0;
 
-		String passedRmiPort = args[0];
 		try
 		{
 			if (args.length == 1)
 			{
+				String passedRmiPort = args[0];
 				portToCreateAgentOn = Short.parseShort(passedRmiPort);
 			}
 			else
