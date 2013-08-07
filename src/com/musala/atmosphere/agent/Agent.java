@@ -2,14 +2,15 @@ package com.musala.atmosphere.agent;
 
 import java.io.IOException;
 import java.rmi.AccessException;
-import java.rmi.ConnectException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
-import java.rmi.UnknownHostException;
 import java.util.List;
 
 import org.apache.log4j.Logger;
 
+import com.musala.atmosphere.agent.command.AgentCommand;
+import com.musala.atmosphere.agent.command.AgentCommandFactory;
+import com.musala.atmosphere.agent.command.AgentConsoleCommands;
 import com.musala.atmosphere.agent.util.AgentPropertiesLoader;
 import com.musala.atmosphere.commons.sa.DeviceParameters;
 import com.musala.atmosphere.commons.sa.exceptions.ADBridgeFailException;
@@ -36,6 +37,8 @@ public class Agent
 
 	private int agentRmiPort;
 
+	private AgentCommandFactory commandFactory;
+
 	/**
 	 * Creates an Agent object on the default agent rmi port ( whose value can be seen in the agent.properties file
 	 * under the name ).
@@ -43,6 +46,7 @@ public class Agent
 	public Agent()
 	{
 		this(AgentPropertiesLoader.getAgentRmiPort());
+		commandFactory = new AgentCommandFactory(this);
 	}
 
 	/**
@@ -57,6 +61,43 @@ public class Agent
 		this.agentRmiPort = agentRmiPort;
 		LOGGER.info("Agent created on port: " + agentRmiPort);
 		agentConsole = new AgentConsole();
+		commandFactory = new AgentCommandFactory(this);
+	}
+
+	public AgentState getAgentState()
+	{
+		return agentState;
+	}
+
+	public void writeToConsole(String message)
+	{
+		agentConsole.write(message);
+	}
+
+	public void writeLineToConsole(String message)
+	{
+		agentConsole.writeLine(message);
+	}
+
+	/**
+	 * Connects this Agent to a Server.
+	 * 
+	 * @param ipAddress
+	 *        server's IP address.
+	 * @param port
+	 *        server's RMI port.
+	 * @throws NotBoundException
+	 * @throws RemoteException
+	 * @throws AccessException
+	 * @throws IllegalPortException
+	 */
+	public void connectToServer(String ipAddress, int port)
+		throws AccessException,
+			RemoteException,
+			NotBoundException,
+			IllegalPortException
+	{
+		agentManager.connectToServer(ipAddress, port);
 	}
 
 	/**
@@ -67,7 +108,6 @@ public class Agent
 	{
 		InnerRunThread innerThread = new InnerRunThread();
 		agentThread = new Thread(innerThread, "AgentRunningWaitThread");
-		// agentState = AgentState.AGENT_RUNNING;
 		agentThread.start();
 
 		try
@@ -256,262 +296,48 @@ public class Agent
 	 *        - the shell command that the managing Agent person wants to execute
 	 * @return - boolean which represents if the Agent should be running if after execution of the passed command. It is
 	 *         'true' if the Agent should be running, and 'false' otherwise.
-	 * @throws InterruptedException
 	 * @throws IOException
 	 */
 	private void parseAndExecuteShellCommand(String passedShellCommand) throws IOException
 	{
 		// parsing the command where character is ' ' OR ':'
 		String[] args = passedShellCommand.trim().split("[ :]");
-		int numberOfarguments = args.length - 1;
-		if (numberOfarguments < 0)
-		{
-			LOGGER.error("Empty command or invalid command parsing!");
-			return;
-		}
+		int numberOfParams = args.length - 1;
 		String command = args[0];
-		String[] params = new String[numberOfarguments];
-		for (int indexOfAdditionalArgument = 0; indexOfAdditionalArgument < numberOfarguments; indexOfAdditionalArgument++)
-		{
-			// we exclude the first argument of the parsed command, because it is the command itself
-			params[indexOfAdditionalArgument] = args[indexOfAdditionalArgument + 1];
-		}
+		String[] params = new String[numberOfParams];
 
-		// executing the command
-		executeShellCommand(command, params);
+		// Copy args array in params shifted with one position.
+		System.arraycopy(args, 1, params, 0, numberOfParams);
+
+		if (!command.equals(""))
+		{
+			executeShellCommand(command, params);
+		}
 	}
 
 	/**
 	 * Evaluates passed command and calls appropriate method of the Agent.
 	 * 
-	 * @param commandString
+	 * @param commandName
 	 *        - passed command for execution
 	 * @param params
 	 *        - arguments, passed to the command
-	 * @throws InterruptedException
 	 * @throws RemoteException
 	 * @throws AccessException
-	 * @throws IOException
 	 */
-	private void executeShellCommand(String commandString, String[] params) throws AccessException, RemoteException
+	private void executeShellCommand(String commandName, String[] params) throws AccessException, RemoteException
 	{
-		AgentConsoleCommands command = null;
-		// Enum.valueOf(String command) doesn't work as expected here
-		for (AgentConsoleCommands possibleCommand : AgentConsoleCommands.values())
-		{
-			String possibleCommandString = possibleCommand.getCommand();
-			if (possibleCommandString.equalsIgnoreCase(commandString))
-			{
-				command = possibleCommand;
-				break;
-			}
-		}
+		AgentConsoleCommands command = AgentConsoleCommands.findCommand(commandName);
 
 		// if the command does not match any of the enum commands
 		if (command == null)
 		{
-			if (!commandString.isEmpty())
-			{
-				agentConsole.writeLine("No such command. Type 'help' to retrieve list of available commands.");
-			}
+			agentConsole.writeLine("No such command. Type 'help' to retrieve list of available commands.");
 			return;
 		}
 
-		// evaluate the command
-		switch (command)
-		{
-			case AGENT_RUN:
-			{
-				executeCommandRun(params);
-				break;
-			}
-			case AGENT_CONNECT:
-			{
-				executeCommandConnect(params);
-				break;
-			}
-			case AGENT_HELP:
-			{
-				executeCommandHelp(params);
-				break;
-			}
-			case AGENT_STOP:
-			{
-				executeCommandStop(params);
-				break;
-			}
-		}
-
-	}
-
-	/**
-	 * Executes the command for running agent.
-	 * 
-	 * @param params
-	 */
-	private void executeCommandRun(String[] params)
-	{
-		if (params.length != 0)
-		{
-			agentConsole.writeLine("Command '" + AgentConsoleCommands.AGENT_RUN.getCommand()
-					+ "' requires no arguments. Type '" + AgentConsoleCommands.AGENT_HELP.getCommand()
-					+ "' to retrieve list of available commands.");
-		}
-		else
-		{
-			// we should start the agent if it's instantiated
-			if (agentState == AgentState.AGENT_CREATED)
-			{
-				startAgentThread();
-			}
-			else
-			{
-				// agentState cannot be AGENT_STOPPED and we already checked the case of AGENT_CREATED, so the only
-				// available option here is AGENT_RUNNING
-				agentConsole.writeLine("Cannot run agent: agent already running.");
-			}
-		}
-	}
-
-	/**
-	 * Connects the agent to given Server.
-	 * 
-	 * @param params
-	 *        - should be array of type: { serverIp, serverPort } or {serverPort} in which case the serverIp will be
-	 *        assumed to be "localhost"
-	 * @throws RemoteException
-	 * @throws AccessException
-	 */
-	private void executeCommandConnect(String[] params) throws AccessException, RemoteException
-	{
-		if (agentState == AgentState.AGENT_CREATED)
-		{
-			agentConsole.writeLine("Agent not running to be connected. Run the Agent first.");
-			return;
-		}
-		String serverIp = "localhost";
-		String serverPortAsString = null;
-		switch (params.length)
-		{
-			case 2:
-			{
-				serverIp = params[0];
-				serverPortAsString = params[1];
-				break;
-			}
-			case 1:
-			{
-				serverPortAsString = params[0];
-				break;
-			}
-			default:
-			{
-				agentConsole.writeLine("Bad arguments for command '" + AgentConsoleCommands.AGENT_CONNECT.getCommand()
-						+ ". Type '" + AgentConsoleCommands.AGENT_HELP.getCommand()
-						+ "' to retrieve list of available commands.");
-				return;
-			}
-		}
-
-		try
-		{
-			int serverPort = Integer.parseInt(serverPortAsString);
-			if (isPortValueValid(serverPort))
-			{
-				agentManager.connectToServer(serverIp, serverPort);
-			}
-			else
-			{
-				LOGGER.error("Invalid port value: port must be number in the interval ["
-						+ AgentPropertiesLoader.getRmiMinimalPortValue() + "; "
-						+ AgentPropertiesLoader.getRmiMaximalPortValue() + "].");
-			}
-		}
-		catch (NumberFormatException e)
-		{
-			LOGGER.error("Passed server port is not a number!");
-			return;
-		}
-		catch (NotBoundException e)
-		{
-			LOGGER.error("No server is running.", e);
-		}
-		catch (UnknownHostException e)
-		{
-			LOGGER.error("Your IP is invalid.", e);
-		}
-		catch (ConnectException e)
-		{
-			LOGGER.error("IP is ok, but port is not. Make sure the port value is the same as the Server's port.", e);
-		}
-
-	}
-
-	/**
-	 * Evaluates command for printing information about console commands.
-	 * 
-	 * @param params
-	 *        - passed arguments to the command
-	 */
-	private void executeCommandHelp(String[] params)
-	{
-		if (params.length != 0)
-		{
-			agentConsole.writeLine("Command '" + AgentConsoleCommands.AGENT_HELP.getCommand()
-					+ "' requires no arguments. Type '" + AgentConsoleCommands.AGENT_HELP.getCommand()
-					+ "' to retrieve list of available commands.");
-		}
-		else
-		{
-			List<String> listOfCommands = AgentConsoleCommands.getListOfCommands();
-			for (String agentConsoleCommand : listOfCommands)
-			{
-				agentConsole.writeLine(agentConsoleCommand);
-			}
-		}
-	}
-
-	/**
-	 * Executes stopping command for the Agent with given parameters.
-	 * 
-	 * @param params
-	 *        - passed arguments to the command
-	 * @throws IOException
-	 */
-	private void executeCommandStop(String[] params)
-	{
-		if (params.length != 0)
-		{
-			agentConsole.writeLine("Command '" + AgentConsoleCommands.AGENT_STOP.getCommand()
-					+ "' requires no arguments. Type '" + AgentConsoleCommands.AGENT_HELP.getCommand()
-					+ "' to retrieve list of available commands.");
-		}
-		else
-		{
-			// our agent can be stopped only once; so if it is not in running state, it must be only created and
-			// not started
-			if (agentState != AgentState.AGENT_RUNNING)
-			{
-				agentConsole.writeLine("Cannot stop agent: agent is not running to be stopped. To run it, type \"run\".");
-			}
-			else
-			{
-				this.stop();
-			}
-		}
-	}
-
-	/**
-	 * Checks whether given RMi port value is valid.
-	 * 
-	 * @param rmiPort
-	 *        - int that represents the port value
-	 * @return - true, if the passed rmi port value is valid, and false otherwise
-	 */
-	public static boolean isPortValueValid(int rmiPort)
-	{
-		boolean isPortOk = (rmiPort >= AgentPropertiesLoader.getRmiMinimalPortValue() && rmiPort <= AgentPropertiesLoader.getRmiMaximalPortValue());
-		return isPortOk;
+		AgentCommand executableCommand = commandFactory.getCommandInstance(command);
+		executableCommand.execute(params);
 	}
 
 	/**
@@ -520,34 +346,30 @@ public class Agent
 	 * arguments, the Agent will be created on default port.
 	 * 
 	 * @param args
-	 * @throws InterruptedException
 	 * @throws IOException
 	 */
 	public static void main(String[] args) throws IOException
 	{
 		// First we check if we have been passed an argument which specifies RMI port for the Agent to be ran at.
-		int portToCreateAgentOn = AgentPropertiesLoader.getAgentRmiPort();
-		if (args.length == 1)
+		int portToCreateAgentOn = 0;
+
+		String passedRmiPort = args[0];
+		try
 		{
-			String passedRmiPort = args[0];
-			try
+			if (args.length == 1)
 			{
-				portToCreateAgentOn = Integer.parseInt(passedRmiPort);
+				portToCreateAgentOn = Short.parseShort(passedRmiPort);
 			}
-			catch (NumberFormatException e)
+			else
 			{
-				LOGGER.warn("Error while trying to parse given port: argument is not a number.", e);
+				portToCreateAgentOn = AgentPropertiesLoader.getAgentRmiPort();
 			}
 		}
-
-		// check if passed port value is valid ( should be in the range [0;65535] )
-		if (isPortValueValid(portToCreateAgentOn) == false)
+		catch (NumberFormatException e)
 		{
-			portToCreateAgentOn = AgentPropertiesLoader.getAgentRmiPort();
-			LOGGER.warn("Invalid port: port must be number in the interval ["
-					+ AgentPropertiesLoader.getRmiMinimalPortValue() + "; "
-					+ AgentPropertiesLoader.getRmiMaximalPortValue() + "]. Creating agent on default RMI port- "
-					+ portToCreateAgentOn);
+			String exceptionMessage = "Error while trying to parse given port: argument is not valid port number.";
+			LOGGER.error(exceptionMessage, e);
+			throw new IllegalPortException(exceptionMessage, e);
 		}
 
 		// and then we create instance of the Agent, but without running it; the User should type "run" to run the

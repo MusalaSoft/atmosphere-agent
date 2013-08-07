@@ -1,4 +1,4 @@
-package com.musala.atmosphere.agent;
+package com.musala.atmosphere.agent.command;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,11 +14,10 @@ public enum AgentConsoleCommands
 	AGENT_RUN("run", "run", "Runs the created Agent on localhost."), AGENT_CONNECT(
 			"connect",
 			"connect [IP] <port>",
-			"Connects the agent to given ATMOSPHERE Server.\n IP - ATMOSPHERE Server IP address (optional, if ommited, localhost is assumed)\n port - ATMOSPHERE Server port."), AGENT_HELP(
+			"Connects the agent to given ATMOSPHERE Server.\n"
+					+ " IP - ATMOSPHERE Server IP address (optional, if ommited, localhost is assumed)\n port - ATMOSPHERE Server port."), AGENT_HELP(
 			"help", "help", "prints all usable commands for manipulating the server."), AGENT_STOP("stop", "stop",
 			"stops the running agent on localhost.");
-
-	private static final String DESCRIPTION_PREFFIX = "	 	- ";
 
 	private String command;
 
@@ -77,5 +76,28 @@ public enum AgentConsoleCommands
 			allCommandsFullInformation.add(currentCommandInfo);
 		}
 		return allCommandsFullInformation;
+	}
+
+	/**
+	 * Search for command by given command name. Returns null if it is not found.
+	 * 
+	 * @param commandName
+	 * @return
+	 */
+	public static AgentConsoleCommands findCommand(String commandName)
+	{
+		AgentConsoleCommands resultCommand = null;
+
+		for (AgentConsoleCommands possibleCommand : AgentConsoleCommands.values())
+		{
+			String possibleCommandString = possibleCommand.getCommand();
+			if (possibleCommandString.equalsIgnoreCase(commandName))
+			{
+				resultCommand = possibleCommand;
+				break;
+			}
+		}
+
+		return resultCommand;
 	}
 }

@@ -28,8 +28,8 @@ public class AgentConsole
 	 */
 	public AgentConsole()
 	{
-		consoleReader = (BufferedReader) new BufferedReader(new InputStreamReader(System.in));
-		consoleWriter = (BufferedWriter) new BufferedWriter(new OutputStreamWriter(System.out));
+		consoleReader = new BufferedReader(new InputStreamReader(System.in));
+		consoleWriter = new BufferedWriter(new OutputStreamWriter(System.out));
 	}
 
 	/**
@@ -62,7 +62,6 @@ public class AgentConsole
 		{
 			consoleWriter.write(message);
 			consoleWriter.flush();
-
 		}
 		catch (IOException e)
 		{
@@ -71,7 +70,7 @@ public class AgentConsole
 	}
 
 	/**
-	 * Prints line of text to the console. The line consists of the given text, contatenated with the character for new
+	 * Prints line of text to the console. The line consists of the given text, concatenated with the character for new
 	 * line.
 	 * 
 	 * @param message

@@ -243,6 +243,11 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 		}
 	}
 
+	public List<IDevice> getDevicesList()
+	{
+		return devicesList;
+	}
+
 	@Override
 	public List<String> getAllDeviceWrappers() throws RemoteException
 	{
@@ -586,12 +591,27 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 	 * @throws NotBoundException
 	 * @throws RemoteException
 	 * @throws AccessException
+	 * @throws IllegalPortException
 	 */
-	public void connectToServer(String ipAddress, int port) throws AccessException, RemoteException, NotBoundException
+	public void connectToServer(String ipAddress, int port)
+		throws AccessException,
+			RemoteException,
+			NotBoundException,
+			IllegalPortException
 	{
+		if (!isPortValueValid(port))
+		{
+			throw new IllegalPortException("Given port " + port + " is not valid.");
+		}
 		Registry serverRegistry = LocateRegistry.getRegistry(ipAddress, port);
 		IConnectionRequestReceiver requestReceiver = (IConnectionRequestReceiver) serverRegistry.lookup(RmiStringConstants.CONNECTION_REQUEST_RECEIVER.toString());
 		requestReceiver.postConnectionRequest(rmiRegistryPort);
 		LOGGER.info("Connection request sent to Server with address (" + ipAddress + ":" + port + ")");
+	}
+
+	private boolean isPortValueValid(int rmiPort)
+	{
+		boolean isPortOk = (rmiPort >= AgentPropertiesLoader.getRmiMinimalPortValue() && rmiPort <= AgentPropertiesLoader.getRmiMaximalPortValue());
+		return isPortOk;
 	}
 }
