@@ -28,10 +28,12 @@ import com.android.ddmlib.SyncException;
 import com.android.ddmlib.TimeoutException;
 import com.musala.atmosphere.agent.DevicePropertyStringConstants;
 import com.musala.atmosphere.agent.devicewrapper.util.DeviceProfiler;
+import com.musala.atmosphere.agent.util.AgentPropertiesLoader;
 import com.musala.atmosphere.agent.util.DeviceScreenResolutionParser;
 import com.musala.atmosphere.agent.util.MemoryUnitConverter;
 import com.musala.atmosphere.commons.BatteryState;
 import com.musala.atmosphere.commons.CommandFailedException;
+import com.musala.atmosphere.commons.DeviceOrientation;
 import com.musala.atmosphere.commons.Pair;
 import com.musala.atmosphere.commons.sa.DeviceInformation;
 import com.musala.atmosphere.commons.sa.IWrapDevice;
@@ -120,11 +122,13 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 	public String executeShellCommand(String command) throws RemoteException, CommandFailedException
 	{
 		String response = "";
+		final int COMMAND_EXECUTION_TIMEOUT = AgentPropertiesLoader.getCommandExecutionTimeout();
 
 		try
 		{
 			CollectingOutputReceiver outputReceiver = new CollectingOutputReceiver();
-			wrappedDevice.executeShellCommand(command, outputReceiver);
+			wrappedDevice.executeShellCommand(command, outputReceiver, COMMAND_EXECUTION_TIMEOUT);
+
 			response = outputReceiver.getOutput();
 		}
 		catch (TimeoutException | AdbCommandRejectedException | ShellCommandUnresponsiveException | IOException e)
@@ -442,23 +446,21 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 	public abstract void setPowerState(boolean state) throws RemoteException, CommandFailedException;
 
 	@Override
-	public void setAirplaneMode(boolean airplaneMode)
-			throws CommandFailedException,
-			RemoteException
+	public void setAirplaneMode(boolean airplaneMode) throws CommandFailedException, RemoteException
 	{
 		String deviceOs = getDeviceInformation().getOS();
-		
+
 		final String DEVICE_OS_PATTERN = "(4\\.[2-9]+.*)|([5-9]+\\.\\d+.*)";
 		Pattern osPattern = Pattern.compile(DEVICE_OS_PATTERN);
 		Matcher osMatcher = osPattern.matcher(deviceOs);
-		
+
 		final String INTENT_COMMAND_RESPONSE = "Broadcast completed: result=0";
 		Pattern intentCommandResponsePattern = Pattern.compile(INTENT_COMMAND_RESPONSE);
-		
+
 		if (osMatcher.find())
 		{
 			List<String> commands = new ArrayList<String>();
-			
+
 			if (airplaneMode)
 			{
 				commands.add(AIRPLANE_MODE_COMMAND + "1");
@@ -469,17 +471,17 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 				commands.add(AIRPLANE_MODE_COMMAND + "0");
 				commands.add(AIRPLANE_MODE_INTENT_COMMAND + "false");
 			}
-			
+
 			List<String> response = executeSequenceOfShellCommands(commands);
-			
+
 			String commandResponse = response.get(0);
 			String intentCommandResponse = response.get(1);
-			
+
 			Matcher intentCommandResponseMatcher = intentCommandResponsePattern.matcher(intentCommandResponse);
-			
+
 			boolean isCommandSuccessful = commandResponse.isEmpty();
 			boolean isIntentCommandSuccessful = intentCommandResponseMatcher.find();
-			
+
 			if (!(isCommandSuccessful && isIntentCommandSuccessful))
 			{
 				throw new CommandFailedException("Setting airplane mode failed.");
@@ -488,12 +490,17 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 		else
 		{
 			/*
-			TODO implement setting airplane mode for devices with OS older than Android Jelly Bean 4.2 -
-			can be done by updating a row in /data/data/com.android.providers.settings/databases/settings.db global
-			table, but device needs to be rooted. Installing app on the device is an option.
-			For some helpful resources refer to ticket #2289.
-			*/
+			 * TODO implement setting airplane mode for devices with OS older than Android Jelly Bean 4.2 - can be done
+			 * by updating a row in /data/data/com.android.providers.settings/databases/settings.db global table, but
+			 * device needs to be rooted. Installing app on the device is an option. For some helpful resources refer to
+			 * ticket #2289.
+			 */
 			throw new CommandFailedException("Can not set airplane mode for device with OS " + deviceOs + ".");
 		}
 	}
+
+	@Override
+	public abstract void setOrientation(DeviceOrientation deviceOrientation)
+		throws RemoteException,
+			CommandFailedException;
 }

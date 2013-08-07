@@ -12,6 +12,7 @@ import java.util.HashMap;
 import com.android.ddmlib.EmulatorConsole;
 import com.android.ddmlib.IDevice;
 import com.musala.atmosphere.commons.BatteryState;
+import com.musala.atmosphere.commons.DeviceOrientation;
 import com.musala.atmosphere.commons.sa.exceptions.NotPossibleForDeviceException;
 
 /**
@@ -41,6 +42,8 @@ public class ExtendedEmulatorConsole
 	private final static String COMMAND_NETOWRK_SPEED_FORMAT = "network speed %d:%d\r\n";
 
 	private final static String COMMAND_POWER_STATE_FORMAT = "power ac %s\r\n";
+
+	private final static String COMMAND_SET_ORIENTATION_FORMAT = "sensor set orientation %s\r\n";
 
 	/**
 	 * Socket read/write buffer.
@@ -246,6 +249,22 @@ public class ExtendedEmulatorConsole
 		throws EmulatorConnectionFailedException
 	{
 		String command = String.format(COMMAND_NETOWRK_SPEED_FORMAT, uploadSpeed, downloadSpeed);
+		return executeCommand(command);
+	}
+
+	/**
+	 * Sets the orientation in space of the testing device.
+	 * 
+	 * @param deviceOrientation
+	 *        - desired device orientation.
+	 * @return
+	 * @throws EmulatorConnectionFailedException
+	 */
+	public synchronized boolean setOrientation(DeviceOrientation deviceOrientation)
+		throws EmulatorConnectionFailedException
+	{
+		String orientationToAppend = deviceOrientation.toString();
+		String command = String.format(COMMAND_SET_ORIENTATION_FORMAT, orientationToAppend);
 		return executeCommand(command);
 	}
 
@@ -459,5 +478,4 @@ public class ExtendedEmulatorConsole
 		}
 		return false;
 	}
-
 }

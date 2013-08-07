@@ -9,6 +9,7 @@ import com.musala.atmosphere.agent.devicewrapper.util.EmulatorConnectionFailedEx
 import com.musala.atmosphere.agent.devicewrapper.util.ExtendedEmulatorConsole;
 import com.musala.atmosphere.commons.BatteryState;
 import com.musala.atmosphere.commons.CommandFailedException;
+import com.musala.atmosphere.commons.DeviceOrientation;
 import com.musala.atmosphere.commons.Pair;
 import com.musala.atmosphere.commons.sa.exceptions.NotPossibleForDeviceException;
 
@@ -164,5 +165,38 @@ public class EmulatorWrapDevice extends AbstractWrapDevice
 			e.printStackTrace();
 		}
 
+	}
+
+	@Override
+	public void setOrientation(DeviceOrientation deviceOrientation) throws RemoteException, CommandFailedException
+	{
+		try
+		{
+			ExtendedEmulatorConsole emulatorConsole = ExtendedEmulatorConsole.getExtendedEmulatorConsole(wrappedDevice);
+			boolean success = emulatorConsole.setOrientation(deviceOrientation);
+			if (success == false)
+			{
+				LOGGER.error("FAIL: Setting orientation on '" + wrappedDevice.getSerialNumber() + "'.");
+				throw new CommandFailedException("The setting of the power state failed for device with serial number '"
+						+ wrappedDevice.getSerialNumber() + "'.");
+			}
+		}
+		catch (EmulatorConnectionFailedException e)
+		{
+			throw new CommandFailedException("Connection to the emulator console failed. "
+					+ "See the enclosed exception for more information.", e);
+		}
+		catch (IllegalArgumentException e)
+		{
+			throw new CommandFailedException("Illegal argument has been passed to the emulator console class. "
+					+ "See the enclosed exception for more information.", e);
+		}
+		catch (NotPossibleForDeviceException e)
+		{
+			// Not really possible, as this is an EmulatorWrapDevice and if the
+			// wrapped device was not an emulator, we
+			// would not have gotten this far.
+			e.printStackTrace();
+		}
 	}
 }

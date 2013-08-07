@@ -8,6 +8,7 @@ import com.android.ddmlib.IDevice;
 import com.musala.atmosphere.agent.devicewrapper.util.BatteryChangedIntentData;
 import com.musala.atmosphere.commons.BatteryState;
 import com.musala.atmosphere.commons.CommandFailedException;
+import com.musala.atmosphere.commons.DeviceOrientation;
 import com.musala.atmosphere.commons.Pair;
 import com.musala.atmosphere.commons.sa.exceptions.NotPossibleForDeviceException;
 
@@ -209,5 +210,12 @@ public class RealWrapDevice extends AbstractWrapDevice
 			powerState = "ACTION_POWER_DISCONNECTED";
 		}
 		executeShellCommand("am broadcast -a android.intent.action." + powerState);
+	}
+
+	@Override
+	public void setOrientation(DeviceOrientation deviceOrientation) throws RemoteException, CommandFailedException
+	{
+		// We can't set device orientation on real device
+		throw new CommandFailedException("Can not set device orientation on real devices.");
 	}
 }

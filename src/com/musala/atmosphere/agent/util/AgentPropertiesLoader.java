@@ -167,4 +167,15 @@ public class AgentPropertiesLoader
 		return returnValueInt;
 	}
 
+	/**
+	 * Returns the timeout for command execution.
+	 * 
+	 * @return - int, the timeout for command execution.
+	 */
+	public static int getCommandExecutionTimeout()
+	{
+		String returnValueString = getPropertyString(AgentProperties.COMMAND_EXECUTION_TIMEOUT);
+		int returnValueInt = Integer.parseInt(returnValueString);
+		return returnValueInt;
+	}
 }
