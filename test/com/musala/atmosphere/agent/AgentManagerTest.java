@@ -27,7 +27,7 @@ import com.android.ddmlib.Log;
 import com.android.ddmlib.TimeoutException;
 import com.musala.atmosphere.agent.util.AgentPropertiesLoader;
 import com.musala.atmosphere.commons.CommandFailedException;
-import com.musala.atmosphere.commons.sa.DeviceInformation;
+import com.musala.atmosphere.commons.DeviceInformation;
 import com.musala.atmosphere.commons.sa.IWrapDevice;
 import com.musala.atmosphere.commons.sa.exceptions.DeviceNotFoundException;
 

@@ -103,7 +103,6 @@ public class AgentTest
 		// create the emulator
 		testedAgent.createAndStartEmulator(emulatorParameters);
 
-		// FIXME vlado should check if this logic makes sense.
 		for (int second = 0; second < MAX_EMULATOR_CREATION_TIMEOUT_IN_SECONDS; second++)
 		{
 			List<String> listOfDevices = testedAgent.getAllDevicesSerialNumbers();

@@ -5,6 +5,7 @@ import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.rmi.AccessException;
+import java.rmi.NoSuchObjectException;
 import java.rmi.NotBoundException;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
@@ -215,23 +216,23 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 			AndroidDebugBridge.terminate();
 
 			// Remove all items in the registry so the RMI threads will be closed
-			String[] rmiIds = rmiRegistry.list();
-			for (String currentRmiIdObject : rmiIds)
-			{
-				Object registeredObject = rmiRegistry.lookup(currentRmiIdObject);
-				rmiRegistry.unbind(currentRmiIdObject);
-				try
-				{
-					UnicastRemoteObject.unexportObject((Remote) registeredObject, true);
-				}
-				catch (Exception e)
-				{
-					LOGGER.warn("Could not unexport RMI object with ID: " + currentRmiIdObject);
-				}
-			}
-
 			if (rmiRegistry != null)
 			{
+				String[] rmiIds = rmiRegistry.list();
+				for (String currentRmiIdObject : rmiIds)
+				{
+					Object registeredObject = rmiRegistry.lookup(currentRmiIdObject);
+					rmiRegistry.unbind(currentRmiIdObject);
+					try
+					{
+						UnicastRemoteObject.unexportObject((Remote) registeredObject, true);
+					}
+					catch (NoSuchObjectException e)
+					{
+						LOGGER.warn("Could not unexport RMI object with ID: " + currentRmiIdObject);
+					}
+				}
+
 				UnicastRemoteObject.unexportObject(rmiRegistry, true);
 			}
 		}
