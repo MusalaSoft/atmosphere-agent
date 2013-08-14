@@ -360,28 +360,22 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 		// TODO VALIDATE GETUIXML on AbstractWrapDevice
 		executeShellCommand(dumpCommand);
 
-		StringBuilder uiDumpBuilder = new StringBuilder();
-
 		try
 		{
 			wrappedDevice.pullFile(XMLDUMP_REMOTE_FILE_NAME, XMLDUMP_LOCAL_FILE_NAME);
 
 			File xmlDumpFile = new File(XMLDUMP_LOCAL_FILE_NAME);
-			Scanner xmlDumpFileScanner = new Scanner(xmlDumpFile);
-			while (xmlDumpFileScanner.hasNextLine())
-			{
-				String xmlLine = xmlDumpFileScanner.nextLine();
-				uiDumpBuilder.append(xmlLine);
-			}
+			Scanner xmlDumpFileScanner = new Scanner(xmlDumpFile, "UTF-8");
+			xmlDumpFileScanner.useDelimiter("\\Z");
+			String uiDumpContents = xmlDumpFileScanner.next();
+			xmlDumpFileScanner.close();
+			return uiDumpContents;
 		}
 		catch (SyncException | IOException | AdbCommandRejectedException | TimeoutException e)
 		{
 			LOGGER.error("UI dump failed.", e);
 			throw new CommandFailedException("UI dump failed. See the enclosed exception for more information.", e);
 		}
-
-		String uiDumpContents = uiDumpBuilder.toString();
-		return uiDumpContents;
 	}
 
 	@Override
