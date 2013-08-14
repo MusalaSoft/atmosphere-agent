@@ -42,9 +42,6 @@ public class AgentManagerTest
 	@Before
 	public void setUp() throws Exception
 	{
-		System.out.println();
-
-		// TODO extract to config file
 		DdmPreferences.setLogLevel("warn");
 		Log.setLogOutput(new DdmLibLogListener(Level.ALL, false /* do no log to a file */));
 

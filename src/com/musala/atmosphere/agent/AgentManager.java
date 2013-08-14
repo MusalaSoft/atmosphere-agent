@@ -205,7 +205,6 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 	 */
 	public void close()
 	{
-		LOGGER.info("Closing the AgentManager.");
 		try
 		{
 			// We close the bridge and adb service, so bridge creation wont fail next time we try. This is a workaround,
@@ -226,6 +225,7 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 					try
 					{
 						UnicastRemoteObject.unexportObject((Remote) registeredObject, true);
+
 					}
 					catch (NoSuchObjectException e)
 					{
@@ -242,6 +242,7 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 			// Nothing to do here.
 			e.printStackTrace();
 		}
+		LOGGER.info("AgentManager closed.");
 	}
 
 	public List<IDevice> getDevicesList()
