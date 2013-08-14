@@ -335,11 +335,18 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 	}
 
 	@Override
-	public void discardAPK() throws RemoteException, IOException
+	public void discardAPK() throws RemoteException
 	{
 		if (tempApkFileOutputStream != null)
 		{
-			tempApkFileOutputStream.close();
+			try
+			{
+				tempApkFileOutputStream.close();
+			}
+			catch (IOException e)
+			{
+				// closing failed, it was never functional. nothing to do here.
+			}
 			tempApkFileOutputStream = null;
 		}
 
