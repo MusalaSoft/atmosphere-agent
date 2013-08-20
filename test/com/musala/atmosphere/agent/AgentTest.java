@@ -1,21 +1,15 @@
 package com.musala.atmosphere.agent;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 import java.io.IOException;
-import java.lang.reflect.Field;
-import java.rmi.RemoteException;
 import java.util.List;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.android.ddmlib.IDevice;
 import com.musala.atmosphere.agent.util.AgentPropertiesLoader;
 import com.musala.atmosphere.commons.Pair;
 import com.musala.atmosphere.commons.sa.DeviceParameters;
@@ -33,7 +27,7 @@ public class AgentTest
 	public void setUp() throws Exception
 	{
 		testedAgent = new Agent(AGENT_PORT);
-		testedAgent.startAgentThread();
+		testedAgent.run();
 	}
 
 	@After
@@ -50,40 +44,6 @@ public class AgentTest
 	{
 		assertTrue(	"Port of Agent doesn't match with the port we wanted to create Agent on.",
 					AGENT_PORT == testedAgent.getAgentRmiPort());
-	}
-
-	@Test
-	public void getAllDevicesSerialNumbersTest()
-		throws RemoteException,
-			NoSuchFieldException,
-			SecurityException,
-			IllegalArgumentException,
-			IllegalAccessException
-	{
-		Field agentManagerField = testedAgent.getClass().getDeclaredField("agentManager");
-		agentManagerField.setAccessible(true);
-		AgentManager agentManagerOnAgent = (AgentManager) agentManagerField.get(testedAgent);
-
-		final String mockDeviceSerialNumber = "mdsn";
-		IDevice mockDevice = mock(IDevice.class);
-		when(mockDevice.getSerialNumber()).thenReturn(mockDeviceSerialNumber);
-
-		agentManagerOnAgent.registerDeviceOnAgent(mockDevice);
-
-		boolean present = agentManagerOnAgent.isDevicePresent(mockDeviceSerialNumber);
-		assertTrue("Device with serial number '" + mockDeviceSerialNumber
-				+ "' should be present as we just registered it.", present);
-
-		agentManagerOnAgent.unregisterDeviceOnAgent(mockDevice);
-		present = agentManagerOnAgent.isDevicePresent(mockDeviceSerialNumber);
-		assertFalse("Device with serial number '" + mockDeviceSerialNumber
-				+ "' should not be present as we just unregistered it.", present);
-
-		present = agentManagerOnAgent.isDevicePresent(null);
-		assertFalse("Device with serial number null should not be present on agent", present);
-
-		present = agentManagerOnAgent.isDevicePresent("");
-		assertFalse("Device with serial number \"\" should not be present on agent", present);
 	}
 
 	@Test

@@ -4,40 +4,39 @@ import java.io.IOException;
 import java.rmi.AccessException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
+import java.util.Date;
 import java.util.List;
 
 import org.apache.log4j.Logger;
 
+import com.android.ddmlib.IDevice;
 import com.musala.atmosphere.agent.command.AgentCommand;
 import com.musala.atmosphere.agent.command.AgentCommandFactory;
 import com.musala.atmosphere.agent.command.AgentConsoleCommands;
+import com.musala.atmosphere.agent.state.AgentState;
+import com.musala.atmosphere.agent.state.StoppedAgent;
 import com.musala.atmosphere.agent.util.AgentPropertiesLoader;
 import com.musala.atmosphere.commons.sa.DeviceParameters;
-import com.musala.atmosphere.commons.sa.exceptions.ADBridgeFailException;
 import com.musala.atmosphere.commons.sa.exceptions.DeviceNotFoundException;
 import com.musala.atmosphere.commons.sa.exceptions.NotPossibleForDeviceException;
 
 /**
  * This class creates Agent objects which can be manipulated from the user.
  * 
- * @author vladimir.vladimirov
+ * @author vladimir.vladimirov, nikola.taushanov
  * 
  */
 public class Agent
 {
 	private static final Logger LOGGER = Logger.getLogger(Agent.class.getCanonicalName());
 
-	private AgentManager agentManager;
-
-	private AgentConsole agentConsole;
-
-	private AgentState agentState;
-
-	private Thread agentThread;
-
 	private int agentRmiPort;
 
 	private AgentCommandFactory commandFactory;
+
+	private AgentState currentAgentState;
+
+	private boolean closed;
 
 	/**
 	 * Creates an Agent object on the default agent rmi port ( whose value can be seen in the agent.properties file
@@ -46,7 +45,6 @@ public class Agent
 	public Agent()
 	{
 		this(AgentPropertiesLoader.getAgentRmiPort());
-		commandFactory = new AgentCommandFactory(this);
 	}
 
 	/**
@@ -57,26 +55,43 @@ public class Agent
 	 */
 	public Agent(int agentRmiPort)
 	{
-		agentState = AgentState.AGENT_CREATED;
+		closed = false;
 		this.agentRmiPort = agentRmiPort;
 		LOGGER.info("Agent created on port: " + agentRmiPort);
-		agentConsole = new AgentConsole();
 		commandFactory = new AgentCommandFactory(this);
+		currentAgentState = new StoppedAgent(this);
 	}
 
-	public AgentState getAgentState()
+	/**
+	 * Gets the date and time in which the Agent was run on.
+	 * 
+	 * @return - the specified date
+	 */
+	public Date getStartDate()
 	{
-		return agentState;
+		return currentAgentState.getStartDate();
 	}
 
+	/**
+	 * Writes string to the agent's console output.
+	 * 
+	 * @param message
+	 *        - the message that will be written
+	 */
 	public void writeToConsole(String message)
 	{
-		agentConsole.write(message);
+		currentAgentState.writeToConsole(message);
 	}
 
+	/**
+	 * Writes line to the agent's console output.
+	 * 
+	 * @param message
+	 *        - the message that will be written
+	 */
 	public void writeLineToConsole(String message)
 	{
-		agentConsole.writeLine(message);
+		currentAgentState.writeLineToConsole(message);
 	}
 
 	/**
@@ -97,94 +112,54 @@ public class Agent
 			NotBoundException,
 			IllegalPortException
 	{
-		agentManager.connectToServer(ipAddress, port);
+		currentAgentState.connectToServer(ipAddress, port);
 	}
 
 	/**
-	 * Starts the Agent thread.
+	 * Gets the IP of the server which the agent is connected to.
 	 * 
+	 * @return - the specified IP address of the server
 	 */
-	public void startAgentThread()
+	public String getServerIp()
 	{
-		InnerRunThread innerThread = new InnerRunThread();
-		agentThread = new Thread(innerThread, "AgentRunningWaitThread");
-		// agentState = AgentState.AGENT_RUNNING;
-		agentThread.start();
-
-		try
-		{
-			agentManager = new AgentManager(AgentPropertiesLoader.getPathToADB(), agentRmiPort);
-		}
-		catch (RemoteException e)
-		{
-			stop();
-			LOGGER.fatal("Error in RMI connection", e);
-			throw new RuntimeException("Agent could not be created", e);
-		}
-		catch (ADBridgeFailException e)
-		{
-			stop();
-			LOGGER.fatal("Error while creating AgentManager", e);
-			throw new RuntimeException("Agent could not be created", e);
-		}
+		String serverIpAddress = currentAgentState.getServerIp();
+		return serverIpAddress;
 	}
 
-	private class InnerRunThread implements Runnable
+	/**
+	 * Gets the RMI Port which the server uses to connect to the agent.
+	 * 
+	 * @return - the specified RMI Port
+	 */
+	public int getServerRmiPort()
 	{
-		/**
-		 * Runs the Agent on localhost and port <i>agentRmiPort</i>.
-		 */
-		@Override
-		public void run()
-		{
-			agentState = AgentState.AGENT_RUNNING;
+		int serverRmiPort = currentAgentState.getServerRmiPort();
+		return serverRmiPort;
+	}
 
-			LOGGER.info("Running agent...");
-
-			try
-			{
-				// waiting for action requests
-				while (!isStopped())
-				{
-					Thread.sleep(1000);
-				}
-			}
-			catch (InterruptedException e)
-			{
-				LOGGER.fatal("Something has interrupted the current thread.", e);
-				// Thread.currentThread().interrupt();
-			}
-			finally
-			{
-				if (!isStopped())
-				{
-					stop();
-					LOGGER.warn("Closed agent on address [localhost:" + agentRmiPort + "].");
-				}
-			}
-		}
+	/**
+	 * Runs the agent.
+	 */
+	public void run()
+	{
+		currentAgentState.run();
 	}
 
 	/**
 	 * Stops the agent thread and disconnects the Android Debug Bridge.
-	 * 
-	 * @throws InterruptedException
-	 *         - this exception occurs when some other thread interrupts the thread in which Agent methods are running.
 	 */
 	public void stop()
 	{
-		if (agentState != AgentState.AGENT_STOPPED)
-		{
-			if (agentManager != null)
-			{
-				agentManager.close();
-			}
-			agentState = AgentState.AGENT_STOPPED;
-		}
-		else
-		{
-			LOGGER.info("The agent is not running.");
-		}
+		currentAgentState.stop();
+	}
+
+	/**
+	 * Stops the agent and exits.
+	 */
+	public void close()
+	{
+		currentAgentState.stop();
+		closed = true;
 	}
 
 	/**
@@ -206,8 +181,19 @@ public class Agent
 	 */
 	public List<String> getAllDevicesSerialNumbers() throws RemoteException
 	{
-		List<String> deviceSerialNumbers = agentManager.getAllDeviceWrappers();
+		List<String> deviceSerialNumbers = currentAgentState.getAllDevicesSerialNumbers();
 		return deviceSerialNumbers;
+	}
+
+	/**
+	 * Gets list with all devices attached to this Agent.
+	 * 
+	 * @return - list of IDevices containing the attached devices.
+	 */
+	public List<IDevice> getAllAttachedDevices()
+	{
+		List<IDevice> attachedDevices = currentAgentState.getAllAttachedDevices();
+		return attachedDevices;
 	}
 
 	/**
@@ -219,7 +205,7 @@ public class Agent
 	 */
 	public void createAndStartEmulator(DeviceParameters parameters) throws IOException
 	{
-		agentManager.createAndStartEmulator(parameters);
+		currentAgentState.createAndStartEmulator(parameters);
 	}
 
 	/**
@@ -239,7 +225,7 @@ public class Agent
 			NotPossibleForDeviceException,
 			DeviceNotFoundException
 	{
-		agentManager.closeEmulator(deviceSN);
+		currentAgentState.closeEmulatorBySerialNumber(deviceSN);
 	}
 
 	/**
@@ -261,32 +247,20 @@ public class Agent
 			DeviceNotFoundException,
 			NotPossibleForDeviceException
 	{
-		agentManager.eraseEmulator(deviceSN);
-	}
-
-	/**
-	 * Checks whether the Agent has been stopped.
-	 * 
-	 * @return - true, if agent state is <b><i>AGENT_STOPPED</i></b>, and false if agent state is
-	 *         <b><i>AGENT_CREATED</i></b> or <b><i>AGENT_RUNNING</i></b>.
-	 */
-	public boolean isStopped()
-	{
-		boolean isAgentStopped = (agentState == AgentState.AGENT_STOPPED);
-		return isAgentStopped;
+		currentAgentState.removeEmulatorBySerialNumber(deviceSN);
 	}
 
 	/**
 	 * Reads one line from the agent's console. For more information see
-	 * {@link com.musala.atmosphere.agent.AgentConsole#readLine() AgentConsole.readLine()}
+	 * {@link com.musala.atmosphere.commons.sa.ConsoleControl#readCommand() AgentConsole.readLine()}
 	 * 
 	 * @return - the first line in the console buffer as a String.
 	 * @throws IOException
 	 *         - when an error occurs when trying to read from console
 	 */
-	private String readCommandFromConsole() throws IOException
+	private String readFromConsole() throws IOException
 	{
-		String command = agentConsole.readLine();
+		String command = currentAgentState.readCommandFromConsole();
 		return command;
 	}
 
@@ -333,12 +307,27 @@ public class Agent
 		// if the command does not match any of the enum commands
 		if (command == null)
 		{
-			agentConsole.writeLine("No such command. Type 'help' to retrieve list of available commands.");
+			currentAgentState.writeLineToConsole("No such command. Type 'help' to retrieve list of available commands.");
 			return;
 		}
 
 		AgentCommand executableCommand = commandFactory.getCommandInstance(command);
 		executableCommand.execute(params);
+	}
+
+	/**
+	 * Sets the current state of the agent.
+	 * 
+	 * @param state
+	 */
+	public void setState(AgentState state)
+	{
+		currentAgentState = state;
+	}
+
+	private boolean isClosed()
+	{
+		return closed;
 	}
 
 	/**
@@ -376,10 +365,12 @@ public class Agent
 		// and then we create instance of the Agent, but without running it; the User should type "run" to run the
 		// Agent
 		Agent localAgent = new Agent(portToCreateAgentOn);
+		localAgent.executeShellCommand(AgentConsoleCommands.AGENT_RUN.getCommand(), null);
+
 		do
 		{
-			String passedShellCommand = localAgent.readCommandFromConsole();
+			String passedShellCommand = localAgent.readFromConsole();
 			localAgent.parseAndExecuteShellCommand(passedShellCommand);
-		} while (localAgent.isStopped() == false);
+		} while (!localAgent.isClosed());
 	}
 }

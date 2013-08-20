@@ -3,14 +3,15 @@ package com.musala.atmosphere.agent.command;
 import com.musala.atmosphere.agent.Agent;
 
 /**
- * Stops the agent.
+ * Command which is executed when the user wants to close and exit the agent.
  * 
  * @author nikola.taushanov
  * 
  */
-public class StopCommand extends NoParamsAgentCommand
+public class ExitCommand extends NoParamsAgentCommand
 {
-	public StopCommand(Agent agent)
+
+	public ExitCommand(Agent agent)
 	{
 		super(agent);
 	}
@@ -18,6 +19,6 @@ public class StopCommand extends NoParamsAgentCommand
 	@Override
 	protected void executeCommand(String[] params)
 	{
-		agent.stop();
+		agent.close();
 	}
 }

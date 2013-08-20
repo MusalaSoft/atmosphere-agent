@@ -8,9 +8,14 @@ import java.rmi.UnknownHostException;
 import org.apache.log4j.Logger;
 
 import com.musala.atmosphere.agent.Agent;
-import com.musala.atmosphere.agent.AgentState;
 import com.musala.atmosphere.agent.IllegalPortException;
 
+/**
+ * Command which is executed when the user request a connection to a server.
+ * 
+ * @author nikola.taushanov
+ * 
+ */
 public class ConnectCommand extends AgentCommand
 {
 	private static final Logger LOGGER = Logger.getLogger(Agent.class.getCanonicalName());
@@ -23,7 +28,7 @@ public class ConnectCommand extends AgentCommand
 	@Override
 	protected boolean verifyParams(String[] params)
 	{
-		if (params.length == 1 || params.length == 2)
+		if (params != null && (params.length == 1 || params.length == 2))
 		{
 			return true;
 		}
@@ -36,12 +41,6 @@ public class ConnectCommand extends AgentCommand
 	@Override
 	public void executeCommand(String[] params)
 	{
-		if (agent.getAgentState() == AgentState.AGENT_CREATED)
-		{
-			agent.writeLineToConsole("Agent not running to be connected. Run the Agent first.");
-			return;
-		}
-
 		String serverIp = "localhost";
 		String serverPortAsString = null;
 		if (params.length == 1)

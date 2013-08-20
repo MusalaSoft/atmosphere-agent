@@ -67,6 +67,10 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 
 	private final String agentId;
 
+	private String serverIPAddress;
+
+	private int serverRmiPort;
+
 	// CopyOnWriteArrayList, as we will not have many devices (more than 10 or 15 practically) connected on a single
 	// agent and we are concerned about the DeviceChangeListener not to break things.
 	private volatile List<IDevice> devicesList = new CopyOnWriteArrayList<IDevice>();
@@ -154,6 +158,16 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 		AndroidDebugBridge.addDeviceChangeListener(currentDeviceChangeListener);
 	}
 
+	public String getServerIPAddress()
+	{
+		return serverIPAddress;
+	}
+
+	public int getServerRmiPort()
+	{
+		return serverRmiPort;
+	}
+
 	/**
 	 * Gets the initial devices list (IDevices). Gets called in the AgentManager constructor.
 	 * 
@@ -205,6 +219,7 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 	 */
 	public void close()
 	{
+		LOGGER.info("Closing the AgentManager.");
 		try
 		{
 			// We close the bridge and adb service, so bridge creation wont fail next time we try. This is a workaround,
@@ -225,7 +240,6 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 					try
 					{
 						UnicastRemoteObject.unexportObject((Remote) registeredObject, true);
-
 					}
 					catch (NoSuchObjectException e)
 					{
@@ -242,7 +256,6 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 			// Nothing to do here.
 			e.printStackTrace();
 		}
-		LOGGER.info("AgentManager closed.");
 	}
 
 	public List<IDevice> getDevicesList()
@@ -308,7 +321,7 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 	 */
 	String unregisterDeviceOnAgent(IDevice disconnectedDevice)
 	{
-		if (devicesList.contains(disconnectedDevice) == false)
+		if (!devicesList.contains(disconnectedDevice))
 		{
 			// The device was never registered, so nothing to do here.
 			// This should not normally happen!
@@ -418,18 +431,6 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 		return rmiWrapperBindingId;
 	}
 
-	@Override
-	public boolean isDevicePresent(String serialNumber) throws RemoteException
-	{
-		// FIXME REMOVE THIS METHOD
-		for (IDevice device : devicesList)
-		{
-			if (device.getSerialNumber() == serialNumber)
-				return true;
-		}
-		return false;
-	}
-
 	/**
 	 * Returns an IDevice by it's specified serial number.
 	 * 
@@ -455,7 +456,7 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 	public void createAndStartEmulator(DeviceParameters parameters) throws RemoteException, IOException
 	{
 		EmulatorManager emulatorManager = EmulatorManager.getInstance();
-		String createdEmulatorName = emulatorManager.createAndStartEmulator(parameters);
+		emulatorManager.createAndStartEmulator(parameters);
 	}
 
 	// FIXME remove/edit this method
@@ -468,7 +469,7 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 		IDevice device = getDeviceBySerialNumber(serialNumber);
 
 		// If a device is a real, physical device, throw an exception
-		if (device.isEmulator() == false)
+		if (!device.isEmulator())
 		{
 			throw new NotPossibleForDeviceException("Cannot close a real device.");
 		}
@@ -567,6 +568,9 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 	@Override
 	public void registerServer(String serverIPAddress, int serverRmiPort) throws RemoteException
 	{
+		this.serverIPAddress = serverIPAddress;
+		this.serverRmiPort = serverRmiPort;
+
 		// Try to construct a new device change listener that will notify the newly set server
 		DeviceChangeListener newDeviceChangeListener = new DeviceChangeListener(serverIPAddress,
 																				serverRmiPort,

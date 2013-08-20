@@ -1,9 +1,7 @@
 package com.musala.atmosphere.agent;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -62,52 +60,6 @@ public class AgentManagerTest
 	{
 		List<String> list = agentManager.getAllDeviceWrappers();
 		assertNotNull("The devices information list should never be 'null'.", list);
-	}
-
-	@Test
-	public void testIsDevicePresentWithNullAndEmpty() throws RemoteException
-	{
-		boolean present = agentManager.isDevicePresent(null);
-		assertFalse("Device with serial number 'null' should never be present.", present);
-
-		present = agentManager.isDevicePresent("");
-		assertFalse("Device with empty serial number should never be present.", present);
-	}
-
-	@Test
-	public void testIsDevicePresentWithValidSerialNumber()
-		throws RemoteException,
-			TimeoutException,
-			AdbCommandRejectedException,
-			CommandFailedException
-	{
-		final String mockDeviceSerialNumber = "lol";
-		IDevice mockDevice = mock(IDevice.class);
-		when(mockDevice.getSerialNumber()).thenReturn(mockDeviceSerialNumber);
-
-		agentManager.registerDeviceOnAgent(mockDevice);
-		boolean present = agentManager.isDevicePresent(mockDeviceSerialNumber);
-		assertTrue("Device with serial number '" + mockDeviceSerialNumber
-				+ "' should be present as we just registered it.", present);
-
-		agentManager.unregisterDeviceOnAgent(mockDevice);
-		present = agentManager.isDevicePresent(mockDeviceSerialNumber);
-		assertFalse("Device with serial number '" + mockDeviceSerialNumber
-				+ "' should not be present as we just unregistered it.", present);
-	}
-
-	@Test
-	public void testIsDevicePresentWithNull() throws RemoteException, DeviceNotFoundException
-	{
-		boolean present = agentManager.isDevicePresent(null);
-		assertFalse("Device with serial number null can never be present.", present);
-	}
-
-	@Test
-	public void testIsDevicePresentWithEmpty() throws RemoteException, DeviceNotFoundException
-	{
-		boolean present = agentManager.isDevicePresent("");
-		assertFalse("Device with empty serial number can never be present.", present);
 	}
 
 	@Test

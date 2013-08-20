@@ -48,6 +48,31 @@ public class AgentCommandFactory
 				resultCommand = new StopCommand(agent);
 				break;
 			}
+			case AGENT_DEVICES:
+			{
+				resultCommand = new ListDevicesCommand(agent);
+				break;
+			}
+			case AGENT_SERVER_ADDRESS:
+			{
+				resultCommand = new ServerAddressCommand(agent);
+				break;
+			}
+			case AGENT_EXIT:
+			{
+				resultCommand = new ExitCommand(agent);
+				break;
+			}
+			case AGENT_UPTIME:
+			{
+				resultCommand = new UptimeCommand(agent);
+				break;
+			}
+			case AGENT_PERFORMANCE:
+			{
+				resultCommand = new PerformanceScoreCommand(agent);
+				break;
+			}
 		}
 
 		return resultCommand;

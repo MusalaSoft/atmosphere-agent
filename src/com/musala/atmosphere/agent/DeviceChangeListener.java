@@ -20,10 +20,6 @@ class DeviceChangeListener implements IDeviceChangeListener
 {
 	private AgentManager agentManagerRefference;
 
-	private String serverIPAddress;
-
-	private int serverRmiPort;
-
 	private String agentId;
 
 	private IAgentEventSender agentEventSender;
@@ -52,8 +48,6 @@ class DeviceChangeListener implements IDeviceChangeListener
 			String agentId,
 			AgentManager agentManagerRefference) throws RemoteException
 	{
-		this.serverIPAddress = serverIPAddress;
-		this.serverRmiPort = serverRmiPort;
 		this.agentId = agentId;
 		this.agentManagerRefference = agentManagerRefference;
 
