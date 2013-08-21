@@ -284,9 +284,6 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 	 * @param connectedDevice
 	 *        the newly connected device.
 	 * @return the RMI binding ID of the newly bound wrapper.
-	 * @throws CommandFailedException
-	 * @throws AdbCommandRejectedException
-	 * @throws TimeoutException
 	 */
 	String registerDeviceOnAgent(IDevice connectedDevice)
 	{
