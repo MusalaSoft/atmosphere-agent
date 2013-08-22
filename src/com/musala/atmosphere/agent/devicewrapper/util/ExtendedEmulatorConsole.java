@@ -248,7 +248,7 @@ public class ExtendedEmulatorConsole
 	 * @return True if setting the network speed was successful, false otherwise.
 	 * @throws EmulatorConnectionFailedException
 	 */
-	public synchronized boolean setNetoworkSpeed(int uploadSpeed, int downloadSpeed)
+	public synchronized boolean setNetworkSpeed(int uploadSpeed, int downloadSpeed)
 		throws EmulatorConnectionFailedException
 	{
 		String command = String.format(COMMAND_NETOWRK_SPEED_FORMAT, uploadSpeed, downloadSpeed);

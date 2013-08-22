@@ -16,6 +16,8 @@ import com.musala.atmosphere.agent.command.AgentConsoleCommands;
 import com.musala.atmosphere.agent.state.AgentState;
 import com.musala.atmosphere.agent.state.StoppedAgent;
 import com.musala.atmosphere.agent.util.AgentPropertiesLoader;
+import com.musala.atmosphere.commons.Pair;
+import com.musala.atmosphere.commons.sa.ConsoleControl;
 import com.musala.atmosphere.commons.sa.DeviceParameters;
 import com.musala.atmosphere.commons.sa.exceptions.DeviceNotFoundException;
 import com.musala.atmosphere.commons.sa.exceptions.NotPossibleForDeviceException;
@@ -275,18 +277,21 @@ public class Agent
 	 */
 	private void parseAndExecuteShellCommand(String passedShellCommand) throws IOException
 	{
-		// parsing the command where character is ' ' OR ':'
-		String[] args = passedShellCommand.trim().split("[ :]");
-		int numberOfParams = args.length - 1;
-		String command = args[0];
-		String[] params = new String[numberOfParams];
-
-		// Copy args array in params shifted with one position.
-		System.arraycopy(args, 1, params, 0, numberOfParams);
-
-		if (!command.equals(""))
+		if (passedShellCommand != null)
 		{
-			executeShellCommand(command, params);
+			Pair<String, String[]> parsedCommand = ConsoleControl.parseShellCommand(passedShellCommand);
+			String command = parsedCommand.getKey();
+			String[] params = parsedCommand.getValue();
+
+			if (!command.isEmpty())
+			{
+				executeShellCommand(command, params);
+			}
+		}
+		else
+		{
+			LOGGER.error("Error in console: trying to execute 'null' as a command.");
+			throw new IllegalArgumentException("Command passed to agent is 'null'");
 		}
 	}
 

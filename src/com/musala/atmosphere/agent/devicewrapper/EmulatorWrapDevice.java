@@ -40,10 +40,10 @@ public class EmulatorWrapDevice extends AbstractWrapDevice
 		try
 		{
 			ExtendedEmulatorConsole emulatorConsole = ExtendedEmulatorConsole.getExtendedEmulatorConsole(wrappedDevice);
-			boolean success = emulatorConsole.setNetoworkSpeed(speeds.getKey(), speeds.getValue());
+			boolean success = emulatorConsole.setNetworkSpeed(speeds.getKey(), speeds.getValue());
 			if (!success)
 			{
-				LOGGER.error("Setting network speed on '" + wrappedDevice.getSerialNumber() + "'.");
+				LOGGER.error("Setting network speed on '" + wrappedDevice.getSerialNumber() + "' failed.");
 				throw new CommandFailedException("ExtendedEmulatorConsole method .setNetworkSpeed(...) "
 						+ "failed for device with serial number '" + wrappedDevice.getSerialNumber() + "'.");
 			}
