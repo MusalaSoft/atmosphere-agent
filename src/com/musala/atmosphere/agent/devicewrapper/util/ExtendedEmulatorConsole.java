@@ -12,6 +12,7 @@ import java.util.HashMap;
 import com.android.ddmlib.EmulatorConsole;
 import com.android.ddmlib.IDevice;
 import com.musala.atmosphere.commons.BatteryState;
+import com.musala.atmosphere.commons.DeviceAcceleration;
 import com.musala.atmosphere.commons.DeviceOrientation;
 import com.musala.atmosphere.commons.sa.exceptions.NotPossibleForDeviceException;
 
@@ -44,6 +45,8 @@ public class ExtendedEmulatorConsole
 	private final static String COMMAND_POWER_STATE_FORMAT = "power ac %s\r\n";
 
 	private final static String COMMAND_SET_ORIENTATION_FORMAT = "sensor set orientation %s\r\n";
+
+	private final static String COMMAND_SET_ACCELERATION_FORMAT = "sensor set acceleration %s\r\n";
 
 	/**
 	 * Socket read/write buffer.
@@ -265,6 +268,22 @@ public class ExtendedEmulatorConsole
 	{
 		String orientationToAppend = deviceOrientation.toString();
 		String command = String.format(COMMAND_SET_ORIENTATION_FORMAT, orientationToAppend);
+		return executeCommand(command);
+	}
+
+	/**
+	 * Sets the acceleration of the testing device.
+	 * 
+	 * @param deviceAcceleration
+	 *        - desired device acceleration.
+	 * @return
+	 * @throws EmulatorConnectionFailedException
+	 */
+	public synchronized boolean setAcceleration(DeviceAcceleration deviceAcceleration)
+		throws EmulatorConnectionFailedException
+	{
+		String accelerationToAppend = deviceAcceleration.parseCommand();
+		String command = String.format(COMMAND_SET_ACCELERATION_FORMAT, accelerationToAppend);
 		return executeCommand(command);
 	}
 

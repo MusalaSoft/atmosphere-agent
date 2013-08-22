@@ -9,6 +9,7 @@ import com.musala.atmosphere.agent.devicewrapper.util.EmulatorConnectionFailedEx
 import com.musala.atmosphere.agent.devicewrapper.util.ExtendedEmulatorConsole;
 import com.musala.atmosphere.commons.BatteryState;
 import com.musala.atmosphere.commons.CommandFailedException;
+import com.musala.atmosphere.commons.DeviceAcceleration;
 import com.musala.atmosphere.commons.DeviceOrientation;
 import com.musala.atmosphere.commons.Pair;
 import com.musala.atmosphere.commons.sa.exceptions.NotPossibleForDeviceException;
@@ -40,9 +41,9 @@ public class EmulatorWrapDevice extends AbstractWrapDevice
 		{
 			ExtendedEmulatorConsole emulatorConsole = ExtendedEmulatorConsole.getExtendedEmulatorConsole(wrappedDevice);
 			boolean success = emulatorConsole.setNetoworkSpeed(speeds.getKey(), speeds.getValue());
-			if (success == false)
+			if (!success)
 			{
-				LOGGER.error("FAIL: Setting network speed on '" + wrappedDevice.getSerialNumber() + "'.");
+				LOGGER.error("Setting network speed on '" + wrappedDevice.getSerialNumber() + "'.");
 				throw new CommandFailedException("ExtendedEmulatorConsole method .setNetworkSpeed(...) "
 						+ "failed for device with serial number '" + wrappedDevice.getSerialNumber() + "'.");
 			}
@@ -66,9 +67,9 @@ public class EmulatorWrapDevice extends AbstractWrapDevice
 		{
 			ExtendedEmulatorConsole emulatorConsole = ExtendedEmulatorConsole.getExtendedEmulatorConsole(wrappedDevice);
 			boolean success = emulatorConsole.setBatteryLevel(level);
-			if (success == false)
+			if (!success)
 			{
-				LOGGER.error("FAIL: Setting battery level on '" + wrappedDevice.getSerialNumber() + "'.");
+				LOGGER.error("Setting battery level on '" + wrappedDevice.getSerialNumber() + "'.");
 				throw new CommandFailedException("ExtendedEmulatorConsole method .setBatteryLevel(...) failed for device with serial number '"
 						+ wrappedDevice.getSerialNumber() + "'.");
 			}
@@ -107,9 +108,9 @@ public class EmulatorWrapDevice extends AbstractWrapDevice
 		{
 			ExtendedEmulatorConsole emulatorConsole = ExtendedEmulatorConsole.getExtendedEmulatorConsole(wrappedDevice);
 			boolean success = emulatorConsole.setBatteryState(state);
-			if (success == false)
+			if (!success)
 			{
-				LOGGER.error("FAIL: Setting battery state on '" + wrappedDevice.getSerialNumber() + "'.");
+				LOGGER.error("Setting battery state on '" + wrappedDevice.getSerialNumber() + "'.");
 				throw new CommandFailedException("ExtendedEmulatorConsole method .setBatteryState(...) "
 						+ "failed for device with serial number '" + wrappedDevice.getSerialNumber() + "'.");
 			}
@@ -140,9 +141,9 @@ public class EmulatorWrapDevice extends AbstractWrapDevice
 		{
 			ExtendedEmulatorConsole emulatorConsole = ExtendedEmulatorConsole.getExtendedEmulatorConsole(wrappedDevice);
 			boolean success = emulatorConsole.setPowerState(state);
-			if (success == false)
+			if (!success)
 			{
-				LOGGER.error("FAIL: Setting power state on '" + wrappedDevice.getSerialNumber() + "'.");
+				LOGGER.error("Setting power state on '" + wrappedDevice.getSerialNumber() + "'.");
 				throw new CommandFailedException("The setting of the power state failed for device with serial number '"
 						+ wrappedDevice.getSerialNumber() + "'.");
 			}
@@ -174,10 +175,43 @@ public class EmulatorWrapDevice extends AbstractWrapDevice
 		{
 			ExtendedEmulatorConsole emulatorConsole = ExtendedEmulatorConsole.getExtendedEmulatorConsole(wrappedDevice);
 			boolean success = emulatorConsole.setOrientation(deviceOrientation);
-			if (success == false)
+			if (!success)
 			{
-				LOGGER.error("FAIL: Setting orientation on '" + wrappedDevice.getSerialNumber() + "'.");
-				throw new CommandFailedException("The setting of the power state failed for device with serial number '"
+				LOGGER.error("Setting orientation on '" + wrappedDevice.getSerialNumber() + "'.");
+				throw new CommandFailedException("The setting of the device orientation failed for device with serial number '"
+						+ wrappedDevice.getSerialNumber() + "'.");
+			}
+		}
+		catch (EmulatorConnectionFailedException e)
+		{
+			throw new CommandFailedException("Connection to the emulator console failed. "
+					+ "See the enclosed exception for more information.", e);
+		}
+		catch (IllegalArgumentException e)
+		{
+			throw new CommandFailedException("Illegal argument has been passed to the emulator console class. "
+					+ "See the enclosed exception for more information.", e);
+		}
+		catch (NotPossibleForDeviceException e)
+		{
+			// Not really possible, as this is an EmulatorWrapDevice and if the
+			// wrapped device was not an emulator, we
+			// would not have gotten this far.
+			e.printStackTrace();
+		}
+	}
+
+	@Override
+	public void setAcceleration(DeviceAcceleration deviceAcceleration) throws RemoteException, CommandFailedException
+	{
+		try
+		{
+			ExtendedEmulatorConsole emulatorConsole = ExtendedEmulatorConsole.getExtendedEmulatorConsole(wrappedDevice);
+			boolean success = emulatorConsole.setAcceleration(deviceAcceleration);
+			if (!success)
+			{
+				LOGGER.error("Setting acceleration on '" + wrappedDevice.getSerialNumber() + "'.");
+				throw new CommandFailedException("The setting of the device acceleration failed for device with serial number '"
 						+ wrappedDevice.getSerialNumber() + "'.");
 			}
 		}
