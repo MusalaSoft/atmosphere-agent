@@ -88,9 +88,6 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 	 *        Port, which will be used for the RMI Registry
 	 * @throws RemoteException
 	 * @throws ADBridgeFailException
-	 * @throws CommandFailedException
-	 * @throws AdbCommandRejectedException
-	 * @throws TimeoutException
 	 */
 	public AgentManager(String adbPath, int rmiPort) throws RemoteException, ADBridgeFailException
 	{
