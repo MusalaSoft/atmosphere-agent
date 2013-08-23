@@ -146,7 +146,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 		throws RemoteException,
 			CommandFailedException
 	{
-		List<String> responses = new ArrayList<String>();
+		List<String> responses = new ArrayList<String>(commandsList.size());
 
 		for (String commandForExecution : commandsList)
 		{

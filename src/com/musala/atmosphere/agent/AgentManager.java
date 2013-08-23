@@ -611,7 +611,7 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 
 	private boolean isPortValueValid(int rmiPort)
 	{
-		boolean isPortOk = (rmiPort >= AgentPropertiesLoader.getRmiMinimalPortValue() && rmiPort <= AgentPropertiesLoader.getRmiMaximalPortValue());
+		boolean isPortOk = (rmiPort > 0 && rmiPort <= 65535);
 		return isPortOk;
 	}
 }
