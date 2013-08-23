@@ -62,6 +62,8 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 
 	private static final String AIRPLANE_MODE_COMMAND = "settings put global airplane_mode_on ";
 
+	private final String DUMP_SENSOR_SERVICE_INFO_COMMAND = "dumpsys sensorservice";
+
 	private static final String AIRPLANE_MODE_INTENT_COMMAND = "am broadcast -a android.intent.action.AIRPLANE_MODE --ez state ";
 
 	private File tempApkFile;
@@ -501,7 +503,29 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 	}
 
 	@Override
-	public abstract void setOrientation(DeviceOrientation deviceOrientation)
+	public abstract void setDeviceOrientation(DeviceOrientation deviceOrientation)
 		throws RemoteException,
 			CommandFailedException;
+
+	@Override
+	public DeviceOrientation getDeviceOrientation() throws RemoteException, CommandFailedException
+	{
+		String response = executeShellCommand(DUMP_SENSOR_SERVICE_INFO_COMMAND);
+
+		String findOrientatioSensorRegex = "(\\s)(Orientation)(.+)(last=< (.?\\d+\\.\\d), (.?\\d+\\.\\d), (.?\\d+\\.\\d)>)";
+		Pattern extractionPattern = Pattern.compile(findOrientatioSensorRegex);
+		Matcher regexMatch = extractionPattern.matcher(response);
+
+		if (!regexMatch.find())
+		{
+			throw new CommandFailedException("Getting device orientation failed.");
+		}
+
+		DeviceOrientation deviceOrientation = new DeviceOrientation();
+		deviceOrientation.setAzimuth(Float.parseFloat((regexMatch.group(5))));
+		deviceOrientation.setPitch(Float.parseFloat((regexMatch.group(6))));
+		deviceOrientation.setRoll(Float.parseFloat((regexMatch.group(7))));
+
+		return deviceOrientation;
+	}
 }

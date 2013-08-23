@@ -169,7 +169,7 @@ public class EmulatorWrapDevice extends AbstractWrapDevice
 	}
 
 	@Override
-	public void setOrientation(DeviceOrientation deviceOrientation) throws RemoteException, CommandFailedException
+	public void setDeviceOrientation(DeviceOrientation deviceOrientation) throws RemoteException, CommandFailedException
 	{
 		try
 		{

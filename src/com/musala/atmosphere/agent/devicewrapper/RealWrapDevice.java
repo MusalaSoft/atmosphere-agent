@@ -214,7 +214,7 @@ public class RealWrapDevice extends AbstractWrapDevice
 	}
 
 	@Override
-	public void setOrientation(DeviceOrientation deviceOrientation) throws RemoteException, CommandFailedException
+	public void setDeviceOrientation(DeviceOrientation deviceOrientation) throws RemoteException, CommandFailedException
 	{
 		// We can't set device orientation on real device
 		throw new CommandFailedException("Can not set device orientation on real devices.");
