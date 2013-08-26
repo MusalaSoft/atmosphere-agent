@@ -33,6 +33,7 @@ import com.musala.atmosphere.agent.util.DeviceScreenResolutionParser;
 import com.musala.atmosphere.agent.util.MemoryUnitConverter;
 import com.musala.atmosphere.commons.BatteryState;
 import com.musala.atmosphere.commons.CommandFailedException;
+import com.musala.atmosphere.commons.DeviceAcceleration;
 import com.musala.atmosphere.commons.DeviceInformation;
 import com.musala.atmosphere.commons.DeviceOrientation;
 import com.musala.atmosphere.commons.Pair;
@@ -512,8 +513,8 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 	{
 		String response = executeShellCommand(DUMP_SENSOR_SERVICE_INFO_COMMAND);
 
-		String findOrientatioSensorRegex = "(\\s)(Orientation)(.+)(last=< (.?\\d+\\.\\d), (.?\\d+\\.\\d), (.?\\d+\\.\\d)>)";
-		Pattern extractionPattern = Pattern.compile(findOrientatioSensorRegex);
+		String findOrientationSensorRegex = "(Orientation)(.+)(last=<\\s*(-{0,1}\\d+\\.\\d),\\s*(-{0,1}\\d+\\.\\d),\\s*(-{0,1}\\d+\\.\\d)>)";
+		Pattern extractionPattern = Pattern.compile(findOrientationSensorRegex);
 		Matcher regexMatch = extractionPattern.matcher(response);
 
 		if (!regexMatch.find())
@@ -521,11 +522,35 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 			throw new CommandFailedException("Getting device orientation failed.");
 		}
 
-		DeviceOrientation deviceOrientation = new DeviceOrientation();
-		deviceOrientation.setAzimuth(Float.parseFloat((regexMatch.group(5))));
-		deviceOrientation.setPitch(Float.parseFloat((regexMatch.group(6))));
-		deviceOrientation.setRoll(Float.parseFloat((regexMatch.group(7))));
+		float orientationAzimuth = Float.parseFloat((regexMatch.group(4)));
+		float orientationPitch = Float.parseFloat((regexMatch.group(5)));
+		float orientationRoll = Float.parseFloat((regexMatch.group(6)));
+		DeviceOrientation deviceOrientation = new DeviceOrientation(orientationAzimuth,
+																	orientationPitch,
+																	orientationRoll);
 
 		return deviceOrientation;
+	}
+
+	@Override
+	public DeviceAcceleration getDeviceAcceleration() throws RemoteException, CommandFailedException
+	{
+		String response = executeShellCommand(DUMP_SENSOR_SERVICE_INFO_COMMAND);
+
+		String findAccelerationSensorRegex = "(Accelerometer)(.+)(last=<\\s*(-{0,1}\\d+\\.\\d),\\s*(-{0,1}\\d+\\.\\d),\\s*(-{0,1}\\d+\\.\\d)>)";
+		Pattern extractionPattern = Pattern.compile(findAccelerationSensorRegex);
+		Matcher regexMatch = extractionPattern.matcher(response);
+
+		if (!regexMatch.find())
+		{
+			throw new CommandFailedException("Getting device orientation failed.");
+		}
+
+		float accelerationX = Float.parseFloat((regexMatch.group(4)));
+		float accelerationY = Float.parseFloat((regexMatch.group(5)));
+		float accelerationZ = Float.parseFloat((regexMatch.group(6)));
+		DeviceAcceleration deviceAcceleration = new DeviceAcceleration(accelerationX, accelerationY, accelerationZ);
+
+		return deviceAcceleration;
 	}
 }

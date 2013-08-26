@@ -266,7 +266,7 @@ public class ExtendedEmulatorConsole
 	public synchronized boolean setOrientation(DeviceOrientation deviceOrientation)
 		throws EmulatorConnectionFailedException
 	{
-		String orientationToAppend = deviceOrientation.toString();
+		String orientationToAppend = deviceOrientation.parseCommand();
 		String command = String.format(COMMAND_SET_ORIENTATION_FORMAT, orientationToAppend);
 		return executeCommand(command);
 	}
