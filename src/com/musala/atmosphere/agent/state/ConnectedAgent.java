@@ -19,7 +19,7 @@ import com.musala.atmosphere.commons.sa.ConsoleControl;
  */
 public class ConnectedAgent extends RunningAgent
 {
-	private static final Logger LOGGER = Logger.getLogger(Agent.class.getCanonicalName());
+	private static final Logger LOGGER = Logger.getLogger(ConnectedAgent.class.getCanonicalName());
 
 	public ConnectedAgent(Agent agent, AgentManager agentManager, ConsoleControl agentConsole)
 	{

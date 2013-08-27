@@ -18,7 +18,7 @@ import com.musala.atmosphere.agent.IllegalPortException;
  */
 public class ConnectCommand extends AgentCommand
 {
-	private static final Logger LOGGER = Logger.getLogger(Agent.class.getCanonicalName());
+	private static final Logger LOGGER = Logger.getLogger(ConnectCommand.class.getCanonicalName());
 
 	public ConnectCommand(Agent agent)
 	{

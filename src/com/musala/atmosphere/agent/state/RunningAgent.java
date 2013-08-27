@@ -28,7 +28,7 @@ import com.musala.atmosphere.commons.sa.exceptions.NotPossibleForDeviceException
  */
 public class RunningAgent extends AgentState
 {
-	private static final Logger LOGGER = Logger.getLogger(Agent.class.getCanonicalName());
+	private static final Logger LOGGER = Logger.getLogger(RunningAgent.class.getCanonicalName());
 
 	private Date startDate;
 

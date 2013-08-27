@@ -25,7 +25,7 @@ import com.musala.atmosphere.commons.sa.exceptions.NotPossibleForDeviceException
  */
 public class StoppedAgent extends AgentState
 {
-	private static final Logger LOGGER = Logger.getLogger(Agent.class.getCanonicalName());
+	private static final Logger LOGGER = Logger.getLogger(StoppedAgent.class.getCanonicalName());
 
 	private final String STOPPED_AGENT_ERROR_MESSAGE = "The agent is stopped.";
 

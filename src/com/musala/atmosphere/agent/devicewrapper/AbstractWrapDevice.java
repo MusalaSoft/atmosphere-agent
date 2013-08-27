@@ -27,6 +27,8 @@ import com.android.ddmlib.ShellCommandUnresponsiveException;
 import com.android.ddmlib.SyncException;
 import com.android.ddmlib.TimeoutException;
 import com.musala.atmosphere.agent.DevicePropertyStringConstants;
+import com.musala.atmosphere.agent.devicewrapper.settings.AndroidSystemSettings;
+import com.musala.atmosphere.agent.devicewrapper.settings.DeviceSettingsManager;
 import com.musala.atmosphere.agent.devicewrapper.util.DeviceProfiler;
 import com.musala.atmosphere.agent.util.AgentPropertiesLoader;
 import com.musala.atmosphere.agent.util.DeviceScreenResolutionParser;
@@ -37,6 +39,7 @@ import com.musala.atmosphere.commons.DeviceAcceleration;
 import com.musala.atmosphere.commons.DeviceInformation;
 import com.musala.atmosphere.commons.DeviceOrientation;
 import com.musala.atmosphere.commons.Pair;
+import com.musala.atmosphere.commons.ScreenOrientation;
 import com.musala.atmosphere.commons.sa.IWrapDevice;
 
 public abstract class AbstractWrapDevice extends UnicastRemoteObject implements IWrapDevice
@@ -73,11 +76,14 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 
 	protected IDevice wrappedDevice;
 
+	protected DeviceSettingsManager deviceSettings;
+
 	private final static Logger LOGGER = Logger.getLogger(AbstractWrapDevice.class.getCanonicalName());
 
 	public AbstractWrapDevice(IDevice deviceToWrap) throws RemoteException
 	{
 		wrappedDevice = deviceToWrap;
+		deviceSettings = new DeviceSettingsManager(this);
 	}
 
 	@Override
@@ -507,6 +513,26 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 	public abstract void setDeviceOrientation(DeviceOrientation deviceOrientation)
 		throws RemoteException,
 			CommandFailedException;
+
+	@Override
+	public void setAutoRotation(boolean autoRotation)
+	{
+		if (autoRotation)
+		{
+			deviceSettings.putInt(AndroidSystemSettings.ACCELEROMETER_ROTATION, 1);
+		}
+		else
+		{
+			deviceSettings.putInt(AndroidSystemSettings.ACCELEROMETER_ROTATION, 0);
+		}
+	}
+
+	@Override
+	public void setScreenOrientation(ScreenOrientation orientation)
+	{
+		setAutoRotation(false);
+		deviceSettings.putInt(AndroidSystemSettings.USER_ROTATION, orientation.getOrientationNumber());
+	}
 
 	@Override
 	public DeviceOrientation getDeviceOrientation() throws RemoteException, CommandFailedException
