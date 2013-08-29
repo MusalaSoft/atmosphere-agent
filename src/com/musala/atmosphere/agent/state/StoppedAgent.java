@@ -27,7 +27,7 @@ public class StoppedAgent extends AgentState
 {
 	private static final Logger LOGGER = Logger.getLogger(StoppedAgent.class.getCanonicalName());
 
-	private final String STOPPED_AGENT_ERROR_MESSAGE = "The agent is stopped.";
+	private final String STOPPED_AGENT_ERROR_MESSAGE = "Could not execute the command - Agent is stopped.";
 
 	public StoppedAgent(Agent agent)
 	{
@@ -89,7 +89,7 @@ public class StoppedAgent extends AgentState
 	}
 
 	@Override
-	public List<String> getAllDevicesSerialNumbers() throws RemoteException
+	public List<String> getAllDevicesSerialNumbers()
 	{
 		LOGGER.error(STOPPED_AGENT_ERROR_MESSAGE);
 		return null;
@@ -104,15 +104,6 @@ public class StoppedAgent extends AgentState
 
 	@Override
 	public void createAndStartEmulator(DeviceParameters parameters) throws IOException
-	{
-		LOGGER.error(STOPPED_AGENT_ERROR_MESSAGE);
-	}
-
-	@Override
-	public void closeEmulatorBySerialNumber(String deviceSN)
-		throws RemoteException,
-			NotPossibleForDeviceException,
-			DeviceNotFoundException
 	{
 		LOGGER.error(STOPPED_AGENT_ERROR_MESSAGE);
 	}

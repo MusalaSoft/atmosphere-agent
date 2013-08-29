@@ -27,7 +27,7 @@ public class UptimeCommand extends NoParamsAgentCommand
 		{
 			SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 			String formattedTime = dateFormatter.format(agentStartDate);
-			agent.writeLineToConsole("Agent was ran on " + formattedTime);
+			agent.writeLineToConsole("Agent was started on " + formattedTime);
 
 			String formattedTimeInterval = getTimeInterval(agentStartDate);
 			agent.writeLineToConsole("Uptime: " + formattedTimeInterval);

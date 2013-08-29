@@ -21,7 +21,7 @@ public class AgentCommandFactory
 	/**
 	 * 
 	 * @param consoleCommand
-	 * @return instance of AgentCommand which is associated with the consoleCommand
+	 * @return instance of {@link AgentCommand AgentCommand} which is associated with the passed consoleCommand.
 	 */
 	public AgentCommand getCommandInstance(AgentConsoleCommands consoleCommand)
 	{

@@ -1,9 +1,7 @@
 package com.musala.atmosphere.agent.command;
 
-import java.rmi.ConnectException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
-import java.rmi.UnknownHostException;
 
 import org.apache.log4j.Logger;
 
@@ -58,13 +56,13 @@ public class ConnectCommand extends AgentCommand
 			int serverPort = Integer.parseInt(serverPortAsString);
 			agent.connectToServer(serverIp, serverPort);
 		}
-		catch (NumberFormatException | UnknownHostException | ConnectException | IllegalPortException e)
+		catch (NumberFormatException | IllegalPortException e)
 		{
 			LOGGER.error("Server IP/Port is not valid.", e);
 		}
 		catch (NotBoundException | RemoteException e)
 		{
-			LOGGER.error("Error when connecting to server.", e);
+			LOGGER.error("Connecting to Server resulted in exception.", e);
 		}
 	}
 }

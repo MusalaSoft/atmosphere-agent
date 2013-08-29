@@ -45,7 +45,7 @@ import com.musala.atmosphere.commons.sa.IWrapDevice;
 public abstract class AbstractWrapDevice extends UnicastRemoteObject implements IWrapDevice
 {
 	/**
-	 * 
+	 * auto generated serialziation id
 	 */
 	private static final long serialVersionUID = -9122701818928360023L;
 
@@ -254,8 +254,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 		catch (ShellCommandUnresponsiveException | TimeoutException | AdbCommandRejectedException | IOException e)
 		{
 			// Shell command execution failed.
-			e.printStackTrace();
-			LOGGER.fatal("Shell command execution failed.", e);
+			LOGGER.error("Shell command execution failed.", e);
 		}
 		catch (StringIndexOutOfBoundsException e)
 		{
@@ -373,7 +372,6 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 	public String getUiXml() throws RemoteException, CommandFailedException
 	{
 		String dumpCommand = "uiautomator dump " + XMLDUMP_REMOTE_FILE_NAME;
-		// TODO VALIDATE GETUIXML on AbstractWrapDevice
 		executeShellCommand(dumpCommand);
 
 		try
@@ -458,7 +456,8 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 	@Override
 	public void setAirplaneMode(boolean airplaneMode) throws CommandFailedException, RemoteException
 	{
-		String deviceOs = getDeviceInformation().getOS();
+		DeviceInformation deviceInformation = getDeviceInformation();
+		String deviceOs = deviceInformation.getOS();
 
 		final String DEVICE_OS_PATTERN = "(4\\.[2-9]+.*)|([5-9]+\\.\\d+.*)";
 		Pattern osPattern = Pattern.compile(DEVICE_OS_PATTERN);

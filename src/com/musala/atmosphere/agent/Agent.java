@@ -23,7 +23,7 @@ import com.musala.atmosphere.commons.sa.exceptions.DeviceNotFoundException;
 import com.musala.atmosphere.commons.sa.exceptions.NotPossibleForDeviceException;
 
 /**
- * This class creates Agent objects which can be manipulated from the user.
+ * Class that instantiates the Agent ATMOSPHERE component.
  * 
  * @author vladimir.vladimirov, nikola.taushanov
  * 
@@ -41,8 +41,7 @@ public class Agent
 	private boolean closed;
 
 	/**
-	 * Creates an Agent object on the default agent rmi port ( whose value can be seen in the agent.properties file
-	 * under the name ).
+	 * Creates an Agent component bound on the specified in <i>agent.properties</i> file port.
 	 */
 	public Agent()
 	{
@@ -50,7 +49,7 @@ public class Agent
 	}
 
 	/**
-	 * Creates Agent on given RMI port.
+	 * Creates an Agent component bound on given port.
 	 * 
 	 * @param agentRmiPort
 	 *        - RMI port of the Agent.
@@ -65,20 +64,21 @@ public class Agent
 	}
 
 	/**
-	 * Gets the date and time in which the Agent was run on.
+	 * Gets the date and time on which the Agent was started.
 	 * 
-	 * @return - the specified date
+	 * @return the specified date.
 	 */
 	public Date getStartDate()
 	{
-		return currentAgentState.getStartDate();
+		Date result = currentAgentState.getStartDate();
+		return result;
 	}
 
 	/**
-	 * Writes string to the agent's console output.
+	 * Prints a string to the agent's console output.
 	 * 
 	 * @param message
-	 *        - the message that will be written
+	 *        - the message to be printed.
 	 */
 	public void writeToConsole(String message)
 	{
@@ -86,10 +86,10 @@ public class Agent
 	}
 
 	/**
-	 * Writes line to the agent's console output.
+	 * Prints a line to the agent's console output.
 	 * 
 	 * @param message
-	 *        - the message that will be written
+	 *        - the message to be printed.
 	 */
 	public void writeLineToConsole(String message)
 	{
@@ -100,27 +100,22 @@ public class Agent
 	 * Connects this Agent to a Server.
 	 * 
 	 * @param ipAddress
-	 *        server's IP address.
+	 *        - server's IP address.
 	 * @param port
-	 *        server's RMI port.
+	 *        - server's RMI port.
 	 * @throws NotBoundException
 	 * @throws RemoteException
 	 * @throws AccessException
-	 * @throws IllegalPortException
 	 */
-	public void connectToServer(String ipAddress, int port)
-		throws AccessException,
-			RemoteException,
-			NotBoundException,
-			IllegalPortException
+	public void connectToServer(String ipAddress, int port) throws AccessException, RemoteException, NotBoundException
 	{
 		currentAgentState.connectToServer(ipAddress, port);
 	}
 
 	/**
-	 * Gets the IP of the server which the agent is connected to.
+	 * Gets the IP of the server to which the agent is currently connected to.
 	 * 
-	 * @return - the specified IP address of the server
+	 * @return the current server's IP address.
 	 */
 	public String getServerIp()
 	{
@@ -129,9 +124,9 @@ public class Agent
 	}
 
 	/**
-	 * Gets the RMI Port which the server uses to connect to the agent.
+	 * Gets the port of the server to which the agent is currently connected to.
 	 * 
-	 * @return - the specified RMI Port
+	 * @return - the current server's port.
 	 */
 	public int getServerRmiPort()
 	{
@@ -140,7 +135,7 @@ public class Agent
 	}
 
 	/**
-	 * Runs the agent.
+	 * Runs the Agent.
 	 */
 	public void run()
 	{
@@ -148,7 +143,7 @@ public class Agent
 	}
 
 	/**
-	 * Stops the agent thread and disconnects the Android Debug Bridge.
+	 * Stops the Agent thread and releases the Android Debug Bridge.
 	 */
 	public void stop()
 	{
@@ -156,18 +151,18 @@ public class Agent
 	}
 
 	/**
-	 * Stops the agent and exits.
+	 * Stops the Agent and effectively closes the current process.
 	 */
 	public void close()
 	{
-		currentAgentState.stop();
+		stop();
 		closed = true;
 	}
 
 	/**
-	 * Gets the RMI port of the Agent
+	 * Gets the Agent's port.
 	 * 
-	 * @return - number of port, under which the Agent is published in RMI.
+	 * @return Agent's RMI port.
 	 */
 	public int getAgentRmiPort()
 	{
@@ -175,22 +170,21 @@ public class Agent
 	}
 
 	/**
-	 * Gets list with all serial numbers of devices, attached to this Agent.
+	 * Gets a list of all attached devices' serial numbers.
 	 * 
-	 * @return - list of Strings which are the serial numbers of the devices, attached to this Agent
-	 * @throws RemoteException
-	 *         - when there is some problem with the RMI connection
+	 * @return list of Strings that represent device serial numbers.
 	 */
-	public List<String> getAllDevicesSerialNumbers() throws RemoteException
+	public List<String> getAllDevicesSerialNumbers()
 	{
-		List<String> deviceSerialNumbers = currentAgentState.getAllDevicesSerialNumbers();
+		List<String> deviceSerialNumbers = null;
+		deviceSerialNumbers = currentAgentState.getAllDevicesSerialNumbers();
 		return deviceSerialNumbers;
 	}
 
 	/**
-	 * Gets list with all devices attached to this Agent.
+	 * Gets list of all devices attached to this Agent.
 	 * 
-	 * @return - list of IDevices containing the attached devices.
+	 * @return list of {@link IDevice IDevice} objects.
 	 */
 	public List<IDevice> getAllAttachedDevices()
 	{
@@ -199,10 +193,10 @@ public class Agent
 	}
 
 	/**
-	 * Creates and starts an emulator on this agent with desired properties.
+	 * Creates and starts an emulator with specified properties on the current Agent.
 	 * 
 	 * @param parameters
-	 *        - requred DeviceParameters for the emulator to have
+	 *        - parameters to be passed to the emulator creation procedure.
 	 * @throws IOException
 	 */
 	public void createAndStartEmulator(DeviceParameters parameters) throws IOException
@@ -211,37 +205,16 @@ public class Agent
 	}
 
 	/**
-	 * Closes given emulator.
+	 * Closes and erases an emulator by it's serial number.
 	 * 
 	 * @param deviceSN
-	 *        - the Serial number of the device we want to stop running.
+	 *        - the serial number of the emulator to be closed.
 	 * @throws RemoteException
 	 * @throws NotPossibleForDeviceException
-	 *         - when the device, corresponding to the passed device serial number, is not an emulator and, therefore,
-	 *         can not be closed
+	 *         - when the specified serial number is of a real device and, therefore, cannot be closed.
 	 * @throws DeviceNotFoundException
-	 *         - when there is no device with the given serial number
-	 */
-	public void closeEmulatorBySerialNumber(String deviceSN)
-		throws RemoteException,
-			NotPossibleForDeviceException,
-			DeviceNotFoundException
-	{
-		currentAgentState.closeEmulatorBySerialNumber(deviceSN);
-	}
-
-	/**
-	 * Closes given emulator and erases the Virtual Device, responsible for creating and starting it.
-	 * 
-	 * @param deviceSN
-	 *        - the Serial Number of the device we want to remove completely from the Agent.
-	 * @throws RemoteException
+	 *         - when there is no device with the specified serial number.
 	 * @throws IOException
-	 * @throws DeviceNotFoundException
-	 *         - when there is no device with the given serial number
-	 * @throws NotPossibleForDeviceException
-	 *         - when the device, corresponding to the passed device serial number, is not an emulator and, therefore,
-	 *         can not be closed
 	 */
 	public void removeEmulatorBySerialNumber(String deviceSN)
 		throws RemoteException,
@@ -254,11 +227,11 @@ public class Agent
 
 	/**
 	 * Reads one line from the agent's console. For more information see
-	 * {@link com.musala.atmosphere.commons.sa.ConsoleControl#readCommand() AgentConsole.readLine()}
+	 * {@link com.musala.atmosphere.commons.sa.ConsoleControl#readCommand() AgentConsole.readLine()}.
 	 * 
-	 * @return - the first line in the console buffer as a String.
+	 * @return the first line in the console buffer as a String.
 	 * @throws IOException
-	 *         - when an error occurs when trying to read from console
+	 *         - when a console reading error occurs.
 	 */
 	private String readFromConsole() throws IOException
 	{
@@ -267,52 +240,45 @@ public class Agent
 	}
 
 	/**
-	 * Executes passed shell command from the user into the console of given Agent.
+	 * Executes a passed shell command from the console.
 	 * 
 	 * @param passedShellCommand
-	 *        - the shell command that the managing Agent person wants to execute
-	 * @return - boolean which represents if the Agent should be running if after execution of the passed command. It is
-	 *         'true' if the Agent should be running, and 'false' otherwise.
+	 *        - the passed shell command.
 	 * @throws IOException
 	 */
 	private void parseAndExecuteShellCommand(String passedShellCommand) throws IOException
 	{
-		if (passedShellCommand != null)
+		if (passedShellCommand == null)
 		{
-			Pair<String, String[]> parsedCommand = ConsoleControl.parseShellCommand(passedShellCommand);
-			String command = parsedCommand.getKey();
-			String[] params = parsedCommand.getValue();
-
-			if (!command.isEmpty())
-			{
-				executeShellCommand(command, params);
-			}
+			throw new IllegalArgumentException("Shell command passed for execution can not be 'null'.");
 		}
-		else
+
+		Pair<String, String[]> parsedCommand = ConsoleControl.parseShellCommand(passedShellCommand);
+		String command = parsedCommand.getKey();
+		String[] params = parsedCommand.getValue();
+
+		if (!command.isEmpty())
 		{
-			LOGGER.error("Error in console: trying to execute 'null' as a command.");
-			throw new IllegalArgumentException("Command passed to agent is 'null'");
+			executeShellCommand(command, params);
 		}
 	}
 
 	/**
-	 * Evaluates passed command and calls appropriate method of the Agent.
+	 * Evaluates s passed command and calls the appropriate Agent method.
 	 * 
 	 * @param commandName
-	 *        - passed command for execution
+	 *        - command for execution.
 	 * @param params
-	 *        - arguments, passed to the command
-	 * @throws RemoteException
-	 * @throws AccessException
+	 *        - passed command arguments.
 	 */
-	private void executeShellCommand(String commandName, String[] params) throws AccessException, RemoteException
+	private void executeShellCommand(String commandName, String[] params)
 	{
 		AgentConsoleCommands command = AgentConsoleCommands.findCommand(commandName);
 
 		// if the command does not match any of the enum commands
 		if (command == null)
 		{
-			currentAgentState.writeLineToConsole("No such command. Type 'help' to retrieve list of available commands.");
+			currentAgentState.writeLineToConsole("Unknown command. Use 'help' to retrieve list of available commands.");
 			return;
 		}
 
@@ -321,9 +287,10 @@ public class Agent
 	}
 
 	/**
-	 * Sets the current state of the agent.
+	 * Sets the current Agent state.
 	 * 
 	 * @param state
+	 *        - the new {@link AgentState AgentState}.
 	 */
 	public void setState(AgentState state)
 	{
@@ -336,24 +303,23 @@ public class Agent
 	}
 
 	/**
-	 * Starts an Agent on localhost. It can be passed zero parameters or one parameter of type integer, which specifies
-	 * on which port the Agent will be created. If passed argument could not be converted to int, or there are more
-	 * arguments, the Agent will be created on default port.
+	 * Starts an Agent. Either no parameters or one that specifies on which port the Agent will be started can be
+	 * passed. If the passed argument could not be parsed as integer an exception is thrown. If no parameters or more
+	 * than one parameter was passed, the Agent will be created on the port specified in the properties file.
 	 * 
 	 * @param args
 	 * @throws IOException
 	 */
 	public static void main(String[] args) throws IOException
 	{
-		// First we check if we have been passed an argument which specifies RMI port for the Agent to be ran at.
+		// Check if an argument which specifies a port for the Agent was passed.
 		int portToCreateAgentOn = 0;
-
 		try
 		{
 			if (args.length == 1)
 			{
 				String passedRmiPort = args[0];
-				portToCreateAgentOn = Short.parseShort(passedRmiPort);
+				portToCreateAgentOn = Integer.parseInt(passedRmiPort);
 			}
 			else
 			{
@@ -362,13 +328,11 @@ public class Agent
 		}
 		catch (NumberFormatException e)
 		{
-			String exceptionMessage = "Error while trying to parse given port: argument is not valid port number.";
-			LOGGER.error(exceptionMessage, e);
+			String exceptionMessage = "Parsing passed port resulted in an exception.";
+			LOGGER.fatal(exceptionMessage, e);
 			throw new IllegalPortException(exceptionMessage, e);
 		}
 
-		// and then we create instance of the Agent, but without running it; the User should type "run" to run the
-		// Agent
 		Agent localAgent = new Agent(portToCreateAgentOn);
 		localAgent.executeShellCommand(AgentConsoleCommands.AGENT_RUN.getCommand(), null);
 

@@ -25,14 +25,19 @@ public class ListDevicesCommand extends NoParamsAgentCommand
 		List<IDevice> allAtachedDevices = agent.getAllAttachedDevices();
 		if (allAtachedDevices == null || allAtachedDevices.size() == 0)
 		{
-			agent.writeLineToConsole("No devices attached");
+			agent.writeLineToConsole("No devices attached.");
 		}
 		else
 		{
-			agent.writeLineToConsole("List of devices attached");
+			agent.writeLineToConsole("List of devices attached : ");
+			int counter = 1;
 			for (IDevice attachedDevice : allAtachedDevices)
 			{
-				String consoleMessage = String.format("%s %s", attachedDevice.getName(), attachedDevice.getState());
+				String consoleMessage = String.format(	"%d. %-20s %s",
+														counter,
+														attachedDevice.getState(),
+														attachedDevice.getName());
+				counter++;
 				agent.writeLineToConsole(consoleMessage);
 			}
 		}

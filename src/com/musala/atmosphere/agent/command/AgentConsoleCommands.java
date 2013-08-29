@@ -11,16 +11,17 @@ import java.util.List;
  */
 public enum AgentConsoleCommands
 {
-	AGENT_RUN("run", "run", "Runs the created Agent on localhost."), 
-	AGENT_CONNECT("connect", "connect [IP] <port>",	"Connects the agent to given ATMOSPHERE Server.\n"
-			+ " IP - ATMOSPHERE Server IP address (optional, if ommited, localhost is assumed)\n port - ATMOSPHERE Server port."), 
-	AGENT_HELP("help", "help", "Prints all usable commands for manipulating the server."), 
-	AGENT_STOP("stop", "stop", "Stops the running agent on localhost."), 
-	AGENT_DEVICES("devices", "devices", "List all devices attached."), 
-	AGENT_SERVER_ADDRESS("server-address", "server-address", "Print the address of the Server that is attached to."),
-	AGENT_EXIT("exit", "exit", "Stops the agent and exit."),
-	AGENT_UPTIME("uptime", "uptime", "Prints the time when agent was ran and the uptime."),
-	AGENT_PERFORMANCE("performance", "performance", "Returns performance score and detailed information for this agent.");
+	AGENT_RUN("run", "run", "Runs the Agent component."), AGENT_CONNECT(
+			"connect",
+			"connect [IP] <port>",
+			"Connects the agent to given ATMOSPHERE Server.\n"
+					+ " IP - ATMOSPHERE Server IP address (optional, if ommited, localhost is assumed)\n port - Server component port."), AGENT_HELP(
+			"help", "help", "Prints all available commands."), AGENT_STOP("stop", "stop", "Stops the running Agent."), AGENT_DEVICES(
+			"devices", "devices", "Lists all attached devices."), AGENT_SERVER_ADDRESS("server-address",
+			"server-address", "Print the address of the Server that this component is connected to."), AGENT_EXIT(
+			"exit", "exit", "Stops the Agent component and exits."), AGENT_UPTIME("uptime", "uptime",
+			"Prints the time when Agent was ran and the uptime."), AGENT_PERFORMANCE("performance", "performance",
+			"Returns performance score and detailed information for this Agent.");
 
 	private String command;
 
@@ -82,10 +83,10 @@ public enum AgentConsoleCommands
 	}
 
 	/**
-	 * Search for command by given command name. Returns null if it is not found.
+	 * Searches for command by given command name. Returns null if no corresponding command is found.
 	 * 
 	 * @param commandName
-	 * @return
+	 * @return an {@link AgentConsoleCommands AgentConsoleCommands} instance.
 	 */
 	public static AgentConsoleCommands findCommand(String commandName)
 	{

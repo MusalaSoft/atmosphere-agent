@@ -10,7 +10,6 @@ import java.util.List;
 import com.android.ddmlib.IDevice;
 import com.musala.atmosphere.agent.Agent;
 import com.musala.atmosphere.agent.AgentManager;
-import com.musala.atmosphere.agent.IllegalPortException;
 import com.musala.atmosphere.commons.sa.ConsoleControl;
 import com.musala.atmosphere.commons.sa.DeviceParameters;
 import com.musala.atmosphere.commons.sa.exceptions.DeviceNotFoundException;
@@ -40,15 +39,15 @@ public abstract class AgentState
 	/**
 	 * Gets the date and time in which the Agent was run on.
 	 * 
-	 * @return - the specified date
+	 * @return the specified date.
 	 */
 	public abstract Date getStartDate();
 
 	/**
-	 * Writes string to the agent's console output.
+	 * Prints a string to the Agent's console output.
 	 * 
 	 * @param message
-	 *        - the message that will be written
+	 *        - the message to be printed.
 	 */
 	public void writeToConsole(String message)
 	{
@@ -56,10 +55,10 @@ public abstract class AgentState
 	}
 
 	/**
-	 * Writes line to the agent's console output.
+	 * Prints a line to the Agent's console output.
 	 * 
 	 * @param message
-	 *        - the message that will be written
+	 *        - the message to be printed.
 	 */
 	public void writeLineToConsole(String message)
 	{
@@ -67,16 +66,16 @@ public abstract class AgentState
 	}
 
 	/**
-	 * Gets the IP of the server which the agent is connected to.
+	 * Gets the IP of the server to which the agent is currently connected to.
 	 * 
-	 * @return - the specified IP address of the server
+	 * @return the current server's IP address.
 	 */
 	public abstract String getServerIp();
 
 	/**
-	 * Gets the RMI Port which the server uses to connect to the agent.
+	 * Gets the port of the server to which the agent is currently connected to.
 	 * 
-	 * @return - the specified RMI Port
+	 * @return - the current server's port.
 	 */
 	public abstract int getServerRmiPort();
 
@@ -84,92 +83,71 @@ public abstract class AgentState
 	 * Connects this Agent to a Server.
 	 * 
 	 * @param ipAddress
-	 *        server's IP address.
+	 *        - server's IP address.
 	 * @param port
-	 *        server's RMI port.
+	 *        - server's port.
 	 * @throws NotBoundException
 	 * @throws RemoteException
 	 * @throws AccessException
-	 * @throws IllegalPortException
 	 */
 	public abstract void connectToServer(String ipAddress, int port)
 		throws AccessException,
 			RemoteException,
-			NotBoundException,
-			IllegalPortException;
+			NotBoundException;
 
 	/**
-	 * Runs the agent.
+	 * Runs the Agent.
 	 */
 	public abstract void run();
 
 	/**
-	 * Stops the agent thread and disconnects the Android Debug Bridge.
+	 * Stops the agent thread and releases the Android Debug Bridge.
 	 */
 	public abstract void stop();
 
 	/**
-	 * Gets the RMI port of the Agent
+	 * Gets the Agent's port.
 	 * 
-	 * @return - number of port, under which the Agent is published in RMI.
+	 * @return Agent's RMI port.
 	 */
 	public abstract int getAgentRmiPort();
 
 	/**
-	 * Gets list with all serial numbers of devices, attached to this Agent.
+	 * Gets a list of all attached devices' serial numbers.
 	 * 
-	 * @return - list of Strings which are the serial numbers of the devices, attached to this Agent
+	 * @return list of Strings that represent device serial numbers.
 	 * @throws RemoteException
-	 *         - when there is some problem with the RMI connection
 	 */
-	public abstract List<String> getAllDevicesSerialNumbers() throws RemoteException;
+	public abstract List<String> getAllDevicesSerialNumbers();
 
 	/**
-	 * Gets list with all devices attached to this Agent.
+	 * Gets list of all devices attached to this Agent.
 	 * 
-	 * @return - list of IDevices containing the attached devices.
+	 * @return list of {@link IDevice IDevice} objects.
 	 */
 	public abstract List<IDevice> getAllAttachedDevices();
 
 	/**
-	 * Creates and starts an emulator on this agent with desired properties.
+	 * Creates and starts an emulator with specified properties on the current Agent.
 	 * 
 	 * @param parameters
-	 *        - requred DeviceParameters for the emulator to have
+	 *        - parameters to be passed to the emulator creation procedure.
 	 * @throws IOException
 	 */
 	public abstract void createAndStartEmulator(DeviceParameters parameters) throws IOException;
 
 	/**
-	 * Closes given emulator.
+	 * Closes and erases an emulator by it's serial number.
 	 * 
 	 * @param deviceSN
-	 *        - the Serial number of the device we want to stop running.
+	 *        - the serial number of the emulator to be closed.
 	 * @throws RemoteException
 	 * @throws NotPossibleForDeviceException
-	 *         - when the device, corresponding to the passed device serial number, is not an emulator and, therefore,
-	 *         can not be closed
+	 *         - when the specified serial number is of a real device and, therefore, cannot be closed.
 	 * @throws DeviceNotFoundException
-	 *         - when there is no device with the given serial number
-	 */
-	public abstract void closeEmulatorBySerialNumber(String deviceSN)
-		throws RemoteException,
-			NotPossibleForDeviceException,
-			DeviceNotFoundException;
-
-	/**
-	 * Closes given emulator and erases the Virtual Device, responsible for creating and starting it.
-	 * 
-	 * @param deviceSN
-	 *        - the Serial Number of the device we want to remove completely from the Agent.
-	 * @throws RemoteException
+	 *         - when there is no device with the specified serial number.
 	 * @throws IOException
-	 * @throws DeviceNotFoundException
-	 *         - when there is no device with the given serial number
-	 * @throws NotPossibleForDeviceException
-	 *         - when the device, corresponding to the passed device serial number, is not an emulator and, therefore,
-	 *         can not be closed
-	 */
+	 * */
 	public abstract void removeEmulatorBySerialNumber(String deviceSN)
 		throws RemoteException,
 			IOException,
@@ -177,11 +155,11 @@ public abstract class AgentState
 			NotPossibleForDeviceException;
 
 	/**
-	 * Reads one line from the agent's console.
+	 * Reads one line from the Agent's console.
 	 * 
-	 * @return - the first line in the console buffer as a String.
+	 * @return the first line in the console buffer as a String.
 	 * @throws IOException
-	 *         - when an error occurs when trying to read from console
+	 *         - when a console reading error occurs.
 	 */
 	public String readCommandFromConsole() throws IOException
 	{

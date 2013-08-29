@@ -22,9 +22,6 @@ public abstract class NoParamsAgentCommand extends AgentCommand
 		{
 			return false;
 		}
-		else
-		{
-			return true;
-		}
+		return true;
 	}
 }

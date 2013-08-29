@@ -83,16 +83,6 @@ public class StoppedAgentTest
 	}
 
 	@Test
-	public void testCloseEmulatorBySerialNumber()
-		throws RemoteException,
-			NotPossibleForDeviceException,
-			DeviceNotFoundException
-	{
-		// This method should do nothing. Throwing an exception would be an error.
-		stoppedAgentState.closeEmulatorBySerialNumber("");
-	}
-
-	@Test
 	public void testRemoveEmulatorBySerialNumber()
 		throws RemoteException,
 			IOException,

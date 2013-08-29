@@ -23,7 +23,6 @@ public class SystemInformation
 	 */
 	public static boolean checkHaxmAvailability()
 	{
-		boolean haxmAvailable = false;
 		try
 		{
 			String[] command = {"cmd.exe", "/C", "sc query intelhaxm"};
@@ -33,10 +32,10 @@ public class SystemInformation
 			String line = reader.readLine();
 			while (line != null)
 			{
-				if (line.equals("SERVICE_NAME: intelhaxm"))
+				if (line.contains("SERVICE_NAME: intelhaxm"))
 				{
 					LOGGER.info("Haxm available.");
-					haxmAvailable = true;
+					return true;
 				}
 
 				line = reader.readLine();
@@ -44,10 +43,9 @@ public class SystemInformation
 		}
 		catch (IOException e)
 		{
-			LOGGER.warn("Can not execute command for haxm availability.", e);
-			e.printStackTrace();
+			LOGGER.warn("Could not execute haxm availability validation command.", e);
 		}
-		return haxmAvailable;
+		return false;
 	}
 
 	/**

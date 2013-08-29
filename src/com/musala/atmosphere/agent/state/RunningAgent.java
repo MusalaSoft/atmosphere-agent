@@ -12,7 +12,6 @@ import org.apache.log4j.Logger;
 import com.android.ddmlib.IDevice;
 import com.musala.atmosphere.agent.Agent;
 import com.musala.atmosphere.agent.AgentManager;
-import com.musala.atmosphere.agent.IllegalPortException;
 import com.musala.atmosphere.agent.util.AgentPropertiesLoader;
 import com.musala.atmosphere.commons.sa.ConsoleControl;
 import com.musala.atmosphere.commons.sa.DeviceParameters;
@@ -63,15 +62,15 @@ public class RunningAgent extends AgentState
 		{
 			stopAgent();
 
-			LOGGER.fatal("Error in RMI connection", e);
-			throw new RuntimeException("Agent could not be created", e);
+			LOGGER.fatal("Creating an AgentManager instance resulted in RMI exception.", e);
+			throw new RuntimeException("Agent could not be started.", e);
 		}
 		catch (ADBridgeFailException e)
 		{
 			stopAgent();
 
-			LOGGER.fatal("Error while creating AgentManager", e);
-			throw new RuntimeException("Agent could not be created", e);
+			LOGGER.fatal("Creating an AgentManager instance resulted in ADB related exception.", e);
+			throw new RuntimeException("Agent could not be started.", e);
 		}
 	}
 
@@ -84,23 +83,19 @@ public class RunningAgent extends AgentState
 	@Override
 	public String getServerIp()
 	{
-		LOGGER.warn("The agent is not connected to a server.");
+		LOGGER.warn("Agent is not connected to a server.");
 		return null;
 	}
 
 	@Override
 	public int getServerRmiPort()
 	{
-		LOGGER.warn("The agent is not connected to a server.");
+		LOGGER.warn("Agent is not connected to a server.");
 		return -1;
 	}
 
 	@Override
-	public void connectToServer(String ipAddress, int port)
-		throws AccessException,
-			RemoteException,
-			NotBoundException,
-			IllegalPortException
+	public void connectToServer(String ipAddress, int port) throws AccessException, RemoteException, NotBoundException
 	{
 		agentManager.connectToServer(ipAddress, port);
 		agent.setState(new ConnectedAgent(agent, agentManager, agentConsole));
@@ -109,7 +104,7 @@ public class RunningAgent extends AgentState
 	@Override
 	public void run()
 	{
-		LOGGER.warn("The agent is already running.");
+		LOGGER.warn("Agent is already running.");
 	}
 
 	@Override
@@ -135,7 +130,7 @@ public class RunningAgent extends AgentState
 		}
 		catch (InterruptedException e)
 		{
-			LOGGER.fatal("Something has interrupted the current thread.", e);
+			LOGGER.fatal("Agent waiting thread was interrupted.", e);
 		}
 	}
 
@@ -152,14 +147,22 @@ public class RunningAgent extends AgentState
 	@Override
 	public int getAgentRmiPort()
 	{
-		LOGGER.warn("The agent is not connected to a server.");
+		LOGGER.warn("Agent is not connected to a server.");
 		return -1;
 	}
 
 	@Override
-	public List<String> getAllDevicesSerialNumbers() throws RemoteException
+	public List<String> getAllDevicesSerialNumbers()
 	{
-		List<String> deviceSerialNumbers = agentManager.getAllDeviceWrappers();
+		List<String> deviceSerialNumbers = null;
+		try
+		{
+			deviceSerialNumbers = agentManager.getAllDeviceWrappers();
+		}
+		catch (RemoteException e)
+		{
+			// Impossible as the method is invoked locally.
+		}
 		return deviceSerialNumbers;
 	}
 
@@ -174,15 +177,6 @@ public class RunningAgent extends AgentState
 	public void createAndStartEmulator(DeviceParameters parameters) throws IOException
 	{
 		agentManager.createAndStartEmulator(parameters);
-	}
-
-	@Override
-	public void closeEmulatorBySerialNumber(String deviceSN)
-		throws RemoteException,
-			NotPossibleForDeviceException,
-			DeviceNotFoundException
-	{
-		agentManager.closeEmulator(deviceSN);
 	}
 
 	@Override
@@ -204,22 +198,18 @@ public class RunningAgent extends AgentState
 		public void run()
 		{
 			LOGGER.info("Running agent...");
-
-			try
+			while (isRunning)
 			{
-				while (isRunning)
+				try
 				{
 					Thread.sleep(1000);
 				}
+				catch (InterruptedException e)
+				{
+					LOGGER.warn("Agent wait thread was interrupted.", e);
+				}
 			}
-			catch (InterruptedException e)
-			{
-				LOGGER.warn("Something has interrupted the current thread.", e);
-			}
-			finally
-			{
-				stopAgent();
-			}
+			stopAgent();
 		}
 	}
 }

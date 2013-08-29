@@ -29,7 +29,7 @@ public class ServerAddressCommand extends NoParamsAgentCommand
 		}
 		else
 		{
-			consoleMessage = "Not connected to any server.";
+			consoleMessage = "Not connected to a Server.";
 		}
 		agent.writeLineToConsole(consoleMessage);
 	}

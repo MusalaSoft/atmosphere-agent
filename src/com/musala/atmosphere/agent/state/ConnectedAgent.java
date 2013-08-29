@@ -8,7 +8,6 @@ import org.apache.log4j.Logger;
 
 import com.musala.atmosphere.agent.Agent;
 import com.musala.atmosphere.agent.AgentManager;
-import com.musala.atmosphere.agent.IllegalPortException;
 import com.musala.atmosphere.commons.sa.ConsoleControl;
 
 /**
@@ -41,11 +40,7 @@ public class ConnectedAgent extends RunningAgent
 	}
 
 	@Override
-	public void connectToServer(String ipAddress, int port)
-		throws AccessException,
-			RemoteException,
-			NotBoundException,
-			IllegalPortException
+	public void connectToServer(String ipAddress, int port) throws AccessException, RemoteException, NotBoundException
 	{
 		LOGGER.warn("The agent is already connected to a server.");
 	}
