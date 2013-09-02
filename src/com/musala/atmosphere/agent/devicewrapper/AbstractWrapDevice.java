@@ -27,6 +27,7 @@ import com.android.ddmlib.ShellCommandUnresponsiveException;
 import com.android.ddmlib.SyncException;
 import com.android.ddmlib.TimeoutException;
 import com.musala.atmosphere.agent.DevicePropertyStringConstants;
+import com.musala.atmosphere.agent.devicewrapper.settings.AndroidGlobalSettings;
 import com.musala.atmosphere.agent.devicewrapper.settings.AndroidSystemSettings;
 import com.musala.atmosphere.agent.devicewrapper.settings.DeviceSettingsManager;
 import com.musala.atmosphere.agent.devicewrapper.util.DeviceProfiler;
@@ -64,11 +65,9 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 
 	private static final String DUMP_BATTERY_INFO_COMMAND = "dumpsys battery";
 
-	private static final String AIRPLANE_MODE_COMMAND = "settings put global airplane_mode_on ";
-
 	private final String DUMP_SENSOR_SERVICE_INFO_COMMAND = "dumpsys sensorservice";
 
-	private static final String AIRPLANE_MODE_INTENT_COMMAND = "am broadcast -a android.intent.action.AIRPLANE_MODE --ez state ";
+	private static final String AIRPLANE_MODE_INTENT_COMMAND = "am broadcast -a android.intent.action.AIRPLANE_MODE --ez state %s";
 
 	private File tempApkFile;
 
@@ -466,45 +465,26 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 		final String INTENT_COMMAND_RESPONSE = "Broadcast completed: result=0";
 		Pattern intentCommandResponsePattern = Pattern.compile(INTENT_COMMAND_RESPONSE);
 
+		int airplaneModeIntValue = airplaneMode ? 1 : 0;
+
 		if (osMatcher.find())
 		{
-			List<String> commands = new ArrayList<String>();
-
-			if (airplaneMode)
-			{
-				commands.add(AIRPLANE_MODE_COMMAND + "1");
-				commands.add(AIRPLANE_MODE_INTENT_COMMAND + "true");
-			}
-			else
-			{
-				commands.add(AIRPLANE_MODE_COMMAND + "0");
-				commands.add(AIRPLANE_MODE_INTENT_COMMAND + "false");
-			}
-
-			List<String> response = executeSequenceOfShellCommands(commands);
-
-			String commandResponse = response.get(0);
-			String intentCommandResponse = response.get(1);
-
-			Matcher intentCommandResponseMatcher = intentCommandResponsePattern.matcher(intentCommandResponse);
-
-			boolean isCommandSuccessful = commandResponse.isEmpty();
-			boolean isIntentCommandSuccessful = intentCommandResponseMatcher.find();
-
-			if (!(isCommandSuccessful && isIntentCommandSuccessful))
-			{
-				throw new CommandFailedException("Setting airplane mode failed.");
-			}
+			deviceSettings.putInt(AndroidGlobalSettings.AIRPLANE_MODE_ON, airplaneModeIntValue);
 		}
 		else
 		{
-			/*
-			 * TODO implement setting airplane mode for devices with OS older than Android Jelly Bean 4.2 - can be done
-			 * by updating a row in /data/data/com.android.providers.settings/databases/settings.db global table, but
-			 * device needs to be rooted. Installing app on the device is an option. For some helpful resources refer to
-			 * ticket #2289.
-			 */
-			throw new CommandFailedException("Can not set airplane mode for device with OS " + deviceOs + ".");
+			deviceSettings.putInt(AndroidSystemSettings.AIRPLANE_MODE_ON, airplaneModeIntValue);
+		}
+
+		String intentCommand = String.format(AIRPLANE_MODE_INTENT_COMMAND, airplaneMode);
+
+		String intentCommandResponse = executeShellCommand(intentCommand);
+
+		Matcher intentCommandResponseMatcher = intentCommandResponsePattern.matcher(intentCommandResponse);
+
+		if (!intentCommandResponseMatcher.find())
+		{
+			throw new CommandFailedException("Setting airplane mode failed.");
 		}
 	}
 

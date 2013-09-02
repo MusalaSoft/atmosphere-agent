@@ -12,6 +12,11 @@ package com.musala.atmosphere.agent.devicewrapper.settings;
 public enum AndroidSystemSettings implements IAndroidSettings
 {
 	/**
+	 * WARNING: Moved to {@link AndroidGlobalSettings} since Android 4.2.2. Whether Airplane Mode is on.
+	 */
+	AIRPLANE_MODE_ON("airplane_mode_on"),
+
+	/**
 	 * Determines whether remote devices may discover and/or connect to this device.
 	 * <P>
 	 * Type: INT
