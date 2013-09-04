@@ -56,7 +56,7 @@ public class RunningAgent extends AgentState
 
 		try
 		{
-			agentManager = new AgentManager(AgentPropertiesLoader.getPathToADB(), agent.getAgentRmiPort());
+			agentManager = new AgentManager(AgentPropertiesLoader.getADBPath(), agent.getAgentRmiPort());
 		}
 		catch (RemoteException e)
 		{

@@ -3,7 +3,7 @@ package com.musala.atmosphere.agent.util;
 import com.musala.atmosphere.commons.PropertiesLoader;
 
 /**
- * Reads agent properties from agent properties config file.
+ * Reads properties from the Agent properties config file.
  * 
  * @author valyo.yolovski
  * 
@@ -18,8 +18,8 @@ public class AgentPropertiesLoader
 	 * are returned.
 	 * 
 	 * @param property
-	 *        The Agent property to be returned.
-	 * @return Returns the desired agent property value. Returns String properties only!
+	 *        - the Agent property to be returned.
+	 * @return the desired agent property value. Returns String properties only!
 	 */
 	private synchronized static String getPropertyString(AgentProperties property)
 	{
@@ -32,22 +32,22 @@ public class AgentPropertiesLoader
 	/**
 	 * Returns the path to ADB from the config file.
 	 * 
-	 * @return
+	 * @return - the path to the Android Debug Bridge.
 	 */
-	public static String getPathToADB()
+	public static String getADBPath()
 	{
-		String returnValueString = getPropertyString(AgentProperties.PATH_TO_ADB);
+		String returnValueString = getPropertyString(AgentProperties.ADB_PATH);
 		return returnValueString;
 	}
 
 	/**
 	 * Returns the timeout for connecting with the Android Debug Bridge from the config file.
 	 * 
-	 * @return
+	 * @return - int, the timeout in miliseconds.
 	 */
-	public static int getADBridgeTimeout()
+	public static int getADBConnectionTimeout()
 	{
-		String returnValueString = getPropertyString(AgentProperties.ADBRIDGE_TIMEOUT);
+		String returnValueString = getPropertyString(AgentProperties.ADB_CONNECTION_TIMEOUT);
 		int returnValue = Integer.parseInt(returnValueString);
 		return returnValue;
 	}
@@ -55,7 +55,7 @@ public class AgentPropertiesLoader
 	/**
 	 * Returns the Agent RMI port from the config file.
 	 * 
-	 * @return
+	 * @return - the port on which the Agent is published in RMI.
 	 */
 	public static int getAgentRmiPort()
 	{
@@ -89,9 +89,9 @@ public class AgentPropertiesLoader
 	}
 
 	/**
-	 * Returns the path to android tool from the config file.
+	 * Returns the path to Android tool directory from the config file.
 	 * 
-	 * @return
+	 * @return the path to Android tool directory from the config file
 	 */
 	public static String getAndroidToolPath()
 	{
@@ -100,71 +100,47 @@ public class AgentPropertiesLoader
 	}
 
 	/**
-	 * Returns the path to the Android tools directory from the config file.
+	 * Returns the path to the Android SDK tools directory from the config file.
 	 * 
 	 * @return
 	 */
-	public static String getAndroidToolsDirPath()
+	public static String getAndroidSdkToolsDirPath()
 	{
-		String returnValueString = getPropertyString(AgentProperties.ANDROID_TOOLSDIR_PATH);
+		String returnValueString = getPropertyString(AgentProperties.ANDROID_SDK_TOOLS_PATH);
 		return returnValueString;
 	}
 
 	/**
-	 * Returns the path to the Android working directory from the config file.
+	 * Returns the path to the Android Tool working directory from the config file.
 	 * 
-	 * @return
+	 * @return the path to the Android tool working directory.
 	 */
-	public static String getAndroidWorkDirPath()
+	public static String getAndroidToolWorkDirPath()
 	{
-		String returnValueString = getPropertyString(AgentProperties.ANDROID_WORKDIR_PATH);
+		String returnValueString = getPropertyString(AgentProperties.ANDROID_TOOL_WORKDIR_PATH);
 		return returnValueString;
 	}
 
 	/**
 	 * Returns the name of the Android tools class from the config file.
 	 * 
-	 * @return
+	 * @return - the name of the class.
 	 */
 	public static String getAndroidToolClass()
 	{
-		String returnValueString = getPropertyString(AgentProperties.ANDROIDTOOL_CLASS);
+		String returnValueString = getPropertyString(AgentProperties.ANDROID_TOOL_CLASS);
 		return returnValueString;
 	}
 
 	/**
-	 * Returns the path of the emulator executable file from the config file..
+	 * Returns the path of the emulator executable file from the config file.
 	 * 
-	 * @return
+	 * @return - String, the path to the directory.
 	 */
 	public static String getEmulatorExecutable()
 	{
-		String returnValueString = getPropertyString(AgentProperties.EMULATOR_EXECUTABLE);
+		String returnValueString = getPropertyString(AgentProperties.EMULATOR_EXECUTABLE_PATH);
 		return returnValueString;
-	}
-
-	/**
-	 * Returns the minimal value for valid RMI port.
-	 * 
-	 * @return - int, which is the smallest value that can be used as number of port in java RMI.
-	 */
-	public static int getRmiMinimalPortValue()
-	{
-		String returnValueString = getPropertyString(AgentProperties.RMI_MINIMAL_PORT_VALUE);
-		int returnValueInt = Integer.parseInt(returnValueString);
-		return returnValueInt;
-	}
-
-	/**
-	 * Returns the maximal value for valid RMI port.
-	 * 
-	 * @return - int, which is the biggest value that can be used as number of port in java RMI.
-	 */
-	public static int getRmiMaximalPortValue()
-	{
-		String returnValueString = getPropertyString(AgentProperties.RMI_MAXIMAL_PORT_VALUE);
-		int returnValueInt = Integer.parseInt(returnValueString);
-		return returnValueInt;
 	}
 
 	/**

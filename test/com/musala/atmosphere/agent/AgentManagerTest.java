@@ -35,7 +35,7 @@ public class AgentManagerTest
 
 	private static final int RMI_PORT = AgentPropertiesLoader.getAgentRmiPort();
 
-	private static final String PATH_TO_ADB = AgentPropertiesLoader.getPathToADB();
+	private static final String PATH_TO_ADB = AgentPropertiesLoader.getADBPath();
 
 	@Before
 	public void setUp() throws Exception

@@ -201,10 +201,10 @@ public class EmulatorManager implements IDeviceChangeListener
 		androidToolCommandBuilder.append("java"); // The android tool is a java application
 		androidToolCommandBuilder.append(" \"-Dcom.android.sdkmanager.toolsdir="); // We must set this variable to the
 																					// tools SDK folder
-		androidToolCommandBuilder.append(AgentPropertiesLoader.getAndroidToolsDirPath());
+		androidToolCommandBuilder.append(AgentPropertiesLoader.getAndroidSdkToolsDirPath());
 		androidToolCommandBuilder.append("\" \"-Dcom.android.sdkmanager.workdir="); // We must set this variable to a
 																					// desired temp folder
-		androidToolCommandBuilder.append(AgentPropertiesLoader.getAndroidWorkDirPath());
+		androidToolCommandBuilder.append(AgentPropertiesLoader.getAndroidToolWorkDirPath());
 		androidToolCommandBuilder.append("\" -classpath \"");
 		androidToolCommandBuilder.append(AgentPropertiesLoader.getAndroidToolPath());
 		androidToolCommandBuilder.append(File.separator);
@@ -246,7 +246,7 @@ public class EmulatorManager implements IDeviceChangeListener
 	private String sendCommandToEmulatorTool(List<String> parameters, String commandInput) throws IOException
 	{
 		List<String> command = new LinkedList<String>();
-		command.add(AgentPropertiesLoader.getAndroidToolsDirPath() + File.separator
+		command.add(AgentPropertiesLoader.getAndroidSdkToolsDirPath() + File.separator
 				+ AgentPropertiesLoader.getEmulatorExecutable());
 		command.addAll(parameters);
 
@@ -267,7 +267,7 @@ public class EmulatorManager implements IDeviceChangeListener
 	private Process sendCommandToEmulatorToolAndReturn(List<String> parameters, String commandInput) throws IOException
 	{
 		List<String> command = new LinkedList<String>();
-		command.add(AgentPropertiesLoader.getAndroidToolsDirPath() + File.separator
+		command.add(AgentPropertiesLoader.getAndroidSdkToolsDirPath() + File.separator
 				+ AgentPropertiesLoader.getEmulatorExecutable());
 		command.addAll(parameters);
 

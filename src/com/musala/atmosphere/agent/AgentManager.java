@@ -190,7 +190,7 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 			{
 			}
 			// let's not wait > timeout milliseconds.
-			if (timeout * 100 > AgentPropertiesLoader.getADBridgeTimeout())
+			if (timeout * 100 > AgentPropertiesLoader.getADBConnectionTimeout())
 			{
 				LOGGER.fatal("Timeout getting initial device list.");
 
