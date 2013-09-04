@@ -1,6 +1,8 @@
 package com.musala.atmosphere.agent.devicewrapper;
 
 import java.rmi.RemoteException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
 
@@ -8,8 +10,10 @@ import com.android.ddmlib.IDevice;
 import com.musala.atmosphere.agent.devicewrapper.util.BatteryChangedIntentData;
 import com.musala.atmosphere.commons.BatteryState;
 import com.musala.atmosphere.commons.CommandFailedException;
+import com.musala.atmosphere.commons.ConnectionType;
 import com.musala.atmosphere.commons.DeviceAcceleration;
 import com.musala.atmosphere.commons.DeviceOrientation;
+import com.musala.atmosphere.commons.MobileDataState;
 import com.musala.atmosphere.commons.Pair;
 import com.musala.atmosphere.commons.sa.exceptions.NotPossibleForDeviceException;
 
@@ -214,16 +218,52 @@ public class RealWrapDevice extends AbstractWrapDevice
 	}
 
 	@Override
-	public void setDeviceOrientation(DeviceOrientation deviceOrientation) throws RemoteException, CommandFailedException
+	public void setDeviceOrientation(DeviceOrientation deviceOrientation)
+		throws RemoteException,
+			CommandFailedException
 	{
-		// We can't set device orientation on real device
+		// We can't set device orientation on real device.
 		throw new CommandFailedException("Can not set device orientation on real devices.");
 	}
 
 	@Override
 	public void setAcceleration(DeviceAcceleration deviceAcceleration) throws RemoteException, CommandFailedException
 	{
-		// We can't set device acceleration on real device
+		// We can't set device acceleration on real device.
 		throw new CommandFailedException("Can not set device acceleration on real devices.");
+	}
+
+	@Override
+	public void setMobileDataState(MobileDataState state) throws CommandFailedException
+	{
+		// We can't set mobile data state on real device.
+		throw new CommandFailedException("Can not set device acceleration on real devices.");
+	}
+
+	@Override
+	public ConnectionType getConnectionType() throws RemoteException, CommandFailedException
+	{
+		String commandResponse = executeShellCommand("dumpsys netstats");
+		String findNetworkConnectionTypeRegex = "Active interfaces:.{1,25}ident=\\[\\[type=(\\w{0,20})";
+		Pattern extractionPattern = Pattern.compile(findNetworkConnectionTypeRegex, Pattern.DOTALL);
+		Matcher regexMatch = extractionPattern.matcher(commandResponse);
+		if (!regexMatch.find())
+		{
+			return ConnectionType.NONE;
+		}
+
+		String mobileDataState = regexMatch.group(1);
+		if (mobileDataState.isEmpty())
+		{
+			return ConnectionType.NONE;
+		}
+		return ConnectionType.valueOf(mobileDataState);
+	}
+
+	@Override
+	public MobileDataState getMobileDataState() throws CommandFailedException, RemoteException
+	{
+		// We can't get mobile data state on real device.
+		throw new CommandFailedException("Can not get mobile data state on real devices.");
 	}
 }

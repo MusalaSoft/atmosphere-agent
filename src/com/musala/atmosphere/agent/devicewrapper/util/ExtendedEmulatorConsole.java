@@ -14,6 +14,7 @@ import com.android.ddmlib.IDevice;
 import com.musala.atmosphere.commons.BatteryState;
 import com.musala.atmosphere.commons.DeviceAcceleration;
 import com.musala.atmosphere.commons.DeviceOrientation;
+import com.musala.atmosphere.commons.MobileDataState;
 import com.musala.atmosphere.commons.sa.exceptions.NotPossibleForDeviceException;
 
 /**
@@ -47,6 +48,10 @@ public class ExtendedEmulatorConsole
 	private final static String COMMAND_SET_ORIENTATION_FORMAT = "sensor set orientation %s\r\n";
 
 	private final static String COMMAND_SET_ACCELERATION_FORMAT = "sensor set acceleration %s\r\n";
+
+	private final static String COMMAND_SET_MOBILE_DATA_STATE = "gsm data %s\r\n";
+
+	private final static String COMMAND_GSM_STATUS = "gsm status\r\n";
 
 	/**
 	 * Socket read/write buffer.
@@ -256,6 +261,19 @@ public class ExtendedEmulatorConsole
 	}
 
 	/**
+	 * Gets the mobile data state of the emulator through the emulator console and returns the response.
+	 * 
+	 * @return the response from the emulator console.
+	 * @throws EmulatorConnectionFailedException
+	 */
+	public synchronized String getMobileDataState() throws EmulatorConnectionFailedException
+	{
+		String command = COMMAND_GSM_STATUS;
+		String response = executeCommandWithResponse(command);
+		return response;
+	}
+
+	/**
 	 * Sets the orientation in space of the testing device.
 	 * 
 	 * @param deviceOrientation
@@ -288,6 +306,20 @@ public class ExtendedEmulatorConsole
 	}
 
 	/**
+	 * Sets the mobile data state of an emulator through the emulator console.
+	 * 
+	 * @return - the command response from the emulator console.
+	 * @throws EmulatorConnectionFailedException
+	 */
+	public synchronized boolean setMobileDataState(MobileDataState state) throws EmulatorConnectionFailedException
+	{
+		String stateToAppend = state.toString();
+		String command = String.format(COMMAND_SET_MOBILE_DATA_STATE, stateToAppend);
+		boolean commandIsOk = executeCommand(command);
+		return commandIsOk;
+	}
+
+	/**
 	 * Sends a string to the emulator console and returns a value indicating if the response was OK or KO.
 	 * 
 	 * @param command
@@ -305,6 +337,21 @@ public class ExtendedEmulatorConsole
 		}
 		sendCommand(command);
 		return responseIsFine();
+	}
+
+	/**
+	 * Executes command in the emulator console and returns the output.
+	 * 
+	 * @param command
+	 *        - the command to be executed.
+	 * @return - the command output.
+	 * @throws EmulatorConnectionFailedException
+	 */
+	protected synchronized String executeCommandWithResponse(String command) throws EmulatorConnectionFailedException
+	{
+		executeCommand(command);
+		String commandResponse = new String(buffer);
+		return commandResponse;
 	}
 
 	/**

@@ -1,6 +1,8 @@
 package com.musala.atmosphere.agent.devicewrapper;
 
 import java.rmi.RemoteException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
 
@@ -9,8 +11,10 @@ import com.musala.atmosphere.agent.devicewrapper.util.EmulatorConnectionFailedEx
 import com.musala.atmosphere.agent.devicewrapper.util.ExtendedEmulatorConsole;
 import com.musala.atmosphere.commons.BatteryState;
 import com.musala.atmosphere.commons.CommandFailedException;
+import com.musala.atmosphere.commons.ConnectionType;
 import com.musala.atmosphere.commons.DeviceAcceleration;
 import com.musala.atmosphere.commons.DeviceOrientation;
+import com.musala.atmosphere.commons.MobileDataState;
 import com.musala.atmosphere.commons.Pair;
 import com.musala.atmosphere.commons.sa.exceptions.NotPossibleForDeviceException;
 
@@ -169,7 +173,9 @@ public class EmulatorWrapDevice extends AbstractWrapDevice
 	}
 
 	@Override
-	public void setDeviceOrientation(DeviceOrientation deviceOrientation) throws RemoteException, CommandFailedException
+	public void setDeviceOrientation(DeviceOrientation deviceOrientation)
+		throws RemoteException,
+			CommandFailedException
 	{
 		try
 		{
@@ -232,5 +238,64 @@ public class EmulatorWrapDevice extends AbstractWrapDevice
 			// would not have gotten this far.
 			e.printStackTrace();
 		}
+	}
+
+	@Override
+	public void setMobileDataState(MobileDataState state) throws CommandFailedException, RemoteException
+	{
+		try
+		{
+			ExtendedEmulatorConsole emulatorConsole = ExtendedEmulatorConsole.getExtendedEmulatorConsole(wrappedDevice);
+			boolean success = emulatorConsole.setMobileDataState(state);
+			if (!success)
+			{
+				LOGGER.error("Setting mobile data state on " + state.toString() + " failed.");
+				throw new CommandFailedException("Setting mobile data state on " + state.toString() + " failed.");
+			}
+		}
+		catch (EmulatorConnectionFailedException e)
+		{
+			throw new CommandFailedException("Connection to the emulator console failed. "
+					+ "See the enclosed exception for more information.", e);
+		}
+		catch (NotPossibleForDeviceException e)
+		{
+			throw new CommandFailedException("Illegal argument has been passed to the emulator console class. " + e);
+		}
+	}
+
+	@Override
+	public MobileDataState getMobileDataState() throws CommandFailedException, RemoteException
+	{
+		try
+		{
+			ExtendedEmulatorConsole emulatorConsole = ExtendedEmulatorConsole.getExtendedEmulatorConsole(wrappedDevice);
+			String response = emulatorConsole.getMobileDataState();
+			String findStatusRegex = "gsm data state:\\s+(\\w+)";
+			Pattern extractionPattern = Pattern.compile(findStatusRegex);
+			Matcher regexMatch = extractionPattern.matcher(response);
+			if (!regexMatch.find())
+			{
+				throw new CommandFailedException("Getting mobile data state failed.");
+			}
+			String mobileDataState = regexMatch.group(1);
+			return MobileDataState.valueOf(mobileDataState.toUpperCase());
+		}
+		catch (EmulatorConnectionFailedException e)
+		{
+			throw new CommandFailedException("Connection to the emulator console failed. "
+					+ "See the enclosed exception for more information.", e);
+		}
+		catch (NotPossibleForDeviceException e)
+		{
+			throw new CommandFailedException("Illegal argument has been passed to the emulator console class. "
+					+ "See the enclosed exception for more information.", e);
+		}
+	}
+
+	@Override
+	public ConnectionType getConnectionType() throws RemoteException, CommandFailedException
+	{
+		throw new CommandFailedException("Can not get connection type for emulators.");
 	}
 }

@@ -13,8 +13,10 @@ import org.junit.Test;
 import com.android.ddmlib.IDevice;
 import com.musala.atmosphere.commons.BatteryState;
 import com.musala.atmosphere.commons.CommandFailedException;
+import com.musala.atmosphere.commons.ConnectionType;
 import com.musala.atmosphere.commons.DeviceAcceleration;
 import com.musala.atmosphere.commons.DeviceOrientation;
+import com.musala.atmosphere.commons.MobileDataState;
 import com.musala.atmosphere.commons.Pair;
 
 public class AbstractWrapDeviceTest
@@ -93,6 +95,24 @@ public class AbstractWrapDeviceTest
 			public void setBatteryLevel(int level) throws RemoteException, CommandFailedException
 			{
 
+			}
+
+			@Override
+			public void setMobileDataState(MobileDataState state) throws CommandFailedException, RemoteException
+			{
+
+			}
+
+			@Override
+			public ConnectionType getConnectionType() throws RemoteException, CommandFailedException
+			{
+				return null;
+			}
+
+			@Override
+			public MobileDataState getMobileDataState() throws CommandFailedException, RemoteException
+			{
+				return null;
 			}
 		};
 

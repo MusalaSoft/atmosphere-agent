@@ -36,9 +36,11 @@ import com.musala.atmosphere.agent.util.DeviceScreenResolutionParser;
 import com.musala.atmosphere.agent.util.MemoryUnitConverter;
 import com.musala.atmosphere.commons.BatteryState;
 import com.musala.atmosphere.commons.CommandFailedException;
+import com.musala.atmosphere.commons.ConnectionType;
 import com.musala.atmosphere.commons.DeviceAcceleration;
 import com.musala.atmosphere.commons.DeviceInformation;
 import com.musala.atmosphere.commons.DeviceOrientation;
+import com.musala.atmosphere.commons.MobileDataState;
 import com.musala.atmosphere.commons.Pair;
 import com.musala.atmosphere.commons.ScreenOrientation;
 import com.musala.atmosphere.commons.sa.IWrapDevice;
@@ -558,4 +560,13 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 
 		return deviceAcceleration;
 	}
+
+	@Override
+	public abstract void setMobileDataState(MobileDataState state) throws CommandFailedException, RemoteException;
+
+	@Override
+	public abstract ConnectionType getConnectionType() throws RemoteException, CommandFailedException;
+
+	@Override
+	public abstract MobileDataState getMobileDataState() throws CommandFailedException, RemoteException;
 }
