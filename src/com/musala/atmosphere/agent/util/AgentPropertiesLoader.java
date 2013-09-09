@@ -65,18 +65,6 @@ public class AgentPropertiesLoader
 	}
 
 	/**
-	 * Returns the waiting time for the creation of the emulator from the config file.
-	 * 
-	 * @return
-	 */
-	public static int getEmulatorCreationWait()
-	{
-		String returnValueString = getPropertyString(AgentProperties.EMULATOR_CREATION_WAIT);
-		int returnValue = Integer.parseInt(returnValueString);
-		return returnValue;
-	}
-
-	/**
 	 * Returns the timeout for the creation of the emulator form the config file.
 	 * 
 	 * @return
