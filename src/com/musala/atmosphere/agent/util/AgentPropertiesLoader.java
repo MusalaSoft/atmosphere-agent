@@ -1,6 +1,6 @@
 package com.musala.atmosphere.agent.util;
 
-import com.musala.atmosphere.commons.PropertiesLoader;
+import com.musala.atmosphere.commons.util.PropertiesLoader;
 
 /**
  * Reads properties from the Agent properties config file.

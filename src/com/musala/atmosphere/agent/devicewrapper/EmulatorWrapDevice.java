@@ -15,12 +15,17 @@ import com.musala.atmosphere.commons.ConnectionType;
 import com.musala.atmosphere.commons.DeviceAcceleration;
 import com.musala.atmosphere.commons.DeviceOrientation;
 import com.musala.atmosphere.commons.MobileDataState;
-import com.musala.atmosphere.commons.Pair;
 import com.musala.atmosphere.commons.sa.exceptions.NotPossibleForDeviceException;
+import com.musala.atmosphere.commons.util.Pair;
 
+/**
+ * Device wrapper for emulators. Implements methods in an emulator-specific way.
+ * 
+ * @author georgi.gaydarov
+ * 
+ */
 public class EmulatorWrapDevice extends AbstractWrapDevice
 {
-
 	/**
 	 * 
 	 */

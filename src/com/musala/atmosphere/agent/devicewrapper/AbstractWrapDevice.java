@@ -27,9 +27,6 @@ import com.android.ddmlib.ShellCommandUnresponsiveException;
 import com.android.ddmlib.SyncException;
 import com.android.ddmlib.TimeoutException;
 import com.musala.atmosphere.agent.DevicePropertyStringConstants;
-import com.musala.atmosphere.agent.devicewrapper.settings.AndroidGlobalSettings;
-import com.musala.atmosphere.agent.devicewrapper.settings.AndroidSystemSettings;
-import com.musala.atmosphere.agent.devicewrapper.settings.DeviceSettingsManager;
 import com.musala.atmosphere.agent.devicewrapper.util.DeviceProfiler;
 import com.musala.atmosphere.agent.util.AgentPropertiesLoader;
 import com.musala.atmosphere.agent.util.DeviceScreenResolutionParser;
@@ -41,14 +38,13 @@ import com.musala.atmosphere.commons.DeviceAcceleration;
 import com.musala.atmosphere.commons.DeviceInformation;
 import com.musala.atmosphere.commons.DeviceOrientation;
 import com.musala.atmosphere.commons.MobileDataState;
-import com.musala.atmosphere.commons.Pair;
-import com.musala.atmosphere.commons.ScreenOrientation;
 import com.musala.atmosphere.commons.sa.IWrapDevice;
+import com.musala.atmosphere.commons.util.Pair;
 
 public abstract class AbstractWrapDevice extends UnicastRemoteObject implements IWrapDevice
 {
 	/**
-	 * auto generated serialziation id
+	 * auto generated serialization id
 	 */
 	private static final long serialVersionUID = -9122701818928360023L;
 
@@ -69,22 +65,17 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 
 	private final String DUMP_SENSOR_SERVICE_INFO_COMMAND = "dumpsys sensorservice";
 
-	private static final String AIRPLANE_MODE_INTENT_COMMAND = "am broadcast -a android.intent.action.AIRPLANE_MODE --ez state %s";
-
 	private File tempApkFile;
 
 	private OutputStream tempApkFileOutputStream;
 
 	protected IDevice wrappedDevice;
 
-	protected DeviceSettingsManager deviceSettings;
-
 	private final static Logger LOGGER = Logger.getLogger(AbstractWrapDevice.class.getCanonicalName());
 
 	public AbstractWrapDevice(IDevice deviceToWrap) throws RemoteException
 	{
 		wrappedDevice = deviceToWrap;
-		deviceSettings = new DeviceSettingsManager(this);
 	}
 
 	@Override
@@ -282,8 +273,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 		catch (IOException | AdbCommandRejectedException | TimeoutException | SyncException e)
 		{
 			LOGGER.error("Screenshot fetching failed.", e);
-			throw new CommandFailedException(	"Screenshot fetching failed. See the enclosed exception for more information.",
-												e);
+			throw new CommandFailedException("Screenshot fetching failed.", e);
 		}
 	}
 
@@ -293,8 +283,9 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 		discardAPK();
 
 		String tempApkFilePrefix = wrappedDevice.getSerialNumber();
-		tempApkFilePrefix = tempApkFilePrefix.replaceAll("\\W+", "_"); // replaces everything that is not a letter,
-																		// number or underscore with an underscore
+		// replaces everything that is not a letter,
+		// number or underscore with an underscore
+		tempApkFilePrefix = tempApkFilePrefix.replaceAll("\\W+", "_");
 
 		tempApkFile = File.createTempFile(tempApkFilePrefix, TEMP_APK_FILE_SUFFIX);
 		tempApkFileOutputStream = new BufferedOutputStream(new FileOutputStream(tempApkFile));
@@ -403,6 +394,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 	@Override
 	public BatteryState getBatteryState() throws RemoteException, CommandFailedException
 	{
+		// FIXME this will be changed in #2535
 		String response = executeShellCommand(DUMP_BATTERY_INFO_COMMAND);
 		Pattern extractionPattern = Pattern.compile(BATTERY_STATE_EXTRACTION_REGEX);
 		Matcher stateMatch = extractionPattern.matcher(response);
@@ -421,6 +413,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 	@Override
 	public boolean getPowerState() throws RemoteException, CommandFailedException
 	{
+		// FIXME this will be changed in #2533
 		final String DUMP_POWER_INFO_COMMAND = "dumpsys power";
 		String response = executeShellCommand(DUMP_POWER_INFO_COMMAND);
 
@@ -455,69 +448,14 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 	public abstract void setPowerState(boolean state) throws RemoteException, CommandFailedException;
 
 	@Override
-	public void setAirplaneMode(boolean airplaneMode) throws CommandFailedException, RemoteException
-	{
-		DeviceInformation deviceInformation = getDeviceInformation();
-		String deviceOs = deviceInformation.getOS();
-
-		final String DEVICE_OS_PATTERN = "(4\\.[2-9]+.*)|([5-9]+\\.\\d+.*)";
-		Pattern osPattern = Pattern.compile(DEVICE_OS_PATTERN);
-		Matcher osMatcher = osPattern.matcher(deviceOs);
-
-		final String INTENT_COMMAND_RESPONSE = "Broadcast completed: result=0";
-		Pattern intentCommandResponsePattern = Pattern.compile(INTENT_COMMAND_RESPONSE);
-
-		int airplaneModeIntValue = airplaneMode ? 1 : 0;
-
-		if (osMatcher.find())
-		{
-			deviceSettings.putInt(AndroidGlobalSettings.AIRPLANE_MODE_ON, airplaneModeIntValue);
-		}
-		else
-		{
-			deviceSettings.putInt(AndroidSystemSettings.AIRPLANE_MODE_ON, airplaneModeIntValue);
-		}
-
-		String intentCommand = String.format(AIRPLANE_MODE_INTENT_COMMAND, airplaneMode);
-
-		String intentCommandResponse = executeShellCommand(intentCommand);
-
-		Matcher intentCommandResponseMatcher = intentCommandResponsePattern.matcher(intentCommandResponse);
-
-		if (!intentCommandResponseMatcher.find())
-		{
-			throw new CommandFailedException("Setting airplane mode failed.");
-		}
-	}
-
-	@Override
 	public abstract void setDeviceOrientation(DeviceOrientation deviceOrientation)
 		throws RemoteException,
 			CommandFailedException;
 
 	@Override
-	public void setAutoRotation(boolean autoRotation)
-	{
-		if (autoRotation)
-		{
-			deviceSettings.putInt(AndroidSystemSettings.ACCELEROMETER_ROTATION, 1);
-		}
-		else
-		{
-			deviceSettings.putInt(AndroidSystemSettings.ACCELEROMETER_ROTATION, 0);
-		}
-	}
-
-	@Override
-	public void setScreenOrientation(ScreenOrientation orientation)
-	{
-		setAutoRotation(false);
-		deviceSettings.putInt(AndroidSystemSettings.USER_ROTATION, orientation.getOrientationNumber());
-	}
-
-	@Override
 	public DeviceOrientation getDeviceOrientation() throws RemoteException, CommandFailedException
 	{
+		// TODO maybe move this method?
 		String response = executeShellCommand(DUMP_SENSOR_SERVICE_INFO_COMMAND);
 
 		String findOrientationSensorRegex = "(Orientation)(.+)(last=<\\s*(-{0,1}\\d+\\.\\d),\\s*(-{0,1}\\d+\\.\\d),\\s*(-{0,1}\\d+\\.\\d)>)";
@@ -542,6 +480,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 	@Override
 	public DeviceAcceleration getDeviceAcceleration() throws RemoteException, CommandFailedException
 	{
+		// TODO maybe move this method?
 		String response = executeShellCommand(DUMP_SENSOR_SERVICE_INFO_COMMAND);
 
 		String findAccelerationSensorRegex = "(Accelerometer)(.+)(last=<\\s*(-{0,1}\\d+\\.\\d),\\s*(-{0,1}\\d+\\.\\d),\\s*(-{0,1}\\d+\\.\\d)>)";

@@ -18,8 +18,8 @@ import com.android.ddmlib.AndroidDebugBridge.IDeviceChangeListener;
 import com.android.ddmlib.EmulatorConsole;
 import com.android.ddmlib.IDevice;
 import com.musala.atmosphere.agent.util.AgentPropertiesLoader;
-import com.musala.atmosphere.commons.Pair;
 import com.musala.atmosphere.commons.sa.DeviceParameters;
+import com.musala.atmosphere.commons.util.Pair;
 
 /**
  * 

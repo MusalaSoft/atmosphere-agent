@@ -1,6 +1,6 @@
 package com.musala.atmosphere.agent.util;
 
-import com.musala.atmosphere.commons.Pair;
+import com.musala.atmosphere.commons.util.Pair;
 
 /**
  * <p>

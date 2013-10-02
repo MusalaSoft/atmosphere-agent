@@ -1,5 +1,8 @@
 package com.musala.atmosphere.agent.devicewrapper.util;
 
+import com.musala.atmosphere.commons.util.IntentBuilder;
+import com.musala.atmosphere.commons.util.IntentBuilder.IntentAction;
+
 /**
  * Contains the BATTERY_CHANGED intent constructor.
  * 
@@ -14,7 +17,7 @@ public class BatteryChangedIntentData
 
 	private Integer launchFlags; // 0x600000010 - dafult launch flag
 
-	private Integer icon_small; // 1730328 - default value
+	private Integer iconSmall; // 1730328 - default value
 
 	private Integer scale; // 100 - default scale is 100
 
@@ -22,7 +25,7 @@ public class BatteryChangedIntentData
 
 	private Integer voltage; // 4178 - most common value
 
-	private Integer invalid_charger; // 0 - default is charger is valid
+	private Integer invalidCharger; // 0 - default is charger is valid
 
 	private Integer plugged; // 2 - if plugged to usb; 1 - to ACD; 0 - not plugged
 
@@ -30,14 +33,14 @@ public class BatteryChangedIntentData
 
 	private Integer temperature; // 280 - most common value
 
-	public String present; // "true" - default value for battery presence
+	public Boolean present; // "true" - default value for battery presence
 
-	public String getPresent()
+	public Boolean getPresent()
 	{
 		return present;
 	}
 
-	public void setPresent(String present)
+	public void setPresent(Boolean present)
 	{
 		this.present = present;
 	}
@@ -82,14 +85,14 @@ public class BatteryChangedIntentData
 		this.voltage = voltage;
 	}
 
-	public Integer getInvalid_charger()
+	public Integer getInvalidCharger()
 	{
-		return invalid_charger;
+		return invalidCharger;
 	}
 
-	public void setInvalid_charger(int invalid_charger)
+	public void setInvalidCharger(int invalidCharger)
 	{
-		this.invalid_charger = invalid_charger;
+		this.invalidCharger = invalidCharger;
 	}
 
 	public Integer getPlugged()
@@ -142,13 +145,69 @@ public class BatteryChangedIntentData
 		this.state = state;
 	}
 
-	public Integer getIcon_small()
+	public Integer getIconSmall()
 	{
-		return icon_small;
+		return iconSmall;
 	}
 
-	public void setIcon_small(int icon_small)
+	public void setIconSmall(int iconSmall)
 	{
-		this.icon_small = icon_small;
+		this.iconSmall = iconSmall;
+	}
+
+	public String buildIntentQuery()
+	{
+		IntentBuilder intentBuilder = new IntentBuilder(IntentAction.BATTERY_CHANGED);
+
+		if (getLaunchFlags() != null)
+		{
+			intentBuilder.setFlags(getLaunchFlags());
+		}
+		if (getIconSmall() != null)
+		{
+			intentBuilder.putExtraInteger("icon-small", getIconSmall());
+		}
+		if (getPresent() != null)
+		{
+			intentBuilder.putExtraBoolean("present", getPresent());
+		}
+		if (getScale() != null)
+		{
+			intentBuilder.putExtraInteger("scale", getScale());
+		}
+		if (getLevel() != null)
+		{
+			intentBuilder.putExtraInteger("level", getLevel());
+		}
+		if (getTechnology() != null)
+		{
+			intentBuilder.putExtraString("technology", getTechnology());
+		}
+		if (getState() != null)
+		{
+			intentBuilder.putExtraInteger("status", getState());
+		}
+		if (getVoltage() != null)
+		{
+			intentBuilder.putExtraInteger("voltage", getVoltage());
+		}
+		if (getInvalidCharger() != null)
+		{
+			intentBuilder.putExtraInteger("invalid_charger", getInvalidCharger());
+		}
+		if (getPlugged() != null)
+		{
+			intentBuilder.putExtraInteger("plugged", getPlugged());
+		}
+		if (getHealth() != null)
+		{
+			intentBuilder.putExtraInteger("health", getHealth());
+		}
+		if (getTemperature() != null)
+		{
+			intentBuilder.putExtraInteger("temperature", getTemperature());
+		}
+		String query = intentBuilder.buildIntentCommand();
+		return query;
 	}
 }

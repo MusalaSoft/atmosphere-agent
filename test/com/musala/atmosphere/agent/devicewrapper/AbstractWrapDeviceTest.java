@@ -17,7 +17,7 @@ import com.musala.atmosphere.commons.ConnectionType;
 import com.musala.atmosphere.commons.DeviceAcceleration;
 import com.musala.atmosphere.commons.DeviceOrientation;
 import com.musala.atmosphere.commons.MobileDataState;
-import com.musala.atmosphere.commons.Pair;
+import com.musala.atmosphere.commons.util.Pair;
 
 public class AbstractWrapDeviceTest
 {

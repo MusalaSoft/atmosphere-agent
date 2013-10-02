@@ -16,11 +16,11 @@ import com.musala.atmosphere.agent.command.AgentConsoleCommands;
 import com.musala.atmosphere.agent.state.AgentState;
 import com.musala.atmosphere.agent.state.StoppedAgent;
 import com.musala.atmosphere.agent.util.AgentPropertiesLoader;
-import com.musala.atmosphere.commons.Pair;
 import com.musala.atmosphere.commons.sa.ConsoleControl;
 import com.musala.atmosphere.commons.sa.DeviceParameters;
 import com.musala.atmosphere.commons.sa.exceptions.DeviceNotFoundException;
 import com.musala.atmosphere.commons.sa.exceptions.NotPossibleForDeviceException;
+import com.musala.atmosphere.commons.util.Pair;
 
 /**
  * Class that instantiates the Agent ATMOSPHERE component.

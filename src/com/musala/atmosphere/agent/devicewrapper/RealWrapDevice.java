@@ -14,13 +14,21 @@ import com.musala.atmosphere.commons.ConnectionType;
 import com.musala.atmosphere.commons.DeviceAcceleration;
 import com.musala.atmosphere.commons.DeviceOrientation;
 import com.musala.atmosphere.commons.MobileDataState;
-import com.musala.atmosphere.commons.Pair;
 import com.musala.atmosphere.commons.sa.exceptions.NotPossibleForDeviceException;
+import com.musala.atmosphere.commons.util.IntentBuilder;
+import com.musala.atmosphere.commons.util.IntentBuilder.IntentAction;
+import com.musala.atmosphere.commons.util.Pair;
 
+/**
+ * Real (physical) device wrapper. Implements methods in a real device specific way.
+ * 
+ * @author georgi.gaydarov
+ * 
+ */
 public class RealWrapDevice extends AbstractWrapDevice
 {
 	/**
-	 * 
+	 * auto-generated serialization id
 	 */
 
 	private static final long serialVersionUID = 8940498776944070469L;
@@ -35,7 +43,7 @@ public class RealWrapDevice extends AbstractWrapDevice
 
 	private boolean powerState;
 
-	private static boolean batteryHasBeenLow;
+	private boolean batteryHasBeenLow;
 
 	public RealWrapDevice(IDevice deviceToWrap) throws NotPossibleForDeviceException, RemoteException
 	{
@@ -84,7 +92,6 @@ public class RealWrapDevice extends AbstractWrapDevice
 		executeShellCommand(batteryChangedIntentQuery);
 
 		// Check to see whether other intents have to be sent.
-
 		if (batteryLevel >= BATTERY_LEVEL_THRESHOLD)
 		{
 			if (batteryHasBeenLow)
@@ -92,10 +99,9 @@ public class RealWrapDevice extends AbstractWrapDevice
 				// If the battery level is more than the low battery level threshold
 				// and the battery level has already been below that threshold, a BATTERY_OKAY intent has to be sent.
 				batteryHasBeenLow = false;
-
-				executeShellCommand("am broadcast -a android.intent.action.BATTERY_OKAY"); // Broadcasting
-																							// BATTERY_OKAY
-																							// intent.
+				IntentBuilder intentBuilder = new IntentBuilder(IntentAction.BATTERY_OKAY);
+				String command = intentBuilder.buildIntentCommand();
+				executeShellCommand(command);
 			}
 			else
 			{
@@ -116,10 +122,9 @@ public class RealWrapDevice extends AbstractWrapDevice
 				// If the battery is set below the low battery level threshold and the battery has been above that
 				// threshold before that a BATTERY_LOW intent should be broadcasted.
 				batteryHasBeenLow = true;
-
-				executeShellCommand("am broadcast -a android.intent.action.BATTERY_LOW"); // Broadcasting
-																							// BATTERY_LOW
-																							// intent.
+				IntentBuilder intentBuilder = new IntentBuilder(IntentAction.BATTERY_LOW);
+				String command = intentBuilder.buildIntentCommand();
+				executeShellCommand(command);
 
 			}
 		}
@@ -138,60 +143,8 @@ public class RealWrapDevice extends AbstractWrapDevice
 		data.setLevel(batteryLevel);
 		data.setState(batteryState);
 
-		StringBuilder queryBuilder = new StringBuilder();
-		queryBuilder.append("am broadcast -a android.intent.action.BATTERY_CHANGED");
-
-		if (data.getLaunchFlags() != null)
-		{
-			queryBuilder.append(" -f " + data.getLaunchFlags());
-		}
-		if (data.getIcon_small() != null)
-		{
-			queryBuilder.append(" --ei icon-small " + data.getIcon_small());
-		}
-		if (data.getPresent() != null)
-		{
-			queryBuilder.append(" --ez present " + data.getPresent());
-		}
-		if (data.getScale() != null)
-		{
-			queryBuilder.append(" --ei scale " + data.getScale());
-		}
-		if (data.getLevel() != null)
-		{
-			queryBuilder.append(" --ei level " + data.getLevel());
-		}
-		if (data.getTechnology() != null)
-		{
-			queryBuilder.append(" --es technology " + data.getTechnology());
-		}
-		if (data.getState() != null)
-		{
-			queryBuilder.append(" --ei status " + data.getState());
-		}
-		if (data.getVoltage() != null)
-		{
-			queryBuilder.append(" -- ei voltage " + data.getVoltage());
-		}
-		if (data.getInvalid_charger() != null)
-		{
-			queryBuilder.append(" --ei invalid_charger " + data.getInvalid_charger());
-		}
-		if (data.getPlugged() != null)
-		{
-			queryBuilder.append(" --ei pluuged " + data.getPlugged());
-		}
-		if (data.getHealth() != null)
-		{
-			queryBuilder.append(" --ei health " + data.getHealth());
-		}
-		if (data.getTemperature() != null)
-		{
-			queryBuilder.append(" --ei temperature " + data.getTemperature());
-		}
-		String query = queryBuilder.toString();
+		String query = data.buildIntentQuery();
 		return query;
-
 	}
 
 	@Override
@@ -205,16 +158,11 @@ public class RealWrapDevice extends AbstractWrapDevice
 	@Override
 	public void setPowerState(boolean state) throws RemoteException, CommandFailedException
 	{
-		String powerState;
-		if (state)
-		{
-			powerState = "ACTION_POWER_CONNECTED";
-		}
-		else
-		{
-			powerState = "ACTION_POWER_DISCONNECTED";
-		}
-		executeShellCommand("am broadcast -a android.intent.action." + powerState);
+		IntentAction intentAction = state ? IntentAction.ACTION_POWER_CONNECTED
+				: IntentAction.ACTION_POWER_DISCONNECTED;
+		IntentBuilder intentBuilder = new IntentBuilder(intentAction);
+		String command = intentBuilder.buildIntentCommand();
+		executeShellCommand(command);
 	}
 
 	@Override

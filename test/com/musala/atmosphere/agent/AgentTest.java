@@ -11,8 +11,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.musala.atmosphere.agent.util.AgentPropertiesLoader;
-import com.musala.atmosphere.commons.Pair;
 import com.musala.atmosphere.commons.sa.DeviceParameters;
+import com.musala.atmosphere.commons.util.Pair;
 
 public class AgentTest
 {
