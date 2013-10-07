@@ -45,7 +45,6 @@ import com.musala.atmosphere.commons.DeviceAcceleration;
 import com.musala.atmosphere.commons.DeviceInformation;
 import com.musala.atmosphere.commons.DeviceOrientation;
 import com.musala.atmosphere.commons.MobileDataState;
-import com.musala.atmosphere.commons.as.ServiceRequestProtocol;
 import com.musala.atmosphere.commons.sa.IWrapDevice;
 import com.musala.atmosphere.commons.util.Pair;
 
@@ -106,7 +105,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 		{
 			// TODO throw a new exception here when the preconditions are implemented.
 
-			String errorMessage = String.format("Could not initialize communication to service for %s",
+			String errorMessage = String.format("Could not initialize communication to service for %s.",
 												wrappedDevice.getSerialNumber());
 			throw new ServiceCommunicationFailedException(errorMessage, e);
 		}
@@ -127,7 +126,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 		}
 		catch (TimeoutException | AdbCommandRejectedException | IOException e)
 		{
-			String errorMessage = String.format("Could not forward port for %s", wrappedDevice.getSerialNumber());
+			String errorMessage = String.format("Could not forward port for %s.", wrappedDevice.getSerialNumber());
 			throw new ForwardServicePortFailedException(errorMessage, e);
 		}
 	}
@@ -145,7 +144,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 		}
 		catch (RemoteException | CommandFailedException e)
 		{
-			String errorMessage = String.format("Starting ATMOSPHERE service failed for %s",
+			String errorMessage = String.format("Starting ATMOSPHERE service failed for %s.",
 												wrappedDevice.getSerialNumber());
 			throw new StartAtmosphereServiceFailedException(errorMessage, e);
 		}
@@ -163,7 +162,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 		}
 		catch (RemoteException | CommandFailedException e)
 		{
-			String loggerMessage = String.format(	"Starting ATMOSPHERE service failed for %s",
+			String loggerMessage = String.format(	"Stopping ATMOSPHERE service failed for %s.",
 													wrappedDevice.getSerialNumber());
 			LOGGER.warn(loggerMessage, e);
 		}
@@ -187,27 +186,6 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 												wrappedDevice.getSerialNumber());
 			throw new InitializeServiceCommunicatorFailedException(errorMessage, e);
 		}
-	}
-
-	/**
-	 * Validates whether a communication to the ATMOSPHERE service is available.
-	 * 
-	 * @return - true if communication is available; false otherwise.
-	 * @throws RemoteException
-	 */
-	@Override
-	public boolean validateServiceCommunication() throws RemoteException
-	{
-		try
-		{
-			ServiceRequestProtocol validation = (ServiceRequestProtocol) serviceCommunicator.request(ServiceRequestProtocol.VALIDATION);
-		}
-		catch (ClassNotFoundException | ClassCastException | IOException e)
-		{
-			return false;
-		}
-
-		return true;
 	}
 
 	@Override

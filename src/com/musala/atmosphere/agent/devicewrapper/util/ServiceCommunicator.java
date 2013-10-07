@@ -37,7 +37,11 @@ public class ServiceCommunicator
 	{
 		this.socketPort = socketPort;
 
-		validateRemoteServer();
+		if (!validateRemoteServer())
+		{
+
+			throw new ServiceValidationFailedException("Service validation failed.");
+		}
 	}
 
 	/**
