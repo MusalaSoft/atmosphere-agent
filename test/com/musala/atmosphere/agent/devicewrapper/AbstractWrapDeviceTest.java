@@ -1,5 +1,6 @@
 package com.musala.atmosphere.agent.devicewrapper;
 
+import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
@@ -9,8 +10,10 @@ import java.rmi.RemoteException;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 import com.android.ddmlib.IDevice;
+import com.musala.atmosphere.agent.util.FakeServiceAnswer;
 import com.musala.atmosphere.commons.BatteryState;
 import com.musala.atmosphere.commons.CommandFailedException;
 import com.musala.atmosphere.commons.ConnectionType;
@@ -45,9 +48,10 @@ public class AbstractWrapDeviceTest
 			+ "Goldfish Orientation sensor (handle=0x00000002, connections=1)\r\n";
 
 	@Before
-	public void setUp() throws RemoteException
+	public void setUp() throws Exception
 	{
 		device = mock(IDevice.class);
+		Mockito.doAnswer(new FakeServiceAnswer()).when(device).createForward(anyInt(), anyInt());
 
 		testWrapDevice = new AbstractWrapDevice(device)
 		{

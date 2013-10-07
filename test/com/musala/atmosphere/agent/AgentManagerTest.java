@@ -2,10 +2,10 @@ package com.musala.atmosphere.agent;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.mockito.Matchers.anyInt;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -17,17 +17,15 @@ import java.util.logging.Level;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
 
-import com.android.ddmlib.AdbCommandRejectedException;
 import com.android.ddmlib.DdmPreferences;
 import com.android.ddmlib.IDevice;
 import com.android.ddmlib.Log;
-import com.android.ddmlib.TimeoutException;
 import com.musala.atmosphere.agent.util.AgentPropertiesLoader;
-import com.musala.atmosphere.commons.CommandFailedException;
+import com.musala.atmosphere.agent.util.FakeServiceAnswer;
 import com.musala.atmosphere.commons.DeviceInformation;
 import com.musala.atmosphere.commons.sa.IWrapDevice;
-import com.musala.atmosphere.commons.sa.exceptions.DeviceNotFoundException;
 
 public class AgentManagerTest
 {
@@ -63,13 +61,7 @@ public class AgentManagerTest
 	}
 
 	@Test
-	public void testGetDeviceInformationWithValidSerialNumber()
-		throws RemoteException,
-			DeviceNotFoundException,
-			NotBoundException,
-			TimeoutException,
-			AdbCommandRejectedException,
-			CommandFailedException
+	public void testGetDeviceInformationWithValidSerialNumber() throws Exception
 	{
 		String mockDeviceSerialNumber = "lol";
 		boolean mockDeviceEmulator = false;
@@ -93,6 +85,8 @@ public class AgentManagerTest
 		when(mockDevice.isEmulator()).thenReturn(mockDeviceEmulator);
 		when(mockDevice.arePropertiesSet()).thenReturn(true);
 		when(mockDevice.getProperties()).thenReturn(mockPropMap);
+
+		Mockito.doAnswer(new FakeServiceAnswer()).when(mockDevice).createForward(anyInt(), anyInt());
 
 		agentManager.registerDeviceOnAgent(mockDevice);
 
