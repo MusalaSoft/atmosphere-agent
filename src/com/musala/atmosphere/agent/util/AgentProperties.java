@@ -12,7 +12,8 @@ public enum AgentProperties
 			"emulator.creation.wait.timeout"), ANDROID_TOOL_PATH("android.tool.path"), ANDROID_SDK_TOOLS_PATH(
 			"android.sdk.tools.path"), ANDROID_TOOL_WORKDIR_PATH("android.tool.workdir.path"), ANDROID_TOOL_CLASS(
 			"android.tool.class"), EMULATOR_EXECUTABLE_PATH("emulator.executable.path"), COMMAND_EXECUTION_TIMEOUT(
-			"command.execution.timeout");
+			"command.execution.timeout"), ADB_MIN_FORWARD_PORT("adb.min.forward.port"), ADB_MAX_FORWARD_PORT(
+			"adb.max.forward.port"), SERVICE_CONNECTION_RETRY_LIMIT("service.connection.retry.limit");
 
 	private String value;
 

@@ -48,6 +48,7 @@ public class AbstractWrapDeviceTest
 	public void setUp() throws RemoteException
 	{
 		device = mock(IDevice.class);
+
 		testWrapDevice = new AbstractWrapDevice(device)
 		{
 

@@ -142,4 +142,40 @@ public class AgentPropertiesLoader
 		int returnValueInt = Integer.parseInt(returnValueString);
 		return returnValueInt;
 	}
+
+	/**
+	 * Returns the minimum port identifier that will be used for connection to the ATMOSPHERE service.
+	 * 
+	 * @return - the minimum port identifier that will be used for connection to the ATMOSPHERE service.
+	 */
+	public static int getADBMinForwardPort()
+	{
+		String returnValueString = getPropertyString(AgentProperties.ADB_MIN_FORWARD_PORT);
+		int returnValueInt = Integer.parseInt(returnValueString);
+		return returnValueInt;
+	}
+
+	/**
+	 * Returns the maximum port identifier that will be used for connection to the ATMOSPHERE service.
+	 * 
+	 * @return - the maximum port identifier that will be used for connection to the ATMOSPHERE service.
+	 */
+	public static int getADBMaxForwardPort()
+	{
+		String returnValueString = getPropertyString(AgentProperties.ADB_MAX_FORWARD_PORT);
+		int returnValueInt = Integer.parseInt(returnValueString);
+		return returnValueInt;
+	}
+
+	/**
+	 * Returns the maximum number of service connection retries.
+	 * 
+	 * @return - the maximum number of service connection retries.
+	 */
+	public static int getServiceConnectionRetryLimit()
+	{
+		String returnValueString = getPropertyString(AgentProperties.SERVICE_CONNECTION_RETRY_LIMIT);
+		int returnValueInt = Integer.parseInt(returnValueString);
+		return returnValueInt;
+	}
 }

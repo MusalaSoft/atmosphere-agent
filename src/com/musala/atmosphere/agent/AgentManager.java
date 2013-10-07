@@ -33,6 +33,7 @@ import com.android.ddmlib.IDevice;
 import com.android.ddmlib.TimeoutException;
 import com.musala.atmosphere.agent.devicewrapper.EmulatorWrapDevice;
 import com.musala.atmosphere.agent.devicewrapper.RealWrapDevice;
+import com.musala.atmosphere.agent.exception.ServiceCommunicationFailedException;
 import com.musala.atmosphere.agent.util.AgentPropertiesLoader;
 import com.musala.atmosphere.commons.CommandFailedException;
 import com.musala.atmosphere.commons.sa.DeviceParameters;
@@ -298,7 +299,7 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 			devicesList.add(connectedDevice);
 			return publishId;
 		}
-		catch (RemoteException e)
+		catch (RemoteException | ServiceCommunicationFailedException e)
 		{
 			LOGGER.fatal("Could not publish a wrapper for a device in the RMI registry.", e);
 		}

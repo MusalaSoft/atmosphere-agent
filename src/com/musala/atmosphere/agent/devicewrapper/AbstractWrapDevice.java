@@ -28,9 +28,16 @@ import com.android.ddmlib.SyncException;
 import com.android.ddmlib.TimeoutException;
 import com.musala.atmosphere.agent.DevicePropertyStringConstants;
 import com.musala.atmosphere.agent.devicewrapper.util.DeviceProfiler;
+import com.musala.atmosphere.agent.devicewrapper.util.ForwardServicePortFailedException;
+import com.musala.atmosphere.agent.devicewrapper.util.ServiceCommunicator;
+import com.musala.atmosphere.agent.exception.InitializeServiceCommunicatorFailedException;
+import com.musala.atmosphere.agent.exception.ServiceCommunicationFailedException;
+import com.musala.atmosphere.agent.exception.ServiceValidationFailedException;
+import com.musala.atmosphere.agent.exception.StartAtmosphereServiceFailedException;
 import com.musala.atmosphere.agent.util.AgentPropertiesLoader;
 import com.musala.atmosphere.agent.util.DeviceScreenResolutionParser;
 import com.musala.atmosphere.agent.util.MemoryUnitConverter;
+import com.musala.atmosphere.agent.util.PortAllocator;
 import com.musala.atmosphere.commons.BatteryState;
 import com.musala.atmosphere.commons.CommandFailedException;
 import com.musala.atmosphere.commons.ConnectionType;
@@ -38,6 +45,7 @@ import com.musala.atmosphere.commons.DeviceAcceleration;
 import com.musala.atmosphere.commons.DeviceInformation;
 import com.musala.atmosphere.commons.DeviceOrientation;
 import com.musala.atmosphere.commons.MobileDataState;
+import com.musala.atmosphere.commons.as.ServiceRequestProtocol;
 import com.musala.atmosphere.commons.sa.IWrapDevice;
 import com.musala.atmosphere.commons.util.Pair;
 
@@ -63,19 +71,143 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 
 	private static final String DUMP_BATTERY_INFO_COMMAND = "dumpsys battery";
 
-	private final String DUMP_SENSOR_SERVICE_INFO_COMMAND = "dumpsys sensorservice";
+	private static final String DUMP_SENSOR_SERVICE_INFO_COMMAND = "dumpsys sensorservice";
+
+	private static final String START_ATMOSPHERE_SERVICE = "am startservice --user 0 -n com.musala.atmophere.service/com.musala.atmosphere.service.AtmosphereService";
+
+	private static final String STOP_ATMOSPHERE_SERVICE = "am broadcast -a com.musala.atmosphere.service.SERVICE_CONTROLL --es command stop";
+
+	private static final int ATMOSPHERE_SERVICE_PORT = 6749;
 
 	private File tempApkFile;
 
 	private OutputStream tempApkFileOutputStream;
 
+	protected ServiceCommunicator serviceCommunicator;
+
 	protected IDevice wrappedDevice;
+
+	private int socketPort;
 
 	private final static Logger LOGGER = Logger.getLogger(AbstractWrapDevice.class.getCanonicalName());
 
 	public AbstractWrapDevice(IDevice deviceToWrap) throws RemoteException
 	{
 		wrappedDevice = deviceToWrap;
+
+		try
+		{
+			forwardServicePort();
+			startAtmosphereService();
+			initializeServiceCommunicator(socketPort);
+		}
+		catch (ForwardServicePortFailedException | StartAtmosphereServiceFailedException
+				| InitializeServiceCommunicatorFailedException e)
+		{
+			// TODO throw a new exception here when the preconditions are implemented.
+
+			String errorMessage = String.format("Could not initialize communication to service for %s",
+												wrappedDevice.getSerialNumber());
+			throw new ServiceCommunicationFailedException(errorMessage, e);
+		}
+	}
+
+	/**
+	 * Forwards a local port to the ATMOSPHERE service's port on the wrapped device.
+	 * 
+	 * @throws ForwardServicePortFailedException
+	 */
+	private void forwardServicePort()
+	{
+		socketPort = PortAllocator.getFreePort();
+
+		try
+		{
+			wrappedDevice.createForward(socketPort, ATMOSPHERE_SERVICE_PORT);
+		}
+		catch (TimeoutException | AdbCommandRejectedException | IOException e)
+		{
+			String errorMessage = String.format("Could not forward port for %s", wrappedDevice.getSerialNumber());
+			throw new ForwardServicePortFailedException(errorMessage, e);
+		}
+	}
+
+	/**
+	 * Starts the Atmosphere service on the wrappedDevice.
+	 * 
+	 * @throws StartAtmosphereServiceFailedException
+	 */
+	private void startAtmosphereService()
+	{
+		try
+		{
+			executeShellCommand(START_ATMOSPHERE_SERVICE);
+		}
+		catch (RemoteException | CommandFailedException e)
+		{
+			String errorMessage = String.format("Starting ATMOSPHERE service failed for %s",
+												wrappedDevice.getSerialNumber());
+			throw new StartAtmosphereServiceFailedException(errorMessage, e);
+		}
+	}
+
+	/**
+	 * Stops the ATMOSPHERE service on the wrapped device.
+	 * 
+	 */
+	private void stopAtmosphereService()
+	{
+		try
+		{
+			executeShellCommand(STOP_ATMOSPHERE_SERVICE);
+		}
+		catch (RemoteException | CommandFailedException e)
+		{
+			String loggerMessage = String.format(	"Starting ATMOSPHERE service failed for %s",
+													wrappedDevice.getSerialNumber());
+			LOGGER.warn(loggerMessage, e);
+		}
+	}
+
+	/**
+	 * Initializes the {@link ServiceCommunicator} on the wrapped device.
+	 * 
+	 * @throws InitializeServiceCommunicatorFailedException
+	 */
+	private void initializeServiceCommunicator(int socketPort)
+	{
+
+		try
+		{
+			serviceCommunicator = new ServiceCommunicator(socketPort);
+		}
+		catch (ClassNotFoundException | ServiceValidationFailedException | IOException e)
+		{
+			String errorMessage = String.format("Service initialization failed for %s.",
+												wrappedDevice.getSerialNumber());
+			throw new InitializeServiceCommunicatorFailedException(errorMessage, e);
+		}
+	}
+
+	/**
+	 * Validates whether a communication to the ATMOSPHERE service is available.
+	 * 
+	 * @return - true if communication is available; false otherwise.
+	 * @throws RemoteException
+	 */
+	@Override
+	public boolean validateServiceCommunication() throws RemoteException
+	{
+		try
+		{
+			ServiceRequestProtocol validation = (ServiceRequestProtocol) serviceCommunicator.request(ServiceRequestProtocol.VALIDATION);
+		}
+		catch (ClassNotFoundException | ClassCastException | IOException e)
+		{
+			return false;
+		}
+
+		return true;
 	}
 
 	@Override
@@ -508,4 +640,21 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 
 	@Override
 	public abstract MobileDataState getMobileDataState() throws CommandFailedException, RemoteException;
+
+	@Override
+	protected void finalize()
+	{
+		try
+		{
+			wrappedDevice.removeForward(socketPort, ATMOSPHERE_SERVICE_PORT);
+		}
+		catch (TimeoutException | AdbCommandRejectedException | IOException e)
+		{
+			String loggerMessage = String.format(	"Could not remove port forwarding for %s.",
+													wrappedDevice.getSerialNumber());
+			LOGGER.warn(loggerMessage, e);
+		}
+
+		stopAtmosphereService();
+	}
 }
