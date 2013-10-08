@@ -21,6 +21,8 @@ public class FakeServiceAnswer implements Answer<Void>
 {
 	public final static int FAKE_BATTERY_LEVEL = 69;
 
+	public final static boolean FAKE_POWER_STATE = false;
+
 	@Override
 	public Void answer(InvocationOnMock invocation) throws Throwable
 	{
@@ -73,6 +75,8 @@ public class FakeServiceAnswer implements Answer<Void>
 				return request;
 			case GET_BATTERY_LEVEL:
 				return FAKE_BATTERY_LEVEL;
+			case GET_POWER_STATE:
+				return FAKE_POWER_STATE;
 			default:
 				return null;
 		}

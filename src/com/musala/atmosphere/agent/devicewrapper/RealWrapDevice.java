@@ -158,6 +158,13 @@ public class RealWrapDevice extends AbstractWrapDevice
 	@Override
 	public void setPowerState(boolean state) throws RemoteException, CommandFailedException
 	{
+		BatteryChangedIntentData data = new BatteryChangedIntentData();
+		data.setPlugged(state ? 1 : 0);
+		data.setLevel(batteryLevel);
+		data.setState(batteryState);
+		String batteryChangedIntentQuery = data.buildIntentQuery();
+		executeShellCommand(batteryChangedIntentQuery);
+
 		IntentAction intentAction = state ? IntentAction.ACTION_POWER_CONNECTED
 				: IntentAction.ACTION_POWER_DISCONNECTED;
 		IntentBuilder intentBuilder = new IntentBuilder(intentAction);

@@ -523,22 +523,16 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 	@Override
 	public boolean getPowerState() throws RemoteException, CommandFailedException
 	{
-		// FIXME this will be changed in #2533
-		final String DUMP_POWER_INFO_COMMAND = "dumpsys power";
-		String response = executeShellCommand(DUMP_POWER_INFO_COMMAND);
-
-		final String POWER_STATE_EXTRACTION_REGEX = "mPlugType=(\\d)";
-		Pattern extractionPattern = Pattern.compile(POWER_STATE_EXTRACTION_REGEX);
-		Matcher stateMatch = extractionPattern.matcher(response);
-
-		if (!stateMatch.find())
-		{
-			throw new CommandFailedException("Getting power state failed.");
-		}
-
-		int powerStateInt = Integer.parseInt(stateMatch.group(1));
 		boolean powerState;
-		powerState = powerStateInt != 0;
+		try
+		{
+			powerState = (Boolean) serviceCommunicator.request(ServiceRequestProtocol.GET_POWER_STATE);
+		}
+		catch (ClassNotFoundException | IOException e)
+		{
+			// Redirect the exception to the server
+			throw new CommandFailedException("Getting power state failed.", e);
+		}
 		return powerState;
 	}
 
