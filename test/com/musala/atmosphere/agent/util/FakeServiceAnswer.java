@@ -19,6 +19,8 @@ import com.musala.atmosphere.commons.as.ServiceRequestProtocol;
  */
 public class FakeServiceAnswer implements Answer<Void>
 {
+	public final static int FAKE_BATTERY_LEVEL = 69;
+
 	@Override
 	public Void answer(InvocationOnMock invocation) throws Throwable
 	{
@@ -64,15 +66,15 @@ public class FakeServiceAnswer implements Answer<Void>
 	}
 
 	private Object handleRequest(ServiceRequestProtocol request)
-	{
-		if (request.equals(ServiceRequestProtocol.VALIDATION))
+	{// TODO implement other requests logic here.
+		switch (request)
 		{
-			return request;
-		}
-		else
-		{
-			// TODO implement other requests logic here.
-			return null;
+			case VALIDATION:
+				return request;
+			case GET_BATTERY_LEVEL:
+				return FAKE_BATTERY_LEVEL;
+			default:
+				return null;
 		}
 	}
 }

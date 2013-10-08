@@ -31,35 +31,27 @@ public class ServiceCommunicator
 	private ObjectInputStream socketClientObjectInputStream;
 
 	public ServiceCommunicator(int socketPort)
-		throws ServiceValidationFailedException,
-			IOException,
-			ClassNotFoundException
 	{
 		this.socketPort = socketPort;
 
-		if (!validateRemoteServer())
-		{
-
-			throw new ServiceValidationFailedException("Service validation failed.");
-		}
+		validateRemoteServer();
 	}
 
 	/**
 	 * Validates that the remote server is the ATMOSPHERE service socket server.
 	 * 
-	 * @return - true if the remote server has passed validation; false otherwise.
-	 * @throws ServiceValidationFailedException
-	 * @throws IOException
-	 * @throws ClassNotFoundException
 	 */
-	private boolean validateRemoteServer() throws ServiceValidationFailedException, IOException, ClassNotFoundException
+	private void validateRemoteServer()
 	{
 		try
 		{
 			ServiceRequestProtocol socketServerRequest = (ServiceRequestProtocol) request(ServiceRequestProtocol.VALIDATION);
-			return socketServerRequest.equals(ServiceRequestProtocol.VALIDATION);
+			if (!socketServerRequest.equals(ServiceRequestProtocol.VALIDATION))
+			{
+				throw new ServiceValidationFailedException("Service validation failed. Validation response did not match expected value.");
+			}
 		}
-		catch (ClassCastException e)
+		catch (ClassNotFoundException | IOException e)
 		{
 			throw new ServiceValidationFailedException("Service validation failed.", e);
 		}
@@ -86,6 +78,8 @@ public class ServiceCommunicator
 			}
 			catch (IOException e)
 			{
+				disconnect();
+
 				if (retries < CONNECTION_RETRY_LIMIT)
 				{
 					retries++;
@@ -148,15 +142,17 @@ public class ServiceCommunicator
 	 */
 	private void disconnect() throws IOException
 	{
-		try
+		if (socketClient != null)
 		{
 			socketClient.close();
-			socketClientObjectInputStream.close();
-			socketClientObjectOutputStream.close();
 		}
-		catch (NullPointerException e)
+		if (socketClientObjectInputStream != null)
 		{
-			return;
+			socketClientObjectInputStream.close();
+		}
+		if (socketClientObjectOutputStream != null)
+		{
+			socketClientObjectOutputStream.close();
 		}
 	}
 }

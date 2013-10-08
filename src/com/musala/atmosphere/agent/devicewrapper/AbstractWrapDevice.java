@@ -45,6 +45,7 @@ import com.musala.atmosphere.commons.DeviceAcceleration;
 import com.musala.atmosphere.commons.DeviceInformation;
 import com.musala.atmosphere.commons.DeviceOrientation;
 import com.musala.atmosphere.commons.MobileDataState;
+import com.musala.atmosphere.commons.as.ServiceRequestProtocol;
 import com.musala.atmosphere.commons.sa.IWrapDevice;
 import com.musala.atmosphere.commons.util.Pair;
 
@@ -180,7 +181,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 		{
 			serviceCommunicator = new ServiceCommunicator(socketPort);
 		}
-		catch (ClassNotFoundException | ServiceValidationFailedException | IOException e)
+		catch (ServiceValidationFailedException e)
 		{
 			String errorMessage = String.format("Service initialization failed for %s.",
 												wrappedDevice.getSerialNumber());
@@ -200,14 +201,13 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 	{
 		try
 		{
-			int level = wrappedDevice.getBatteryLevel(0 /* renew value, don't return old one */);
+			int level = (Integer) serviceCommunicator.request(ServiceRequestProtocol.GET_BATTERY_LEVEL);
 			return level;
 		}
-		catch (TimeoutException | AdbCommandRejectedException | IOException | ShellCommandUnresponsiveException e)
+		catch (ClassNotFoundException | IOException e)
 		{
 			// Redirect the exception to the server
-			throw new CommandFailedException(	"getBatteryLevel failed. See the enclosed exception for more information.",
-												e);
+			throw new CommandFailedException("Getting battery level failed.", e);
 		}
 	}
 
