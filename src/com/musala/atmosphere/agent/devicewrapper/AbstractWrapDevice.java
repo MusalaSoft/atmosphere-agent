@@ -504,20 +504,26 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 	@Override
 	public BatteryState getBatteryState() throws RemoteException, CommandFailedException
 	{
-		// FIXME this will be changed in #2535
-		String response = executeShellCommand(DUMP_BATTERY_INFO_COMMAND);
-		Pattern extractionPattern = Pattern.compile(BATTERY_STATE_EXTRACTION_REGEX);
-		Matcher stateMatch = extractionPattern.matcher(response);
-
-		if (!stateMatch.find())
+		try
 		{
-			throw new CommandFailedException("Getting battery state failed.");
+			Integer serviceResponse = (Integer) serviceCommunicator.request(ServiceRequestProtocol.GET_BATTERY_STATE);
+			if (serviceResponse != -1)
+			{
+				BatteryState currentBatteryState = BatteryState.getStateById(serviceResponse);
+				return currentBatteryState;
+			}
+			else
+			{
+				throw new CommandFailedException("The service could not retrieve the battery status.");
+			}
+		}
+		catch (ClassNotFoundException | IOException e)
+		{
+			LOGGER.fatal("Getting battery state failed.", e);
+			throw new CommandFailedException(	"Getting battery status failed. See enclosed exception for more information.",
+												e);
 		}
 
-		int stateId = Integer.parseInt(stateMatch.group(1));
-		BatteryState currentBatteryState = BatteryState.getStateById(stateId);
-
-		return currentBatteryState;
 	}
 
 	@Override
