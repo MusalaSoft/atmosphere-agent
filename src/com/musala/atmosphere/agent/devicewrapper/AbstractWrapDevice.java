@@ -29,7 +29,7 @@ import com.android.ddmlib.TimeoutException;
 import com.musala.atmosphere.agent.DevicePropertyStringConstants;
 import com.musala.atmosphere.agent.devicewrapper.util.DeviceProfiler;
 import com.musala.atmosphere.agent.devicewrapper.util.ForwardServicePortFailedException;
-import com.musala.atmosphere.agent.devicewrapper.util.ServiceCommunicatorClass;
+import com.musala.atmosphere.agent.devicewrapper.util.ServiceCommunicator;
 import com.musala.atmosphere.agent.exception.InitializeServiceRequestHandlerFailedException;
 import com.musala.atmosphere.agent.exception.RemovePortForwardFailedException;
 import com.musala.atmosphere.agent.exception.ServiceCommunicationFailedException;
@@ -72,7 +72,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 
 	private OutputStream tempApkFileOutputStream;
 
-	protected ServiceCommunicatorClass serviceRequestHandler;
+	protected ServiceCommunicator serviceCommunicator;
 
 	protected IDevice wrappedDevice;
 
@@ -81,13 +81,13 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 	public AbstractWrapDevice(IDevice deviceToWrap) throws RemoteException
 	{
 		wrappedDevice = deviceToWrap;
-		serviceRequestHandler = new ServiceCommunicatorClass(wrappedDevice, this);
+		serviceCommunicator = new ServiceCommunicator(wrappedDevice, this);
 
 		try
 		{
-			serviceRequestHandler.forwardServicePort();
-			serviceRequestHandler.startAtmosphereService();
-			serviceRequestHandler.initializeServiceRequestHandler();
+			serviceCommunicator.forwardServicePort();
+			serviceCommunicator.startAtmosphereService();
+			serviceCommunicator.initializeServiceRequestHandler();
 		}
 		catch (ForwardServicePortFailedException | StartAtmosphereServiceFailedException
 				| InitializeServiceRequestHandlerFailedException e)
@@ -112,7 +112,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 	{
 		try
 		{
-			return serviceRequestHandler.getBatteryLevel();
+			return serviceCommunicator.getBatteryLevel();
 		}
 		catch (CommandFailedException e)
 		{
@@ -416,7 +416,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 	{
 		try
 		{
-			return serviceRequestHandler.getBatteryState();
+			return serviceCommunicator.getBatteryState();
 		}
 		catch (CommandFailedException e)
 		{
@@ -431,7 +431,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 	{
 		try
 		{
-			return serviceRequestHandler.getPowerState();
+			return serviceCommunicator.getPowerState();
 		}
 		catch (CommandFailedException e)
 		{
@@ -522,8 +522,8 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 	{
 		try
 		{
-			serviceRequestHandler.removeForward();
-			serviceRequestHandler.stopAtmosphereService();
+			serviceCommunicator.removeForward();
+			serviceCommunicator.stopAtmosphereService();
 		}
 		catch (RemovePortForwardFailedException e)
 		{
