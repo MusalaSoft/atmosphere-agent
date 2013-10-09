@@ -21,7 +21,7 @@ import com.musala.atmosphere.commons.sa.IWrapDevice;
 import com.musala.atmosphere.commons.util.IntentBuilder;
 import com.musala.atmosphere.commons.util.IntentBuilder.IntentAction;
 
-public class ServiceCommunicatorClass
+public class ServiceCommunicator
 {
 	private static final String ATMOSPHERE_SERVICE_COMPONENT = "com.musala.atmosphere.service/com.musala.atmosphere.service.AtmosphereService";
 
@@ -33,7 +33,7 @@ public class ServiceCommunicatorClass
 
 	private ServiceRequestHandler serviceRequesthandler;
 
-	public ServiceCommunicatorClass(IDevice device, IWrapDevice wrappedDevice)
+	public ServiceCommunicator(IDevice device, IWrapDevice wrappedDevice)
 	{
 		this.device = device;
 		this.wrappedDevice = wrappedDevice;
