@@ -1,5 +1,11 @@
 package com.musala.atmosphere.agent.devicewrapper.util;
 
+/**
+ * Thrown when the forwarding of port to the ATMOSPHERE service fails.
+ * 
+ * @author yordan.petrov
+ * 
+ */
 public class ForwardServicePortFailedException extends RuntimeException
 {
 

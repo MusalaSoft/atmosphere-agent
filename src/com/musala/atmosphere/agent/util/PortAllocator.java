@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.Stack;
 
+import com.musala.atmosphere.agent.exception.NoFreePortAvailableException;
+
 /**
  * Allocates free ports.
  * 
@@ -17,9 +19,7 @@ public class PortAllocator
 
 	private final static int MAX_FORWARD_PORT = AgentPropertiesLoader.getADBMaxForwardPort();
 
-	private static int currentPort = MIN_FORWARD_PORT;
-
-	private static final Stack<Integer> FREE_PORTS = new Stack<Integer>();
+	private static final Stack<Integer> freePorts = new Stack<Integer>();
 
 	/**
 	 * Registers a port that has recently been freed by a testing device.
@@ -29,41 +29,74 @@ public class PortAllocator
 	 */
 	public static void registerFreePort(int port)
 	{
-		FREE_PORTS.add(port);
+		freePorts.add(port);
+	}
+
+	/**
+	 * Gets a free port from the list of freed ports by the released devices.
+	 * 
+	 * @return a free port identifier.
+	 * @throws NoFreePortAvailableException
+	 */
+	private static int getFreePortFromList() throws NoFreePortAvailableException
+	{
+		while (!freePorts.isEmpty())
+		{
+			int currentPort = freePorts.pop();
+
+			if (isPortAvailable(currentPort))
+			{
+				return currentPort;
+			}
+		}
+
+		throw new NoFreePortAvailableException("Colud not find a free port in the list of freed ports.");
+	}
+
+	/**
+	 * Gets a free port from the port range specified in the agent.properties file.
+	 * 
+	 * @return a free port identifier.
+	 * @throws NoFreePortAvailableException
+	 */
+	private static int getFreePortFromRange() throws NoFreePortAvailableException
+	{
+		for (int currentPort = MIN_FORWARD_PORT; currentPort <= MAX_FORWARD_PORT; currentPort++)
+		{
+			if (isPortAvailable(currentPort))
+			{
+				return currentPort;
+			}
+		}
+
+		throw new NoFreePortAvailableException("Colud not find a free port in the port range.");
 	}
 
 	/**
 	 * Returns a free port identifier.
 	 * 
-	 * @return - a free port identifier.
+	 * @return a free port identifier.
+	 * @throws NoFreePortAvailableException
 	 */
-	public static int getFreePort()
+	public static int getFreePort() throws NoFreePortAvailableException
 	{
-		int freePort;
-
-		if (FREE_PORTS.isEmpty())
+		try
 		{
-			freePort = currentPort;
-			currentPort++;
+			return getFreePortFromList();
 		}
-		else
+		catch (NoFreePortAvailableException e)
 		{
-			freePort = FREE_PORTS.pop();
 		}
 
-		if (freePort > MAX_FORWARD_PORT)
+		try
 		{
-			currentPort = MIN_FORWARD_PORT;
+			return getFreePortFromRange();
+		}
+		catch (NoFreePortAvailableException e)
+		{
 		}
 
-		if (isPortAvailable(freePort))
-		{
-			return freePort;
-		}
-		else
-		{
-			return getFreePort();
-		}
+		throw new NoFreePortAvailableException("Colud not find a free port.");
 	}
 
 	/**

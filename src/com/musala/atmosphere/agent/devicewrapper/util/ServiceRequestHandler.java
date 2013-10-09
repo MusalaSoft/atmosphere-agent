@@ -16,7 +16,7 @@ import com.musala.atmosphere.commons.as.ServiceRequestProtocol;
  * @author yordan.petrov
  * 
  */
-public class ServiceCommunicator
+public class ServiceRequestHandler
 {
 	private static final String HOST_NAME = "localhost";
 
@@ -30,7 +30,7 @@ public class ServiceCommunicator
 
 	private ObjectInputStream socketClientObjectInputStream;
 
-	public ServiceCommunicator(int socketPort)
+	public ServiceRequestHandler(int socketPort)
 	{
 		this.socketPort = socketPort;
 
@@ -123,6 +123,7 @@ public class ServiceCommunicator
 		{
 			socketClientObjectOutputStream.writeObject(socketServerRequest);
 			Object inputObject = socketClientObjectInputStream.readObject();
+
 			return inputObject;
 		}
 		catch (Exception e)
@@ -142,10 +143,6 @@ public class ServiceCommunicator
 	 */
 	private void disconnect() throws IOException
 	{
-		if (socketClient != null)
-		{
-			socketClient.close();
-		}
 		if (socketClientObjectInputStream != null)
 		{
 			socketClientObjectInputStream.close();
@@ -153,6 +150,10 @@ public class ServiceCommunicator
 		if (socketClientObjectOutputStream != null)
 		{
 			socketClientObjectOutputStream.close();
+		}
+		if (socketClient != null)
+		{
+			socketClient.close();
 		}
 	}
 }
