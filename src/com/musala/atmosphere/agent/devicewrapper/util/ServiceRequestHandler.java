@@ -26,10 +26,6 @@ public class ServiceRequestHandler
 
 	private int socketPort;
 
-	private ObjectOutputStream socketClientObjectOutputStream;
-
-	private ObjectInputStream socketClientObjectInputStream;
-
 	public ServiceRequestHandler(int socketPort)
 	{
 		this.socketPort = socketPort;
@@ -72,8 +68,6 @@ public class ServiceRequestHandler
 			try
 			{
 				socketClient = new Socket(HOST_NAME, socketPort);
-				socketClientObjectOutputStream = new ObjectOutputStream(socketClient.getOutputStream());
-				socketClientObjectInputStream = new ObjectInputStream(socketClient.getInputStream());
 				isConnected = true;
 			}
 			catch (IOException e)
@@ -119,11 +113,17 @@ public class ServiceRequestHandler
 	{
 		connect();
 
+		ObjectOutputStream socketClientObjectOutputStream = null;
+		ObjectInputStream socketClientObjectInputStream = null;
+
 		try
 		{
+			socketClientObjectOutputStream = new ObjectOutputStream(socketClient.getOutputStream());
 			socketClientObjectOutputStream.writeObject(socketServerRequest);
-			Object inputObject = socketClientObjectInputStream.readObject();
+			socketClientObjectOutputStream.flush();
 
+			socketClientObjectInputStream = new ObjectInputStream(socketClient.getInputStream());
+			Object inputObject = socketClientObjectInputStream.readObject();
 			return inputObject;
 		}
 		catch (Exception e)
@@ -132,6 +132,14 @@ public class ServiceRequestHandler
 		}
 		finally
 		{
+			if (socketClientObjectInputStream != null)
+			{
+				socketClientObjectInputStream.close();
+			}
+			if (socketClientObjectOutputStream != null)
+			{
+				socketClientObjectOutputStream.close();
+			}
 			disconnect();
 		}
 	}
@@ -143,14 +151,6 @@ public class ServiceRequestHandler
 	 */
 	private void disconnect() throws IOException
 	{
-		if (socketClientObjectInputStream != null)
-		{
-			socketClientObjectInputStream.close();
-		}
-		if (socketClientObjectOutputStream != null)
-		{
-			socketClientObjectOutputStream.close();
-		}
 		if (socketClient != null)
 		{
 			socketClient.close();
