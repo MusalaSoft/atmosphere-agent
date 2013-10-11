@@ -9,6 +9,7 @@ import java.nio.channels.SocketChannel;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
+import com.musala.atmosphere.commons.BatteryState;
 import com.musala.atmosphere.commons.as.ServiceRequestProtocol;
 
 /**
@@ -23,10 +24,22 @@ public class FakeServiceAnswer implements Answer<Void>
 
 	public final static boolean FAKE_POWER_STATE = false;
 
+	public final static Boolean FAKE_RESPONSE = true;
+
+	private Integer port;
+
+	public void setPort(int port)
+	{
+		this.port = port;
+	}
+
 	@Override
 	public Void answer(InvocationOnMock invocation) throws Throwable
 	{
-		final int port = (int) invocation.getArguments()[0];
+		if (port == null)
+		{
+			port = (Integer) invocation.getArguments()[0];
+		}
 
 		Thread thread = new Thread(new Runnable()
 		{
@@ -77,6 +90,12 @@ public class FakeServiceAnswer implements Answer<Void>
 				return FAKE_BATTERY_LEVEL;
 			case GET_POWER_STATE:
 				return FAKE_POWER_STATE;
+			case SET_WIFI_ON:
+				return FAKE_RESPONSE;
+			case SET_WIFI_OFF:
+				return FAKE_RESPONSE;
+			case GET_BATTERY_STATE:
+				return BatteryState.UNKNOWN.getStateId();
 			default:
 				return null;
 		}

@@ -518,6 +518,20 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 	public abstract MobileDataState getMobileDataState() throws CommandFailedException, RemoteException;
 
 	@Override
+	public void setWiFi(boolean state) throws CommandFailedException, RemoteException
+	{
+		try
+		{
+			serviceCommunicator.setWiFi(state);
+		}
+		catch (CommandFailedException e)
+		{
+			LOGGER.fatal("Setting WiFi failed.", e);
+			throw e;
+		}
+	}
+
+	@Override
 	protected void finalize()
 	{
 		try

@@ -187,7 +187,7 @@ public class ServiceCommunicator
 	 * @return a member of the {@link BatteryState BatteryState} enumeration.
 	 * @throws CommandFailedException
 	 */
-	public BatteryState getBatteryState() throws RemoteException, CommandFailedException
+	public BatteryState getBatteryState() throws CommandFailedException
 	{
 		try
 		{
@@ -207,6 +207,31 @@ public class ServiceCommunicator
 			throw new CommandFailedException(	"Getting battery status failed. See enclosed exception for more information.",
 												e);
 		}
+	}
 
+	/**
+	 * Sets the WiFi state on the device.
+	 * 
+	 * @param state
+	 *        - true if the WiFi should be on; false if it should be on.
+	 * @throws CommandFailedException
+	 */
+	public void setWiFi(boolean state) throws CommandFailedException
+	{
+		try
+		{
+			if (state)
+			{
+				serviceRequesthandler.request(ServiceRequestProtocol.SET_WIFI_ON);
+			}
+			else
+			{
+				serviceRequesthandler.request(ServiceRequestProtocol.SET_WIFI_OFF);
+			}
+		}
+		catch (ClassNotFoundException | IOException e)
+		{
+			throw new CommandFailedException("Setting WiFi failed. See enclosed exception for more information.", e);
+		}
 	}
 }
