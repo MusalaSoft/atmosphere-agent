@@ -8,7 +8,7 @@ import static org.mockito.Mockito.spy;
 
 import java.rmi.RemoteException;
 
-import org.junit.BeforeClass;
+import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 
@@ -24,11 +24,11 @@ import com.musala.atmosphere.commons.util.Pair;
 
 public class AbstractWrapDeviceTest
 {
-	private static AbstractWrapDevice testWrapDevice;
+	private AbstractWrapDevice testWrapDevice;
 
-	private static IDevice device;
+	private IDevice device;
 
-	private static FakeServiceAnswer fakeServiceAnswer;
+	private FakeServiceAnswer fakeServiceAnswer;
 
 	private final String DUMPSYS_SENSORSERVICE_COMMAND_RESULT = "Sensor List:\r\nGoldfish 3-axis Accelerometer"
 			+ "                   | The Android Open Source Project  | 0x00000000 | maxRate=   0.00Hz |"
@@ -49,8 +49,8 @@ public class AbstractWrapDeviceTest
 			+ "Goldfish 3-axis Accelerometer (handle=0x00000000, connections=1)\r\n"
 			+ "Goldfish Orientation sensor (handle=0x00000002, connections=1)\r\n";
 
-	@BeforeClass
-	public static void setUp() throws Exception
+	@Before
+	public void setUp() throws Exception
 	{
 		device = mock(IDevice.class);
 		fakeServiceAnswer = new FakeServiceAnswer();
