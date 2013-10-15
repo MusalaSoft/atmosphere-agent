@@ -512,7 +512,18 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 	public abstract void setMobileDataState(MobileDataState state) throws CommandFailedException, RemoteException;
 
 	@Override
-	public abstract ConnectionType getConnectionType() throws RemoteException, CommandFailedException;
+	public ConnectionType getConnectionType() throws RemoteException, CommandFailedException
+	{
+		try
+		{
+			return serviceCommunicator.getConnectionType();
+		}
+		catch (CommandFailedException e)
+		{
+			LOGGER.fatal("Getting connection type failed.", e);
+			throw e;
+		}
+	}
 
 	@Override
 	public abstract MobileDataState getMobileDataState() throws CommandFailedException, RemoteException;

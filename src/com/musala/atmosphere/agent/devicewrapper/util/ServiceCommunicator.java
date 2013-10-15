@@ -15,8 +15,10 @@ import com.musala.atmosphere.agent.exception.StopAtmosphereServiceFailedExceptio
 import com.musala.atmosphere.agent.util.PortAllocator;
 import com.musala.atmosphere.commons.BatteryState;
 import com.musala.atmosphere.commons.CommandFailedException;
+import com.musala.atmosphere.commons.ConnectionType;
 import com.musala.atmosphere.commons.as.ServiceConstants;
-import com.musala.atmosphere.commons.as.ServiceRequestProtocol;
+import com.musala.atmosphere.commons.as.ServiceRequest;
+import com.musala.atmosphere.commons.as.ServiceRequestType;
 import com.musala.atmosphere.commons.sa.IWrapDevice;
 import com.musala.atmosphere.commons.util.IntentBuilder;
 import com.musala.atmosphere.commons.util.IntentBuilder.IntentAction;
@@ -148,9 +150,11 @@ public class ServiceCommunicator
 	 */
 	public int getBatteryLevel() throws CommandFailedException
 	{
+		ServiceRequest serviceRequest = new ServiceRequest(ServiceRequestType.GET_BATTERY_LEVEL);
+
 		try
 		{
-			int level = (Integer) serviceRequesthandler.request(ServiceRequestProtocol.GET_BATTERY_LEVEL);
+			int level = (Integer) serviceRequesthandler.request(serviceRequest);
 			return level;
 		}
 		catch (ClassNotFoundException | IOException e)
@@ -168,10 +172,12 @@ public class ServiceCommunicator
 	 */
 	public boolean getPowerState() throws CommandFailedException
 	{
+		ServiceRequest serviceRequest = new ServiceRequest(ServiceRequestType.GET_POWER_STATE);
 		boolean powerState;
+
 		try
 		{
-			powerState = (Boolean) serviceRequesthandler.request(ServiceRequestProtocol.GET_POWER_STATE);
+			powerState = (Boolean) serviceRequesthandler.request(serviceRequest);
 		}
 		catch (ClassNotFoundException | IOException e)
 		{
@@ -189,9 +195,11 @@ public class ServiceCommunicator
 	 */
 	public BatteryState getBatteryState() throws CommandFailedException
 	{
+		ServiceRequest serviceRequest = new ServiceRequest(ServiceRequestType.GET_BATTERY_STATE);
+
 		try
 		{
-			Integer serviceResponse = (Integer) serviceRequesthandler.request(ServiceRequestProtocol.GET_BATTERY_STATE);
+			Integer serviceResponse = (Integer) serviceRequesthandler.request(serviceRequest);
 			if (serviceResponse != -1)
 			{
 				BatteryState currentBatteryState = BatteryState.getStateById(serviceResponse);
@@ -209,24 +217,47 @@ public class ServiceCommunicator
 		}
 	}
 
+	public ConnectionType getConnectionType() throws CommandFailedException
+	{
+		ServiceRequest serviceRequest = new ServiceRequest(ServiceRequestType.GET_CONNECTION_TYPE);
+
+		try
+		{
+			Integer serviceResponse = (Integer) serviceRequesthandler.request(serviceRequest);
+			return ConnectionType.getById(serviceResponse);
+		}
+		catch (ClassNotFoundException | IOException e)
+		{
+			throw new CommandFailedException(	"Getting connection type failed. See enclosed exception for more information.",
+												e);
+		}
+	}
+
 	/**
 	 * Sets the WiFi state on the device.
 	 * 
 	 * @param state
-	 *        - true if the WiFi should be on; false if it should be on.
+	 *        - true if the WiFi should be on; false if it should be off.
 	 * @throws CommandFailedException
 	 */
 	public void setWiFi(boolean state) throws CommandFailedException
 	{
+		ServiceRequest serviceRequest = new ServiceRequest(ServiceRequestType.SET_WIFI);
+		Boolean[] arguments = new Boolean[1];
+
 		try
 		{
 			if (state)
 			{
-				serviceRequesthandler.request(ServiceRequestProtocol.SET_WIFI_ON);
+				arguments[0] = true;
+				serviceRequest.setArguments(arguments);
+				serviceRequesthandler.request(serviceRequest);
 			}
 			else
 			{
-				serviceRequesthandler.request(ServiceRequestProtocol.SET_WIFI_OFF);
+				arguments[0] = false;
+				serviceRequest.setArguments(arguments);
+				serviceRequesthandler.request(serviceRequest);
 			}
 		}
 		catch (ClassNotFoundException | IOException e)

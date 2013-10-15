@@ -8,7 +8,8 @@ import java.net.UnknownHostException;
 
 import com.musala.atmosphere.agent.exception.ServiceValidationFailedException;
 import com.musala.atmosphere.agent.util.AgentPropertiesLoader;
-import com.musala.atmosphere.commons.as.ServiceRequestProtocol;
+import com.musala.atmosphere.commons.as.ServiceRequest;
+import com.musala.atmosphere.commons.as.ServiceRequestType;
 
 /**
  * Class that communicates with the ATMOSPHERE service on the wrapped device.
@@ -41,8 +42,9 @@ public class ServiceRequestHandler
 	{
 		try
 		{
-			ServiceRequestProtocol socketServerRequest = (ServiceRequestProtocol) request(ServiceRequestProtocol.VALIDATION);
-			if (!socketServerRequest.equals(ServiceRequestProtocol.VALIDATION))
+			ServiceRequest serviceRequest = new ServiceRequest(ServiceRequestType.VALIDATION);
+			ServiceRequestType response = (ServiceRequestType) request(serviceRequest);
+			if (!response.equals(ServiceRequestType.VALIDATION))
 			{
 				throw new ServiceValidationFailedException("Service validation failed. Validation response did not match expected value.");
 			}
@@ -97,7 +99,7 @@ public class ServiceRequestHandler
 	}
 
 	/**
-	 * Sends a {@link ServiceRequestProtocol} request to the ATMOSPHERE service and returns the response.
+	 * Sends a {@link ServiceRequestType} request to the ATMOSPHERE service and returns the response.
 	 * 
 	 * @param socketServerRequest
 	 *        - request that will be send to the ATMOSPHERE service.
@@ -106,7 +108,7 @@ public class ServiceRequestHandler
 	 * @throws IOException
 	 * @throws UnknownHostException
 	 */
-	public Object request(ServiceRequestProtocol socketServerRequest)
+	public Object request(ServiceRequest socketServerRequest)
 		throws ClassNotFoundException,
 			UnknownHostException,
 			IOException

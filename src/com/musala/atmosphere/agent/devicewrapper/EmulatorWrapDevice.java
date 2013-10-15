@@ -11,7 +11,6 @@ import com.musala.atmosphere.agent.devicewrapper.util.EmulatorConnectionFailedEx
 import com.musala.atmosphere.agent.devicewrapper.util.ExtendedEmulatorConsole;
 import com.musala.atmosphere.commons.BatteryState;
 import com.musala.atmosphere.commons.CommandFailedException;
-import com.musala.atmosphere.commons.ConnectionType;
 import com.musala.atmosphere.commons.DeviceAcceleration;
 import com.musala.atmosphere.commons.DeviceOrientation;
 import com.musala.atmosphere.commons.MobileDataState;
@@ -296,11 +295,5 @@ public class EmulatorWrapDevice extends AbstractWrapDevice
 			throw new CommandFailedException("Illegal argument has been passed to the emulator console class. "
 					+ "See the enclosed exception for more information.", e);
 		}
-	}
-
-	@Override
-	public ConnectionType getConnectionType() throws RemoteException, CommandFailedException
-	{
-		throw new CommandFailedException("Can not get connection type for emulators.");
 	}
 }

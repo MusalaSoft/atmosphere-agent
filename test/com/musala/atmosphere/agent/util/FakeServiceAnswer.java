@@ -1,16 +1,19 @@
 package com.musala.atmosphere.agent.util;
 
+import java.io.EOFException;
+import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.InetSocketAddress;
+import java.net.Socket;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
-import com.musala.atmosphere.commons.BatteryState;
-import com.musala.atmosphere.commons.as.ServiceRequestProtocol;
+import com.musala.atmosphere.commons.as.ServiceRequest;
+import com.musala.atmosphere.commons.as.ServiceRequestType;
 
 /**
  * Fakes calls to the ATMOSPHERE service.
@@ -28,20 +31,19 @@ public class FakeServiceAnswer implements Answer<Void>
 
 	private Integer port;
 
+	Thread thread;
+
 	public void setPort(int port)
 	{
 		this.port = port;
 	}
 
 	@Override
-	public Void answer(InvocationOnMock invocation) throws Throwable
+	public Void answer(InvocationOnMock invocation)
 	{
-		if (port == null)
-		{
-			port = (Integer) invocation.getArguments()[0];
-		}
+		port = (Integer) invocation.getArguments()[0];
 
-		Thread thread = new Thread(new Runnable()
+		thread = new Thread(new Runnable()
 		{
 			@Override
 			public void run()
@@ -52,25 +54,54 @@ public class FakeServiceAnswer implements Answer<Void>
 					serverSocketChannel.configureBlocking(true);
 					serverSocketChannel.socket().bind(new InetSocketAddress(port));
 
-					SocketChannel socketChannel = serverSocketChannel.accept();
-
-					ObjectOutputStream socketServerOutputStream = new ObjectOutputStream(socketChannel.socket()
-																										.getOutputStream());
-					ObjectInputStream socketServerInputStream = new ObjectInputStream(socketChannel.socket()
-																									.getInputStream());
-
-					ServiceRequestProtocol request = (ServiceRequestProtocol) socketServerInputStream.readObject();
-
-					socketServerOutputStream.writeObject(handleRequest(request));
-
-					socketServerInputStream.close();
-					socketServerOutputStream.close();
-					socketChannel.close();
-					serverSocketChannel.close();
+					while (true)
+					{
+						listen(serverSocketChannel);
+					}
 				}
 				catch (Throwable e)
 				{
 					e.printStackTrace();
+				}
+			}
+
+			public void listen(ServerSocketChannel serverSocketChannel) throws IOException
+			{
+				SocketChannel socketChannel = serverSocketChannel.accept();
+
+				ObjectInputStream socketServerInputStream = null;
+				ObjectOutputStream socketServerOutputStream = null;
+
+				try
+				{
+					Socket baseSocket = socketChannel.socket();
+					socketServerInputStream = new ObjectInputStream(baseSocket.getInputStream());
+					ServiceRequest request = (ServiceRequest) socketServerInputStream.readObject();
+
+					Object response = handleRequest(request);
+
+					socketServerOutputStream = new ObjectOutputStream(baseSocket.getOutputStream());
+					socketServerOutputStream.writeObject(response);
+					socketServerOutputStream.flush();
+				}
+				catch (EOFException | ClassNotFoundException e)
+				{
+					e.printStackTrace();
+				}
+				finally
+				{
+					if (socketServerInputStream != null)
+					{
+						socketServerInputStream.close();
+					}
+					if (socketServerOutputStream != null)
+					{
+						socketServerOutputStream.close();
+					}
+					if (socketChannel != null)
+					{
+						socketChannel.close();
+					}
 				}
 			}
 
@@ -80,24 +111,31 @@ public class FakeServiceAnswer implements Answer<Void>
 		return null;
 	}
 
-	private Object handleRequest(ServiceRequestProtocol request)
+	private Object handleRequest(ServiceRequest request)
 	{// TODO implement other requests logic here.
-		switch (request)
+		ServiceRequestType requestType = request.getType();
+
+		switch (requestType)
 		{
 			case VALIDATION:
-				return request;
+				return requestType;
 			case GET_BATTERY_LEVEL:
 				return FAKE_BATTERY_LEVEL;
 			case GET_POWER_STATE:
 				return FAKE_POWER_STATE;
-			case SET_WIFI_ON:
-				return FAKE_RESPONSE;
-			case SET_WIFI_OFF:
-				return FAKE_RESPONSE;
+			case SET_WIFI:
 			case GET_BATTERY_STATE:
-				return BatteryState.UNKNOWN.getStateId();
+				return 3;
+			case GET_CONNECTION_TYPE:
+				return 5;
 			default:
 				return null;
 		}
+	}
+
+	@Override
+	public void finalize()
+	{
+		thread.interrupt();
 	}
 }

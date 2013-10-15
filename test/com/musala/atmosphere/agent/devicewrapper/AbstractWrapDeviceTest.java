@@ -8,14 +8,11 @@ import static org.mockito.Mockito.spy;
 
 import java.rmi.RemoteException;
 
-import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
 import org.mockito.Mockito;
 
 import com.android.ddmlib.IDevice;
-import com.musala.atmosphere.agent.devicewrapper.util.ServiceCommunicator;
 import com.musala.atmosphere.agent.util.FakeServiceAnswer;
 import com.musala.atmosphere.commons.BatteryState;
 import com.musala.atmosphere.commons.CommandFailedException;
@@ -27,17 +24,11 @@ import com.musala.atmosphere.commons.util.Pair;
 
 public class AbstractWrapDeviceTest
 {
-	private AbstractWrapDevice testWrapDevice;
+	private static AbstractWrapDevice testWrapDevice;
 
-	private IDevice device;
+	private static IDevice device;
 
-	@Mock(name = "serviceCommunicator")
-	private ServiceCommunicator serviceCommunicator;
-
-	@InjectMocks
-	private AbstractWrapDevice testDevice;
-
-	private FakeServiceAnswer fakeServiceAnswer;
+	private static FakeServiceAnswer fakeServiceAnswer;
 
 	private final String DUMPSYS_SENSORSERVICE_COMMAND_RESULT = "Sensor List:\r\nGoldfish 3-axis Accelerometer"
 			+ "                   | The Android Open Source Project  | 0x00000000 | maxRate=   0.00Hz |"
@@ -58,8 +49,8 @@ public class AbstractWrapDeviceTest
 			+ "Goldfish 3-axis Accelerometer (handle=0x00000000, connections=1)\r\n"
 			+ "Goldfish Orientation sensor (handle=0x00000002, connections=1)\r\n";
 
-	@Before
-	public void setUp() throws Exception
+	@BeforeClass
+	public static void setUp() throws Exception
 	{
 		device = mock(IDevice.class);
 		fakeServiceAnswer = new FakeServiceAnswer();
@@ -154,24 +145,26 @@ public class AbstractWrapDeviceTest
 	@Test
 	public void testGetBatteryLevel() throws Throwable
 	{
-		fakeServiceAnswer.answer(null);
-		int batteryLevel = testWrapDevice.getBatteryLevel();
+		testWrapDevice.getBatteryLevel();
 	}
 
 	@Test
 	public void testSetWiFi() throws Throwable
 	{
-		fakeServiceAnswer.answer(null);
 		testWrapDevice.setWiFi(true);
 
-		fakeServiceAnswer.answer(null);
 		testWrapDevice.setWiFi(false);
 	}
 
 	@Test
 	public void testGetBatteryState() throws Throwable
 	{
-		fakeServiceAnswer.answer(null);
 		testWrapDevice.getBatteryState();
+	}
+
+	@Test
+	public void testGetConnectionType() throws Throwable
+	{
+		testWrapDevice.getConnectionType();
 	}
 }
