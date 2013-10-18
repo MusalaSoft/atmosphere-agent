@@ -463,26 +463,16 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 	@Override
 	public DeviceOrientation getDeviceOrientation() throws RemoteException, CommandFailedException
 	{
-		// TODO maybe move this method?
-		String response = executeShellCommand(DUMP_SENSOR_SERVICE_INFO_COMMAND);
-
-		String findOrientationSensorRegex = "(Orientation)(.+)(last=<\\s*(-{0,1}\\d+\\.\\d),\\s*(-{0,1}\\d+\\.\\d),\\s*(-{0,1}\\d+\\.\\d)>)";
-		Pattern extractionPattern = Pattern.compile(findOrientationSensorRegex);
-		Matcher regexMatch = extractionPattern.matcher(response);
-
-		if (!regexMatch.find())
+		try
 		{
-			throw new CommandFailedException("Getting device orientation failed.");
+			DeviceOrientation result = serviceCommunicator.getDeviceOrientation();
+			return result;
 		}
-
-		float orientationAzimuth = Float.parseFloat((regexMatch.group(4)));
-		float orientationPitch = Float.parseFloat((regexMatch.group(5)));
-		float orientationRoll = Float.parseFloat((regexMatch.group(6)));
-		DeviceOrientation deviceOrientation = new DeviceOrientation(orientationAzimuth,
-																	orientationPitch,
-																	orientationRoll);
-
-		return deviceOrientation;
+		catch (CommandFailedException e)
+		{
+			LOGGER.fatal("Getting device orientation failed.", e);
+			throw e;
+		}
 	}
 
 	@Override

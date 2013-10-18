@@ -26,16 +26,13 @@ import javax.xml.bind.annotation.adapters.HexBinaryAdapter;
 
 import org.apache.log4j.Logger;
 
-import com.android.ddmlib.AdbCommandRejectedException;
 import com.android.ddmlib.AndroidDebugBridge;
 import com.android.ddmlib.EmulatorConsole;
 import com.android.ddmlib.IDevice;
-import com.android.ddmlib.TimeoutException;
 import com.musala.atmosphere.agent.devicewrapper.EmulatorWrapDevice;
 import com.musala.atmosphere.agent.devicewrapper.RealWrapDevice;
 import com.musala.atmosphere.agent.exception.ServiceCommunicationFailedException;
 import com.musala.atmosphere.agent.util.AgentPropertiesLoader;
-import com.musala.atmosphere.commons.CommandFailedException;
 import com.musala.atmosphere.commons.sa.DeviceParameters;
 import com.musala.atmosphere.commons.sa.IAgentManager;
 import com.musala.atmosphere.commons.sa.IConnectionRequestReceiver;
@@ -345,9 +342,6 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 	 *        that will be wrapped.
 	 * @return RMI binding ID for the newly created wrapper.
 	 * @throws RemoteException
-	 * @throws CommandFailedException
-	 * @throws AdbCommandRejectedException
-	 * @throws TimeoutException
 	 */
 	private String createWrapperForDevice(IDevice device) throws RemoteException
 	{

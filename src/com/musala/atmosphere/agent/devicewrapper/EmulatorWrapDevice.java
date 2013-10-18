@@ -40,6 +40,20 @@ public class EmulatorWrapDevice extends AbstractWrapDevice
 		{
 			throw new NotPossibleForDeviceException("Cannot create emulator wrap device for a real, physical device.");
 		}
+
+		// By default, the magnetic field readings of an emulator is set to 0:0:0, which is an invalid value.
+		// When the android method SensorManager.getRotationMatrix(...) in invoked with 0:0:0 as magnetic field
+		// readings, it fails because of the invalidity of the data. This is why we set dummy data - so the on-device
+		// service can function normally.
+		try
+		{
+			ExtendedEmulatorConsole emulatorConsole = ExtendedEmulatorConsole.getExtendedEmulatorConsole(wrappedDevice);
+			emulatorConsole.setMagneticField(50, 50, 50);
+		}
+		catch (EmulatorConnectionFailedException e)
+		{
+			LOGGER.warn("Connection to emulator console failed.", e);
+		}
 	}
 
 	@Override

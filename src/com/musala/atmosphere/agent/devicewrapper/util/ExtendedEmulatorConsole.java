@@ -51,6 +51,8 @@ public class ExtendedEmulatorConsole
 
 	private final static String COMMAND_SET_MOBILE_DATA_STATE = "gsm data %s\r\n";
 
+	private static final String COMMAND_SET_MAGNETIC_FIELD = "sensor set magnetic-field %d:%d:%d";
+
 	private final static String COMMAND_GSM_STATUS = "gsm status\r\n";
 
 	/**
@@ -308,13 +310,33 @@ public class ExtendedEmulatorConsole
 	/**
 	 * Sets the mobile data state of an emulator through the emulator console.
 	 * 
-	 * @return - the command response from the emulator console.
+	 * @return the command response from the emulator console.
 	 * @throws EmulatorConnectionFailedException
 	 */
 	public synchronized boolean setMobileDataState(MobileDataState state) throws EmulatorConnectionFailedException
 	{
 		String stateToAppend = state.toString();
 		String command = String.format(COMMAND_SET_MOBILE_DATA_STATE, stateToAppend);
+		boolean commandIsOk = executeCommand(command);
+		return commandIsOk;
+	}
+
+	/**
+	 * Sets the magnetic field sensor reading through the emulator console. Note : This sensor provides raw field
+	 * strength data (in uT) for each of the three coordinate axes
+	 * 
+	 * @param x
+	 *        - x coordinate magnetic field sensor data.
+	 * @param y
+	 *        - y coordinate magnetic field sensor data.
+	 * @param z
+	 *        - z coordinate magnetic field sensor data.
+	 * @return the command response from the emulator console.
+	 * @throws EmulatorConnectionFailedException
+	 */
+	public synchronized boolean setMagneticField(int x, int y, int z) throws EmulatorConnectionFailedException
+	{
+		String command = String.format(COMMAND_SET_MAGNETIC_FIELD, x, y, z);
 		boolean commandIsOk = executeCommand(command);
 		return commandIsOk;
 	}

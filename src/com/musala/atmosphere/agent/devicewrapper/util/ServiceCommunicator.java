@@ -16,6 +16,7 @@ import com.musala.atmosphere.agent.util.PortAllocator;
 import com.musala.atmosphere.commons.BatteryState;
 import com.musala.atmosphere.commons.CommandFailedException;
 import com.musala.atmosphere.commons.ConnectionType;
+import com.musala.atmosphere.commons.DeviceOrientation;
 import com.musala.atmosphere.commons.as.ServiceConstants;
 import com.musala.atmosphere.commons.as.ServiceRequest;
 import com.musala.atmosphere.commons.as.ServiceRequestType;
@@ -185,6 +186,34 @@ public class ServiceCommunicator
 			throw new CommandFailedException("Getting power state failed.", e);
 		}
 		return powerState;
+	}
+
+	/**
+	 * Fetches the sensor orientation readings of the device.
+	 * 
+	 * @return a {@link DeviceOrientation} instance.
+	 * @throws CommandFailedException
+	 */
+	public DeviceOrientation getDeviceOrientation() throws CommandFailedException
+	{
+		try
+		{
+			ServiceRequest request = new ServiceRequest(ServiceRequestType.GET_ORIENTATION_READINGS);
+			float[] response = (float[]) serviceRequesthandler.request(request);
+
+			float orientationAzimuth = response[0];
+			float orientationPitch = response[1];
+			float orientationRoll = response[2];
+			DeviceOrientation deviceOrientation = new DeviceOrientation(orientationAzimuth,
+																		orientationPitch,
+																		orientationRoll);
+
+			return deviceOrientation;
+		}
+		catch (ClassNotFoundException | IOException e)
+		{
+			throw new CommandFailedException("Getting battery status failed.", e);
+		}
 	}
 
 	/**

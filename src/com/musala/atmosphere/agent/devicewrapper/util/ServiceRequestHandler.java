@@ -1,8 +1,10 @@
 package com.musala.atmosphere.agent.devicewrapper.util;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
 
@@ -25,7 +27,11 @@ public class ServiceRequestHandler
 
 	private Socket socketClient;
 
-	private int socketPort;
+	private OutputStream socketClientOutputStream;
+
+	private InputStream socketClientInputStream;
+
+	private final int socketPort;
 
 	public ServiceRequestHandler(int socketPort)
 	{
@@ -62,15 +68,16 @@ public class ServiceRequestHandler
 	 */
 	private void connect() throws IOException
 	{
-		boolean isConnected = false;
 		int retries = 0;
 
-		while (!isConnected)
+		while (true)
 		{
 			try
 			{
 				socketClient = new Socket(HOST_NAME, socketPort);
-				isConnected = true;
+				socketClientInputStream = socketClient.getInputStream();
+				socketClientOutputStream = socketClient.getOutputStream();
+				break;
 			}
 			catch (IOException e)
 			{
@@ -103,7 +110,7 @@ public class ServiceRequestHandler
 	 * 
 	 * @param socketServerRequest
 	 *        - request that will be send to the ATMOSPHERE service.
-	 * @return - the response from the ATMOSPHERE service.
+	 * @return the response from the ATMOSPHERE service.
 	 * @throws ClassNotFoundException
 	 * @throws IOException
 	 * @throws UnknownHostException
@@ -115,33 +122,23 @@ public class ServiceRequestHandler
 	{
 		connect();
 
-		ObjectOutputStream socketClientObjectOutputStream = null;
-		ObjectInputStream socketClientObjectInputStream = null;
-
 		try
 		{
-			socketClientObjectOutputStream = new ObjectOutputStream(socketClient.getOutputStream());
-			socketClientObjectOutputStream.writeObject(socketServerRequest);
-			socketClientObjectOutputStream.flush();
+			ObjectOutputStream objectOutputStream = new ObjectOutputStream(socketClientOutputStream);
+			objectOutputStream.flush();
+			objectOutputStream.writeObject(socketServerRequest);
+			objectOutputStream.flush();
 
-			socketClientObjectInputStream = new ObjectInputStream(socketClient.getInputStream());
-			Object inputObject = socketClientObjectInputStream.readObject();
+			ObjectInputStream objectInputStream = new ObjectInputStream(socketClientInputStream);
+			Object inputObject = objectInputStream.readObject();
+
+			objectInputStream.close();
+			objectOutputStream.close();
+
 			return inputObject;
-		}
-		catch (Exception e)
-		{
-			throw e;
 		}
 		finally
 		{
-			if (socketClientObjectInputStream != null)
-			{
-				socketClientObjectInputStream.close();
-			}
-			if (socketClientObjectOutputStream != null)
-			{
-				socketClientObjectOutputStream.close();
-			}
 			disconnect();
 		}
 	}
@@ -153,9 +150,20 @@ public class ServiceRequestHandler
 	 */
 	private void disconnect() throws IOException
 	{
+		if (socketClientInputStream != null)
+		{
+			socketClientInputStream.close();
+			socketClientInputStream = null;
+		}
+		if (socketClientOutputStream != null)
+		{
+			socketClientOutputStream.close();
+			socketClientOutputStream = null;
+		}
 		if (socketClient != null)
 		{
 			socketClient.close();
+			socketClient = null;
 		}
 	}
 }
