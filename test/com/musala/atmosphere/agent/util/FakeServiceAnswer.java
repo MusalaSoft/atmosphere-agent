@@ -12,8 +12,8 @@ import java.nio.channels.SocketChannel;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
-import com.musala.atmosphere.commons.as.ServiceRequest;
-import com.musala.atmosphere.commons.as.ServiceRequestType;
+import com.musala.atmosphere.commons.ad.Request;
+import com.musala.atmosphere.commons.ad.service.ServiceRequest;
 
 /**
  * Fakes calls to the ATMOSPHERE service.
@@ -76,7 +76,7 @@ public class FakeServiceAnswer implements Answer<Void>
 				{
 					Socket baseSocket = socketChannel.socket();
 					socketServerInputStream = new ObjectInputStream(baseSocket.getInputStream());
-					ServiceRequest request = (ServiceRequest) socketServerInputStream.readObject();
+					Request<ServiceRequest> request = (Request<ServiceRequest>) socketServerInputStream.readObject();
 
 					Object response = handleRequest(request);
 
@@ -111,9 +111,9 @@ public class FakeServiceAnswer implements Answer<Void>
 		return null;
 	}
 
-	private Object handleRequest(ServiceRequest request)
+	private Object handleRequest(Request<ServiceRequest> request)
 	{// TODO implement other requests logic here.
-		ServiceRequestType requestType = request.getType();
+		ServiceRequest requestType = request.getType();
 
 		switch (requestType)
 		{

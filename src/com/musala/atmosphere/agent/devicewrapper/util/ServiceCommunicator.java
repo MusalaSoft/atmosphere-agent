@@ -17,9 +17,9 @@ import com.musala.atmosphere.commons.BatteryState;
 import com.musala.atmosphere.commons.CommandFailedException;
 import com.musala.atmosphere.commons.ConnectionType;
 import com.musala.atmosphere.commons.DeviceOrientation;
-import com.musala.atmosphere.commons.as.ServiceConstants;
-import com.musala.atmosphere.commons.as.ServiceRequest;
-import com.musala.atmosphere.commons.as.ServiceRequestType;
+import com.musala.atmosphere.commons.ad.Request;
+import com.musala.atmosphere.commons.ad.service.ServiceConstants;
+import com.musala.atmosphere.commons.ad.service.ServiceRequest;
 import com.musala.atmosphere.commons.sa.IWrapDevice;
 import com.musala.atmosphere.commons.util.IntentBuilder;
 import com.musala.atmosphere.commons.util.IntentBuilder.IntentAction;
@@ -151,7 +151,7 @@ public class ServiceCommunicator
 	 */
 	public int getBatteryLevel() throws CommandFailedException
 	{
-		ServiceRequest serviceRequest = new ServiceRequest(ServiceRequestType.GET_BATTERY_LEVEL);
+		Request<ServiceRequest> serviceRequest = new Request<ServiceRequest>(ServiceRequest.GET_BATTERY_LEVEL);
 
 		try
 		{
@@ -173,7 +173,7 @@ public class ServiceCommunicator
 	 */
 	public boolean getPowerState() throws CommandFailedException
 	{
-		ServiceRequest serviceRequest = new ServiceRequest(ServiceRequestType.GET_POWER_STATE);
+		Request<ServiceRequest> serviceRequest = new Request<ServiceRequest>(ServiceRequest.GET_POWER_STATE);
 		boolean powerState;
 
 		try
@@ -198,7 +198,7 @@ public class ServiceCommunicator
 	{
 		try
 		{
-			ServiceRequest request = new ServiceRequest(ServiceRequestType.GET_ORIENTATION_READINGS);
+			Request<ServiceRequest> request = new Request<ServiceRequest>(ServiceRequest.GET_ORIENTATION_READINGS);
 			float[] response = (float[]) serviceRequesthandler.request(request);
 
 			float orientationAzimuth = response[0];
@@ -224,7 +224,7 @@ public class ServiceCommunicator
 	 */
 	public BatteryState getBatteryState() throws CommandFailedException
 	{
-		ServiceRequest serviceRequest = new ServiceRequest(ServiceRequestType.GET_BATTERY_STATE);
+		Request<ServiceRequest> serviceRequest = new Request<ServiceRequest>(ServiceRequest.GET_BATTERY_STATE);
 
 		try
 		{
@@ -248,7 +248,7 @@ public class ServiceCommunicator
 
 	public ConnectionType getConnectionType() throws CommandFailedException
 	{
-		ServiceRequest serviceRequest = new ServiceRequest(ServiceRequestType.GET_CONNECTION_TYPE);
+		Request<ServiceRequest> serviceRequest = new Request<ServiceRequest>(ServiceRequest.GET_CONNECTION_TYPE);
 
 		try
 		{
@@ -271,7 +271,7 @@ public class ServiceCommunicator
 	 */
 	public void setWiFi(boolean state) throws CommandFailedException
 	{
-		ServiceRequest serviceRequest = new ServiceRequest(ServiceRequestType.SET_WIFI);
+		Request<ServiceRequest> serviceRequest = new Request<ServiceRequest>(ServiceRequest.SET_WIFI);
 		Boolean[] arguments = new Boolean[1];
 
 		try
