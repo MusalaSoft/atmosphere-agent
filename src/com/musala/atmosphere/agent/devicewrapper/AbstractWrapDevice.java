@@ -28,10 +28,9 @@ import com.android.ddmlib.SyncException;
 import com.android.ddmlib.TimeoutException;
 import com.musala.atmosphere.agent.DevicePropertyStringConstants;
 import com.musala.atmosphere.agent.devicewrapper.util.DeviceProfiler;
-import com.musala.atmosphere.agent.devicewrapper.util.ForwardServicePortFailedException;
+import com.musala.atmosphere.agent.devicewrapper.util.ForwardingPortFailedException;
 import com.musala.atmosphere.agent.devicewrapper.util.ServiceCommunicator;
 import com.musala.atmosphere.agent.exception.InitializeServiceRequestHandlerFailedException;
-import com.musala.atmosphere.agent.exception.RemovePortForwardFailedException;
 import com.musala.atmosphere.agent.exception.ServiceCommunicationFailedException;
 import com.musala.atmosphere.agent.exception.StartAtmosphereServiceFailedException;
 import com.musala.atmosphere.agent.exception.StopAtmosphereServiceFailedException;
@@ -81,15 +80,13 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 	public AbstractWrapDevice(IDevice deviceToWrap) throws RemoteException
 	{
 		wrappedDevice = deviceToWrap;
-		serviceCommunicator = new ServiceCommunicator(wrappedDevice, this);
 
+		PortForwardingService forwardingService = new PortForwardingService(wrappedDevice);
 		try
 		{
-			serviceCommunicator.forwardServicePort();
-			serviceCommunicator.startAtmosphereService();
-			serviceCommunicator.initializeServiceRequestHandler();
+			serviceCommunicator = new ServiceCommunicator(forwardingService, this);
 		}
-		catch (ForwardServicePortFailedException | StartAtmosphereServiceFailedException
+		catch (ForwardingPortFailedException | StartAtmosphereServiceFailedException
 				| InitializeServiceRequestHandlerFailedException e)
 		{
 			// TODO throw a new exception here when the preconditions are implemented.
@@ -537,14 +534,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 	{
 		try
 		{
-			serviceCommunicator.removeForward();
 			serviceCommunicator.stopAtmosphereService();
-		}
-		catch (RemovePortForwardFailedException e)
-		{
-			String loggerMessage = String.format(	"Removing port forward failed for %s.",
-													wrappedDevice.getSerialNumber());
-			LOGGER.warn(loggerMessage, e);
 		}
 		catch (StopAtmosphereServiceFailedException e)
 		{

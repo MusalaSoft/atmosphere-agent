@@ -3,22 +3,17 @@ package com.musala.atmosphere.agent.devicewrapper.util;
 import java.io.IOException;
 import java.rmi.RemoteException;
 
-import com.android.ddmlib.AdbCommandRejectedException;
-import com.android.ddmlib.IDevice;
-import com.android.ddmlib.TimeoutException;
+import com.musala.atmosphere.agent.devicewrapper.PortForwardingService;
 import com.musala.atmosphere.agent.exception.InitializeServiceRequestHandlerFailedException;
-import com.musala.atmosphere.agent.exception.NoFreePortAvailableException;
-import com.musala.atmosphere.agent.exception.RemovePortForwardFailedException;
 import com.musala.atmosphere.agent.exception.ServiceValidationFailedException;
 import com.musala.atmosphere.agent.exception.StartAtmosphereServiceFailedException;
 import com.musala.atmosphere.agent.exception.StopAtmosphereServiceFailedException;
-import com.musala.atmosphere.agent.util.PortAllocator;
 import com.musala.atmosphere.commons.BatteryState;
 import com.musala.atmosphere.commons.CommandFailedException;
 import com.musala.atmosphere.commons.ConnectionType;
+import com.musala.atmosphere.commons.DeviceInformation;
 import com.musala.atmosphere.commons.DeviceOrientation;
 import com.musala.atmosphere.commons.ad.Request;
-import com.musala.atmosphere.commons.ad.service.ServiceConstants;
 import com.musala.atmosphere.commons.ad.service.ServiceRequest;
 import com.musala.atmosphere.commons.sa.IWrapDevice;
 import com.musala.atmosphere.commons.util.IntentBuilder;
@@ -28,54 +23,40 @@ public class ServiceCommunicator
 {
 	private static final String ATMOSPHERE_SERVICE_COMPONENT = "com.musala.atmosphere.service/com.musala.atmosphere.service.AtmosphereService";
 
-	private IDevice device;
+	private final IWrapDevice wrappedDevice;
 
-	private IWrapDevice wrappedDevice;
+	private ServiceRequestHandler serviceRequestHandler;
 
-	private int forwardedPort;
+	private PortForwardingService portForwardingService;
 
-	private ServiceRequestHandler serviceRequesthandler;
+	private String deviceSerialNumber;
 
-	public ServiceCommunicator(IDevice device, IWrapDevice wrappedDevice)
+	public ServiceCommunicator(PortForwardingService portForwarder, IWrapDevice wrappedDevice)
 	{
-		this.device = device;
+		portForwardingService = portForwarder;
+		int localPort = portForwardingService.getLocalForwardedPort();
+
 		this.wrappedDevice = wrappedDevice;
-	}
-
-	/**
-	 * Forwards a local port to the ATMOSPHERE service's port on the wrapped device.
-	 * 
-	 * @throws ForwardServicePortFailedException
-	 */
-	public void forwardServicePort()
-	{
 		try
 		{
-			forwardedPort = PortAllocator.getFreePort();
-			device.createForward(forwardedPort, ServiceConstants.SERVICE_PORT);
+			DeviceInformation deviceInformation = wrappedDevice.getDeviceInformation();
+			deviceSerialNumber = deviceInformation.getSerialNumber();
 		}
-		catch (TimeoutException | AdbCommandRejectedException | IOException | NoFreePortAvailableException e)
+		catch (RemoteException e1)
 		{
-			String errorMessage = String.format("Could not forward port for %s.", device.getSerialNumber());
-			throw new ForwardServicePortFailedException(errorMessage, e);
+			// not possible, as this is a local invocation.
 		}
-	}
 
-	/**
-	 * Removes the port forwarding.
-	 * 
-	 * @throws RemovePortForwardFailedException
-	 */
-	public void removeForward() throws RemovePortForwardFailedException
-	{
+		startAtmosphereService();
+		portForwardingService.forwardServicePort();
 		try
 		{
-			device.removeForward(forwardedPort, ServiceConstants.SERVICE_PORT);
+			serviceRequestHandler = new ServiceRequestHandler(localPort);
 		}
-		catch (TimeoutException | AdbCommandRejectedException | IOException e)
+		catch (ServiceValidationFailedException e)
 		{
-			String errorMessage = String.format("Could not remove port forwarding for %s.", device.getSerialNumber());
-			throw new RemovePortForwardFailedException(errorMessage, e);
+			String errorMessage = String.format("Service initialization failed for %s.", deviceSerialNumber);
+			throw new InitializeServiceRequestHandlerFailedException(errorMessage, e);
 		}
 	}
 
@@ -84,7 +65,7 @@ public class ServiceCommunicator
 	 * 
 	 * @throws StartAtmosphereServiceFailedException
 	 */
-	public void startAtmosphereService()
+	private void startAtmosphereService()
 	{
 		IntentBuilder startSeviceIntentBuilder = new IntentBuilder(IntentAction.START_ATMOSPHERE_SERVICE);
 		startSeviceIntentBuilder.setUserId(0);
@@ -97,9 +78,15 @@ public class ServiceCommunicator
 		}
 		catch (RemoteException | CommandFailedException e)
 		{
-			String errorMessage = String.format("Starting ATMOSPHERE service failed for %s.", device.getSerialNumber());
+			String errorMessage = String.format("Starting ATMOSPHERE service failed for %s.", deviceSerialNumber);
 			throw new StartAtmosphereServiceFailedException(errorMessage, e);
 		}
+	}
+
+	@Override
+	public void finalize() throws StopAtmosphereServiceFailedException
+	{
+		stopAtmosphereService();
 	}
 
 	/**
@@ -107,7 +94,7 @@ public class ServiceCommunicator
 	 * 
 	 * @throws StopAtmosphereServiceFailedException
 	 */
-	public void stopAtmosphereService() throws StopAtmosphereServiceFailedException
+	public void stopAtmosphereService()
 	{
 		IntentBuilder stopServiceIntentBuilder = new IntentBuilder(IntentAction.ATMOSPHERE_SERVICE_CONTROL);
 		stopServiceIntentBuilder.putExtraString("command", "stop");
@@ -119,27 +106,8 @@ public class ServiceCommunicator
 		}
 		catch (RemoteException | CommandFailedException e)
 		{
-			String errorMessage = String.format("Stopping ATMOSPHERE service failed for %s.", device.getSerialNumber());
+			String errorMessage = String.format("Stopping ATMOSPHERE service failed for %s.", deviceSerialNumber);
 			throw new StopAtmosphereServiceFailedException(errorMessage, e);
-		}
-	}
-
-	/**
-	 * Initializes the {@link ServiceRequestHandler} on the wrapped device.
-	 * 
-	 * @throws InitializeServiceRequestHandlerFailedException
-	 */
-	public void initializeServiceRequestHandler()
-	{
-
-		try
-		{
-			serviceRequesthandler = new ServiceRequestHandler(forwardedPort);
-		}
-		catch (ServiceValidationFailedException e)
-		{
-			String errorMessage = String.format("Service initialization failed for %s.", device.getSerialNumber());
-			throw new InitializeServiceRequestHandlerFailedException(errorMessage, e);
 		}
 	}
 
@@ -151,11 +119,12 @@ public class ServiceCommunicator
 	 */
 	public int getBatteryLevel() throws CommandFailedException
 	{
+		portForwardingService.forwardServicePort();
 		Request<ServiceRequest> serviceRequest = new Request<ServiceRequest>(ServiceRequest.GET_BATTERY_LEVEL);
 
 		try
 		{
-			int level = (Integer) serviceRequesthandler.request(serviceRequest);
+			int level = (Integer) serviceRequestHandler.request(serviceRequest);
 			return level;
 		}
 		catch (ClassNotFoundException | IOException e)
@@ -173,12 +142,13 @@ public class ServiceCommunicator
 	 */
 	public boolean getPowerState() throws CommandFailedException
 	{
+		portForwardingService.forwardServicePort();
 		Request<ServiceRequest> serviceRequest = new Request<ServiceRequest>(ServiceRequest.GET_POWER_STATE);
 		boolean powerState;
 
 		try
 		{
-			powerState = (Boolean) serviceRequesthandler.request(serviceRequest);
+			powerState = (Boolean) serviceRequestHandler.request(serviceRequest);
 		}
 		catch (ClassNotFoundException | IOException e)
 		{
@@ -196,10 +166,12 @@ public class ServiceCommunicator
 	 */
 	public DeviceOrientation getDeviceOrientation() throws CommandFailedException
 	{
+		portForwardingService.forwardServicePort();
+		Request<ServiceRequest> request = new Request<ServiceRequest>(ServiceRequest.GET_ORIENTATION_READINGS);
+
 		try
 		{
-			Request<ServiceRequest> request = new Request<ServiceRequest>(ServiceRequest.GET_ORIENTATION_READINGS);
-			float[] response = (float[]) serviceRequesthandler.request(request);
+			float[] response = (float[]) serviceRequestHandler.request(request);
 
 			float orientationAzimuth = response[0];
 			float orientationPitch = response[1];
@@ -224,11 +196,12 @@ public class ServiceCommunicator
 	 */
 	public BatteryState getBatteryState() throws CommandFailedException
 	{
+		portForwardingService.forwardServicePort();
 		Request<ServiceRequest> serviceRequest = new Request<ServiceRequest>(ServiceRequest.GET_BATTERY_STATE);
 
 		try
 		{
-			Integer serviceResponse = (Integer) serviceRequesthandler.request(serviceRequest);
+			Integer serviceResponse = (Integer) serviceRequestHandler.request(serviceRequest);
 			if (serviceResponse != -1)
 			{
 				BatteryState currentBatteryState = BatteryState.getStateById(serviceResponse);
@@ -248,11 +221,12 @@ public class ServiceCommunicator
 
 	public ConnectionType getConnectionType() throws CommandFailedException
 	{
+		portForwardingService.forwardServicePort();
 		Request<ServiceRequest> serviceRequest = new Request<ServiceRequest>(ServiceRequest.GET_CONNECTION_TYPE);
 
 		try
 		{
-			Integer serviceResponse = (Integer) serviceRequesthandler.request(serviceRequest);
+			Integer serviceResponse = (Integer) serviceRequestHandler.request(serviceRequest);
 			return ConnectionType.getById(serviceResponse);
 		}
 		catch (ClassNotFoundException | IOException e)
@@ -271,23 +245,14 @@ public class ServiceCommunicator
 	 */
 	public void setWiFi(boolean state) throws CommandFailedException
 	{
+		portForwardingService.forwardServicePort();
 		Request<ServiceRequest> serviceRequest = new Request<ServiceRequest>(ServiceRequest.SET_WIFI);
-		Boolean[] arguments = new Boolean[1];
+		Boolean[] arguments = new Boolean[] {state};
+		serviceRequest.setArguments(arguments);
 
 		try
 		{
-			if (state)
-			{
-				arguments[0] = true;
-				serviceRequest.setArguments(arguments);
-				serviceRequesthandler.request(serviceRequest);
-			}
-			else
-			{
-				arguments[0] = false;
-				serviceRequest.setArguments(arguments);
-				serviceRequesthandler.request(serviceRequest);
-			}
+			serviceRequestHandler.request(serviceRequest);
 		}
 		catch (ClassNotFoundException | IOException e)
 		{
