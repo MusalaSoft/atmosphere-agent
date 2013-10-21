@@ -128,6 +128,12 @@ public class FakeServiceAnswer implements Answer<Void>
 				return 3;
 			case GET_CONNECTION_TYPE:
 				return 5;
+			case GET_ACCELERATION_READINGS:
+				Float[] acceleration = new Float[3];
+				acceleration[0] = 3.7f;
+				acceleration[1] = 5.2f;
+				acceleration[2] = -7.1f;
+				return acceleration;
 			case GET_ORIENTATION_READINGS:
 				return new float[] {6.0f, 1.0f, 9.0f};
 			default:

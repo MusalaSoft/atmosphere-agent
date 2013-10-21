@@ -11,6 +11,7 @@ import com.musala.atmosphere.agent.exception.StopAtmosphereServiceFailedExceptio
 import com.musala.atmosphere.commons.BatteryState;
 import com.musala.atmosphere.commons.CommandFailedException;
 import com.musala.atmosphere.commons.ConnectionType;
+import com.musala.atmosphere.commons.DeviceAcceleration;
 import com.musala.atmosphere.commons.DeviceInformation;
 import com.musala.atmosphere.commons.DeviceOrientation;
 import com.musala.atmosphere.commons.ad.Request;
@@ -219,6 +220,12 @@ public class ServiceCommunicator
 		}
 	}
 
+	/**
+	 * Gets the connection type of the device.
+	 * 
+	 * @return a member of the {@link ConnectionType} enumeration.
+	 * @throws CommandFailedException
+	 */
 	public ConnectionType getConnectionType() throws CommandFailedException
 	{
 		portForwardingService.forwardServicePort();
@@ -257,6 +264,31 @@ public class ServiceCommunicator
 		catch (ClassNotFoundException | IOException e)
 		{
 			throw new CommandFailedException("Setting WiFi failed. See enclosed exception for more information.", e);
+		}
+	}
+
+	/**
+	 * Fetches the sensor acceleration readings of the device.
+	 * 
+	 * @return a {@link DeviceAcceleration} instance.
+	 * @throws CommandFailedException
+	 */
+	public DeviceAcceleration getAcceleration() throws CommandFailedException
+	{
+		portForwardingService.forwardServicePort();
+		Request<ServiceRequest> serviceRequest = new Request<ServiceRequest>(ServiceRequest.GET_ACCELERATION_READINGS);
+		try
+		{
+			Float[] acceeleration = (Float[]) serviceRequestHandler.request(serviceRequest);
+			DeviceAcceleration deviceAcceleration = new DeviceAcceleration(	acceeleration[0],
+																			acceeleration[1],
+																			acceeleration[2]);
+			return deviceAcceleration;
+		}
+		catch (ClassNotFoundException | IOException e)
+		{
+			throw new CommandFailedException(	"Getting acceleration failed. See enclosed exception for more information.",
+												e);
 		}
 	}
 }

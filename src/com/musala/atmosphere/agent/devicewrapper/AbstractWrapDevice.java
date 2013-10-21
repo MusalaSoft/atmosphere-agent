@@ -14,8 +14,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
 
@@ -64,8 +62,6 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 	private static final String SCREENSHOT_LOCAL_FILE_NAME = "screen.png";
 
 	private static final String TEMP_APK_FILE_SUFFIX = ".apk";
-
-	private static final String DUMP_SENSOR_SERVICE_INFO_COMMAND = "dumpsys sensorservice";
 
 	private File tempApkFile;
 
@@ -475,24 +471,16 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 	@Override
 	public DeviceAcceleration getDeviceAcceleration() throws RemoteException, CommandFailedException
 	{
-		// TODO maybe move this method?
-		String response = executeShellCommand(DUMP_SENSOR_SERVICE_INFO_COMMAND);
-
-		String findAccelerationSensorRegex = "(Accelerometer)(.+)(last=<\\s*(-{0,1}\\d+\\.\\d),\\s*(-{0,1}\\d+\\.\\d),\\s*(-{0,1}\\d+\\.\\d)>)";
-		Pattern extractionPattern = Pattern.compile(findAccelerationSensorRegex);
-		Matcher regexMatch = extractionPattern.matcher(response);
-
-		if (!regexMatch.find())
+		try
 		{
-			throw new CommandFailedException("Getting device orientation failed.");
+			return serviceCommunicator.getAcceleration();
+		}
+		catch (CommandFailedException e)
+		{
+			LOGGER.fatal("Getting acceleation failed.", e);
+			throw e;
 		}
 
-		float accelerationX = Float.parseFloat((regexMatch.group(4)));
-		float accelerationY = Float.parseFloat((regexMatch.group(5)));
-		float accelerationZ = Float.parseFloat((regexMatch.group(6)));
-		DeviceAcceleration deviceAcceleration = new DeviceAcceleration(accelerationX, accelerationY, accelerationZ);
-
-		return deviceAcceleration;
 	}
 
 	@Override
