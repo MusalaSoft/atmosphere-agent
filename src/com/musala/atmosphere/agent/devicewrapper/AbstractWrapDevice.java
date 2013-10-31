@@ -230,6 +230,14 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 			deviceInformation.setOs(deviceOs);
 		}
 
+		// API level
+		if (devicePropertiesMap.containsKey(DevicePropertyStringConstants.PROPERTY_API_LEVEL.toString()))
+		{
+			String apiLevelString = devicePropertiesMap.get(DevicePropertyStringConstants.PROPERTY_API_LEVEL.toString());
+			int deviceApiLevel = Integer.parseInt(apiLevelString);
+			deviceInformation.setApiLevel(deviceApiLevel);
+		}
+
 		// RAM
 		String ramMemoryString = DeviceInformation.FALLBACK_RAM_AMOUNT.toString();
 		if (wrappedDevice.isEmulator())
