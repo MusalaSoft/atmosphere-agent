@@ -317,20 +317,20 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 		{
 			// The device was never registered, so nothing to do here.
 			// This should not normally happen!
-			LOGGER.warn("Trying to unregister a device that was not registered at all.");
+			LOGGER.warn("Trying to unregister a device [" + disconnectedDevice.getSerialNumber()
+					+ "] that was not present in the devices list.");
 			return "";
 		}
 
 		try
 		{
-			String publishId = removeWrapperForDevice(disconnectedDevice);
+			String publishId = unbindWrapperForDevice(disconnectedDevice);
 			devicesList.remove(disconnectedDevice);
 			return publishId;
 		}
 		catch (RemoteException e)
 		{
-			LOGGER.fatal("Could not unbind a device wrapper from the RMI registry.", e);
-			e.printStackTrace();
+			LOGGER.error("Device wrapper unbinding failed.", e);
 		}
 		return "";
 	}
@@ -395,7 +395,7 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 	 * @return the RMI binding ID of the unbound wrapper.
 	 * @throws RemoteException
 	 */
-	private String removeWrapperForDevice(IDevice device) throws RemoteException
+	private String unbindWrapperForDevice(IDevice device) throws RemoteException
 	{
 		String rmiWrapperBindingId = getRmiWrapperBindingIdentifier(device);
 
@@ -407,15 +407,15 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 		{
 			// Wrapper for the device was never published, so we have nothing to unbind.
 			// Nothing to do here.
-			e.printStackTrace();
+			LOGGER.error("Unbinding device wrapper [" + rmiWrapperBindingId + "] failed.", e);
 			return "";
 		}
 		catch (AccessException e)
 		{
-			throw new RemoteException("Unbinding a device wrapper resulted in an unexpected exception (enclosed).", e);
+			throw new RemoteException("Unbinding device wrapper [" + rmiWrapperBindingId + "] failed.", e);
 		}
 
-		LOGGER.info("Removed wrapper for device with bindingId = " + rmiWrapperBindingId);
+		LOGGER.info("Removed wrapper for device with bindingId [" + rmiWrapperBindingId + "].");
 
 		return rmiWrapperBindingId;
 	}

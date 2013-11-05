@@ -94,7 +94,8 @@ public class ExtendedEmulatorConsole
 		Integer port = EmulatorConsole.getEmulatorPort(emulatorSerialNumber);
 		if (port == null)
 		{
-			throw new EmulatorConnectionFailedException("Could not get/parse the port for the emulator console on this device.");
+			throw new EmulatorConnectionFailedException("Could not get/parse the port for the emulator console on '"
+					+ emulatorSerialNumber + "'.");
 		}
 
 		// If such a console already exists and it is responsive, use it

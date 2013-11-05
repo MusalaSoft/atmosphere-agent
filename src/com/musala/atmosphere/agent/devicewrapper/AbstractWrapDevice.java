@@ -183,7 +183,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 		deviceInformation.setEmulator(wrappedDevice.isEmulator());
 
 		// If the device will not give us it's valid properties, return the structure with the fallback values set.
-		if (wrappedDevice.isOffline() || wrappedDevice.arePropertiesSet() == false)
+		if (wrappedDevice.isOffline() || !wrappedDevice.arePropertiesSet())
 		{
 			return deviceInformation;
 		}
