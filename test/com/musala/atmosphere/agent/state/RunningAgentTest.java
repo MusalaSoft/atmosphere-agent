@@ -26,7 +26,9 @@ public class RunningAgentTest
 	public void setUp()
 	{
 		innerAgent = spy(new Agent());
-		runningAgentState = new RunningAgent(innerAgent);
+		AgentManager innerAgentManagerMock = mock(AgentManager.class);
+		ConsoleControl consoleMock = mock(ConsoleControl.class);
+		runningAgentState = new RunningAgent(innerAgent, innerAgentManagerMock, consoleMock);
 	}
 
 	@After
