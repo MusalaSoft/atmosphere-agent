@@ -2,6 +2,7 @@ package com.musala.atmosphere.agent;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -14,8 +15,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 
-import org.junit.After;
-import org.junit.Before;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.Mockito;
 
@@ -25,18 +26,20 @@ import com.android.ddmlib.Log;
 import com.musala.atmosphere.agent.util.AgentPropertiesLoader;
 import com.musala.atmosphere.agent.util.FakeServiceAnswer;
 import com.musala.atmosphere.commons.DeviceInformation;
+import com.musala.atmosphere.commons.sa.DeviceParameters;
 import com.musala.atmosphere.commons.sa.IWrapDevice;
+import com.musala.atmosphere.commons.sa.SystemSpecification;
 
 public class AgentManagerTest
 {
-	private AgentManager agentManager;
+	private static AgentManager agentManager;
 
 	private static final int RMI_PORT = AgentPropertiesLoader.getAgentRmiPort();
 
 	private static final String PATH_TO_ADB = AgentPropertiesLoader.getADBPath();
 
-	@Before
-	public void setUp() throws Exception
+	@BeforeClass
+	public static void setUp() throws Exception
 	{
 		DdmPreferences.setLogLevel("warn");
 		Log.setLogOutput(new DdmLibLogListener(Level.ALL, false /* do no log to a file */));
@@ -44,8 +47,8 @@ public class AgentManagerTest
 		agentManager = new AgentManager(PATH_TO_ADB, RMI_PORT);
 	}
 
-	@After
-	public void tearDown() throws Exception
+	@AfterClass
+	public static void tearDown() throws Exception
 	{
 		if (agentManager != null)
 		{
@@ -128,5 +131,33 @@ public class AgentManagerTest
 	{
 		String agentId = agentManager.getAgentId();
 		assertNotNull("Unique Agent ID can never be null", agentId);
+	}
+
+	@Test
+	public void testGetAgentSpecifications() throws RemoteException
+	{
+		SystemSpecification systemSpecification = agentManager.getSpecification();
+		assertNotNull("System specification should never be null", systemSpecification);
+	}
+
+	@Test
+	public void testGetPerformanceScore() throws RemoteException
+	{
+		DeviceParameters requiredDeviceParameters = new DeviceParameters();
+		requiredDeviceParameters.setRam(0);
+
+		double performanceScore = agentManager.getPerformanceScore(requiredDeviceParameters);
+		boolean isScorePositive = performanceScore > 0d;
+		assertTrue("Performance score should not be 0 when the requested RAM memory is 0.", isScorePositive);
+
+		SystemSpecification systemSpecification = agentManager.getSpecification();
+		long totalSystemRam = systemSpecification.getTotalRam();
+
+		requiredDeviceParameters.setRam(totalSystemRam + 1);
+
+		performanceScore = agentManager.getPerformanceScore(requiredDeviceParameters);
+		boolean isScoreNonpositive = performanceScore <= 0d;
+		assertTrue(	"Performance score should not be positive when the requested RAM is higher than the free RAM memory on the agent.",
+					isScoreNonpositive);
 	}
 }

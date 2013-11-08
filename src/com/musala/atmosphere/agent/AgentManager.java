@@ -32,7 +32,9 @@ import com.android.ddmlib.IDevice;
 import com.musala.atmosphere.agent.devicewrapper.EmulatorWrapDevice;
 import com.musala.atmosphere.agent.devicewrapper.RealWrapDevice;
 import com.musala.atmosphere.agent.exception.ServiceCommunicationFailedException;
+import com.musala.atmosphere.agent.util.SystemSpecificationLoader;
 import com.musala.atmosphere.agent.util.AgentPropertiesLoader;
+import com.musala.atmosphere.commons.sa.SystemSpecification;
 import com.musala.atmosphere.commons.sa.DeviceParameters;
 import com.musala.atmosphere.commons.sa.IAgentManager;
 import com.musala.atmosphere.commons.sa.IConnectionRequestReceiver;
@@ -69,6 +71,8 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 
 	private int serverRmiPort;
 
+	private SystemSpecificationLoader systemSpecificationLoader;
+
 	// CopyOnWriteArrayList, as we will not have many devices (more than 10 or 15 practically) connected on a single
 	// agent and we are concerned about the DeviceChangeListener not to break things.
 	private volatile List<IDevice> devicesList = new CopyOnWriteArrayList<IDevice>();
@@ -89,6 +93,9 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 	 */
 	public AgentManager(String adbPath, int rmiPort) throws RemoteException, ADBridgeFailException
 	{
+		systemSpecificationLoader = new SystemSpecificationLoader();
+		systemSpecificationLoader.getSpecification();
+
 		// Start the bridge
 		try
 		{
@@ -608,5 +615,47 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager
 	{
 		boolean isPortOk = (rmiPort > 0 && rmiPort <= 65535);
 		return isPortOk;
+	}
+
+	@Override
+	public SystemSpecification getSpecification() throws RemoteException
+	{
+		SystemSpecification agentParameters = systemSpecificationLoader.getSpecification();
+		return agentParameters;
+	}
+
+	@Override
+	public double getPerformanceScore(DeviceParameters requiredDeviceParameters) throws RemoteException
+	{
+		double score = 0d;
+
+		SystemSpecification systemSpecification = getSpecification();
+
+		long freeRam = systemSpecification.getFreeRam();
+
+		if (requiredDeviceParameters.getRam() >= freeRam)
+		{
+			// If there's no free RAM memory on the agent, running new emulator on it should not happen.
+			return 0d;
+		}
+		else
+		{
+			score += freeRam;
+		}
+
+		boolean isHaxm = systemSpecification.isHaxm();
+		double scimarkScore = systemSpecification.getScimarkScore();
+
+		if (isHaxm)
+		{
+			// Emulators using HAXM perform ~50% faster.
+			score += 1.5d * scimarkScore;
+		}
+		else
+		{
+			score += scimarkScore;
+		}
+
+		return score;
 	}
 }
