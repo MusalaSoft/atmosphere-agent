@@ -31,7 +31,7 @@ public class ExitCommandTest
 	{
 		exitCommand.execute(emptyArray);
 
-		verify(innerAgentMock, times(1)).close();
+		verify(innerAgentMock, times(1)).exit();
 		verifyNoMoreInteractions(innerAgentMock);
 	}
 }

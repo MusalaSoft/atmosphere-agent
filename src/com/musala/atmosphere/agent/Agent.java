@@ -99,17 +99,20 @@ public class Agent
 	/**
 	 * Connects this Agent to a Server.
 	 * 
-	 * @param ipAddress
+	 * @param serverIpAddress
 	 *        - server's IP address.
-	 * @param port
+	 * @param serverPort
 	 *        - server's RMI port.
 	 * @throws NotBoundException
 	 * @throws RemoteException
 	 * @throws AccessException
 	 */
-	public void connectToServer(String ipAddress, int port) throws AccessException, RemoteException, NotBoundException
+	public void connect(String serverIpAddress, int serverPort)
+		throws AccessException,
+			RemoteException,
+			NotBoundException
 	{
-		currentAgentState.connectToServer(ipAddress, port);
+		currentAgentState.connectToServer(serverIpAddress, serverPort);
 	}
 
 	/**
@@ -153,7 +156,7 @@ public class Agent
 	/**
 	 * Stops the Agent and effectively closes the current process.
 	 */
-	public void close()
+	public void exit()
 	{
 		stop();
 		closed = true;

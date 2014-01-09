@@ -54,7 +54,7 @@ public class ConnectCommand extends AgentCommand
 		try
 		{
 			int serverPort = Integer.parseInt(serverPortAsString);
-			agent.connectToServer(serverIp, serverPort);
+			agent.connect(serverIp, serverPort);
 		}
 		catch (NumberFormatException | IllegalPortException e)
 		{

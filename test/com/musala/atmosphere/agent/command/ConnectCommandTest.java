@@ -34,7 +34,7 @@ public class ConnectCommandTest
 		String[] emptyParams = new String[] {"", ""};
 		connectCommand.execute(emptyParams);
 
-		verify(innerAgentMock, never()).connectToServer(anyString(), anyInt());
+		verify(innerAgentMock, never()).connect(anyString(), anyInt());
 	}
 
 	@Test
@@ -43,7 +43,7 @@ public class ConnectCommandTest
 		String[] portOnlyInParams = new String[] {"1980"};
 		connectCommand.execute(portOnlyInParams);
 
-		verify(innerAgentMock, times(1)).connectToServer(eq("localhost"), eq(1980));
+		verify(innerAgentMock, times(1)).connect(eq("localhost"), eq(1980));
 	}
 
 	@Test
@@ -52,7 +52,7 @@ public class ConnectCommandTest
 		String[] portOnlyInParams = new String[] {"localhost", "1980"};
 		connectCommand.execute(portOnlyInParams);
 
-		verify(innerAgentMock, times(1)).connectToServer(eq("localhost"), eq(1980));
+		verify(innerAgentMock, times(1)).connect(eq("localhost"), eq(1980));
 	}
 
 	@Test

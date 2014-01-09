@@ -19,6 +19,6 @@ public class ExitCommand extends NoParamsAgentCommand
 	@Override
 	protected void executeCommand(String[] params)
 	{
-		agent.close();
+		agent.exit();
 	}
 }
