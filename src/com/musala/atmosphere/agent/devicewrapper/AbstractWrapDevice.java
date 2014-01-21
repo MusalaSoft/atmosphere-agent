@@ -41,7 +41,6 @@ import com.musala.atmosphere.commons.ConnectionType;
 import com.musala.atmosphere.commons.DeviceAcceleration;
 import com.musala.atmosphere.commons.DeviceInformation;
 import com.musala.atmosphere.commons.DeviceOrientation;
-import com.musala.atmosphere.commons.MobileDataState;
 import com.musala.atmosphere.commons.sa.IWrapDevice;
 import com.musala.atmosphere.commons.util.Pair;
 
@@ -442,26 +441,6 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 	}
 
 	@Override
-	public abstract void setNetworkSpeed(Pair<Integer, Integer> speeds) throws RemoteException, CommandFailedException;
-
-	@Override
-	public abstract void setBatteryLevel(int level) throws RemoteException, CommandFailedException;
-
-	@Override
-	public abstract void setNetworkLatency(int latency) throws RemoteException;
-
-	@Override
-	public abstract void setBatteryState(BatteryState state) throws RemoteException, CommandFailedException;
-
-	@Override
-	public abstract void setPowerState(boolean state) throws RemoteException, CommandFailedException;
-
-	@Override
-	public abstract void setDeviceOrientation(DeviceOrientation deviceOrientation)
-		throws RemoteException,
-			CommandFailedException;
-
-	@Override
 	public DeviceOrientation getDeviceOrientation() throws RemoteException, CommandFailedException
 	{
 		try
@@ -492,9 +471,6 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 	}
 
 	@Override
-	public abstract void setMobileDataState(MobileDataState state) throws CommandFailedException, RemoteException;
-
-	@Override
 	public ConnectionType getConnectionType() throws RemoteException, CommandFailedException
 	{
 		try
@@ -507,9 +483,6 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 			throw e;
 		}
 	}
-
-	@Override
-	public abstract MobileDataState getMobileDataState() throws CommandFailedException, RemoteException;
 
 	@Override
 	public void setWiFi(boolean state) throws CommandFailedException, RemoteException

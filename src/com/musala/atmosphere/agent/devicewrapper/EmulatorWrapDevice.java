@@ -14,6 +14,7 @@ import com.musala.atmosphere.commons.CommandFailedException;
 import com.musala.atmosphere.commons.DeviceAcceleration;
 import com.musala.atmosphere.commons.DeviceOrientation;
 import com.musala.atmosphere.commons.MobileDataState;
+import com.musala.atmosphere.commons.SmsMessage;
 import com.musala.atmosphere.commons.sa.exceptions.NotPossibleForDeviceException;
 import com.musala.atmosphere.commons.util.Pair;
 
@@ -308,6 +309,30 @@ public class EmulatorWrapDevice extends AbstractWrapDevice
 		{
 			throw new CommandFailedException("Illegal argument has been passed to the emulator console class. "
 					+ "See the enclosed exception for more information.", e);
+		}
+	}
+
+	@Override
+	public void receiveSms(SmsMessage smsMessage) throws CommandFailedException, RemoteException
+	{
+		try
+		{
+			ExtendedEmulatorConsole emulatorConsole = ExtendedEmulatorConsole.getExtendedEmulatorConsole(wrappedDevice);
+			boolean success = emulatorConsole.receiveSms(smsMessage);
+			if (!success)
+			{
+				LOGGER.error("Sending SMS to device failed.");
+				throw new CommandFailedException("Sending SMS to device failed.");
+			}
+		}
+		catch (EmulatorConnectionFailedException e)
+		{
+			throw new CommandFailedException("Connection to the emulator console failed. "
+					+ "See the enclosed exception for more information.", e);
+		}
+		catch (NotPossibleForDeviceException e)
+		{
+			throw new CommandFailedException("Illegal argument has been passed to the emulator console class. " + e);
 		}
 	}
 }

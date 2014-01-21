@@ -17,6 +17,7 @@ import com.musala.atmosphere.commons.ConnectionType;
 import com.musala.atmosphere.commons.DeviceAcceleration;
 import com.musala.atmosphere.commons.DeviceOrientation;
 import com.musala.atmosphere.commons.MobileDataState;
+import com.musala.atmosphere.commons.SmsMessage;
 import com.musala.atmosphere.commons.util.Pair;
 
 public class AbstractWrapDeviceTest
@@ -99,6 +100,12 @@ public class AbstractWrapDeviceTest
 			public MobileDataState getMobileDataState() throws CommandFailedException, RemoteException
 			{
 				return null;
+			}
+
+			@Override
+			public void receiveSms(SmsMessage smsMessage) throws CommandFailedException, RemoteException
+			{
+
 			}
 		};
 

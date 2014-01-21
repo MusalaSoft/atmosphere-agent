@@ -15,6 +15,7 @@ import com.musala.atmosphere.commons.BatteryState;
 import com.musala.atmosphere.commons.DeviceAcceleration;
 import com.musala.atmosphere.commons.DeviceOrientation;
 import com.musala.atmosphere.commons.MobileDataState;
+import com.musala.atmosphere.commons.SmsMessage;
 import com.musala.atmosphere.commons.sa.exceptions.NotPossibleForDeviceException;
 
 /**
@@ -54,6 +55,8 @@ public class ExtendedEmulatorConsole
 	private static final String COMMAND_SET_MAGNETIC_FIELD = "sensor set magnetic-field %d:%d:%d";
 
 	private final static String COMMAND_GSM_STATUS = "gsm status\r\n";
+
+	private final static String COMMAND_SMS_SEND = "sms send %s %s\r\n";
 
 	/**
 	 * Socket read/write buffer.
@@ -338,6 +341,22 @@ public class ExtendedEmulatorConsole
 	public synchronized boolean setMagneticField(int x, int y, int z) throws EmulatorConnectionFailedException
 	{
 		String command = String.format(COMMAND_SET_MAGNETIC_FIELD, x, y, z);
+		boolean commandIsOk = executeCommand(command);
+		return commandIsOk;
+	}
+
+	/**
+	 * Sends SMS to the emulator.
+	 * 
+	 * @param smsMessage
+	 *        - the SMS message, that will be sent to emulator.
+	 * 
+	 * @return the command response from the emulator console.
+	 * @throws EmulatorConnectionFailedException
+	 */
+	public synchronized boolean receiveSms(SmsMessage smsMessage) throws EmulatorConnectionFailedException
+	{
+		String command = String.format(COMMAND_SMS_SEND, smsMessage.getPhoneNumber(), smsMessage.getText());
 		boolean commandIsOk = executeCommand(command);
 		return commandIsOk;
 	}

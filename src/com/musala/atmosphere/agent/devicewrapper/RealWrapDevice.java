@@ -11,6 +11,7 @@ import com.musala.atmosphere.commons.CommandFailedException;
 import com.musala.atmosphere.commons.DeviceAcceleration;
 import com.musala.atmosphere.commons.DeviceOrientation;
 import com.musala.atmosphere.commons.MobileDataState;
+import com.musala.atmosphere.commons.SmsMessage;
 import com.musala.atmosphere.commons.sa.exceptions.NotPossibleForDeviceException;
 import com.musala.atmosphere.commons.util.IntentBuilder;
 import com.musala.atmosphere.commons.util.IntentBuilder.IntentAction;
@@ -197,5 +198,12 @@ public class RealWrapDevice extends AbstractWrapDevice
 	{
 		// We can't get mobile data state on real device.
 		throw new CommandFailedException("Can not get mobile data state on real devices.");
+	}
+
+	@Override
+	public void receiveSms(SmsMessage smsMessage) throws CommandFailedException, RemoteException
+	{
+		// We can't simulate that a real device has received SMS.
+		throw new CommandFailedException("Can not send SMS to real devices.");
 	}
 }
