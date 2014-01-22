@@ -144,9 +144,9 @@ public class AgentPropertiesLoader
 	}
 
 	/**
-	 * Returns the minimum port identifier that will be used for connection to the ATMOSPHERE service.
+	 * Returns the minimum port identifier that will be used for connection to an ATMOSPHERE on-device component.
 	 * 
-	 * @return - the minimum port identifier that will be used for connection to the ATMOSPHERE service.
+	 * @return - the minimum port identifier that will be used for connection to an ATMOSPHERE on-device component.
 	 */
 	public static int getADBMinForwardPort()
 	{
@@ -168,13 +168,13 @@ public class AgentPropertiesLoader
 	}
 
 	/**
-	 * Returns the maximum number of service connection retries.
+	 * Returns the maximum number of on-device component connection retries.
 	 * 
-	 * @return - the maximum number of service connection retries.
+	 * @return - the maximum number of on-device component connection retries.
 	 */
-	public static int getServiceConnectionRetryLimit()
+	public static int getOnDeviceComponentConnectionRetryLimit()
 	{
-		String returnValueString = getPropertyString(AgentProperties.SERVICE_CONNECTION_RETRY_LIMIT);
+		String returnValueString = getPropertyString(AgentProperties.ON_DEVICE_COMPONENT_CONNECTION_RETRY_LIMIT);
 		int returnValueInt = Integer.parseInt(returnValueString);
 		return returnValueInt;
 	}

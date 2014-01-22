@@ -10,7 +10,7 @@ import org.junit.Test;
 import org.mockito.Mockito;
 
 import com.android.ddmlib.IDevice;
-import com.musala.atmosphere.agent.util.FakeServiceAnswer;
+import com.musala.atmosphere.agent.util.FakeOnDeviceComponentAnswer;
 import com.musala.atmosphere.commons.BatteryState;
 import com.musala.atmosphere.commons.CommandFailedException;
 import com.musala.atmosphere.commons.ConnectionType;
@@ -26,14 +26,14 @@ public class AbstractWrapDeviceTest
 
 	private IDevice device;
 
-	private FakeServiceAnswer fakeServiceAnswer;
+	private FakeOnDeviceComponentAnswer fakeOnDeviceComponentAnswer;
 
 	@Before
 	public void setUp() throws Exception
 	{
 		device = mock(IDevice.class);
-		fakeServiceAnswer = new FakeServiceAnswer();
-		Mockito.doAnswer(fakeServiceAnswer).when(device).createForward(anyInt(), anyInt());
+		fakeOnDeviceComponentAnswer = new FakeOnDeviceComponentAnswer();
+		Mockito.doAnswer(fakeOnDeviceComponentAnswer).when(device).createForward(anyInt(), anyInt());
 
 		testWrapDevice = new AbstractWrapDevice(device)
 		{

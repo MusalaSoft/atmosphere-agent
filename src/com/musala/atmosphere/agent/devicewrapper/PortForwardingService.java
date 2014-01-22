@@ -8,6 +8,7 @@ import com.android.ddmlib.TimeoutException;
 import com.musala.atmosphere.agent.devicewrapper.util.ForwardingPortFailedException;
 import com.musala.atmosphere.agent.exception.RemovePortForwardFailedException;
 import com.musala.atmosphere.agent.util.PortAllocator;
+import com.musala.atmosphere.commons.ad.gestureplayer.GesturePlayerConstants;
 import com.musala.atmosphere.commons.ad.service.ServiceConstants;
 
 /**
@@ -48,6 +49,16 @@ public class PortForwardingService
 	public void forwardServicePort() throws ForwardingPortFailedException
 	{
 		forwardPort(ServiceConstants.SERVICE_PORT);
+	}
+
+	/**
+	 * Forwards the allocated local port to the ATMOSPHERE gesture player's port on the wrapped device.
+	 * 
+	 * @throws ForwardingPortFailedException
+	 */
+	public void forwardGesturePlayerPort() throws ForwardingPortFailedException
+	{
+		forwardPort(GesturePlayerConstants.PLAYER_PORT);
 	}
 
 	private void forwardPort(int remotePort) throws ForwardingPortFailedException

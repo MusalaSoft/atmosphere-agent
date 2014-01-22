@@ -6,7 +6,7 @@ import java.rmi.RemoteException;
 import com.musala.atmosphere.agent.devicewrapper.PortForwardingService;
 import com.musala.atmosphere.agent.exception.InitializeServiceRequestHandlerFailedException;
 import com.musala.atmosphere.agent.exception.ServiceValidationFailedException;
-import com.musala.atmosphere.agent.exception.StartAtmosphereServiceFailedException;
+import com.musala.atmosphere.agent.exception.AtmosphereOnDeviceComponentStartFailedException;
 import com.musala.atmosphere.agent.exception.StopAtmosphereServiceFailedException;
 import com.musala.atmosphere.commons.BatteryState;
 import com.musala.atmosphere.commons.CommandFailedException;
@@ -20,6 +20,12 @@ import com.musala.atmosphere.commons.sa.IWrapDevice;
 import com.musala.atmosphere.commons.util.IntentBuilder;
 import com.musala.atmosphere.commons.util.IntentBuilder.IntentAction;
 
+/**
+ * Class that communicates with the ATMOSPHERE service.
+ * 
+ * @author yordan.petrov
+ * 
+ */
 public class ServiceCommunicator
 {
 	private static final String ATMOSPHERE_SERVICE_COMPONENT = "com.musala.atmosphere.service/com.musala.atmosphere.service.AtmosphereService";
@@ -52,7 +58,7 @@ public class ServiceCommunicator
 		portForwardingService.forwardServicePort();
 		try
 		{
-			serviceRequestHandler = new ServiceRequestHandler(localPort);
+			serviceRequestHandler = new ServiceRequestHandler(portForwardingService, localPort);
 		}
 		catch (ServiceValidationFailedException e)
 		{
@@ -64,7 +70,7 @@ public class ServiceCommunicator
 	/**
 	 * Starts the Atmosphere service on the wrappedDevice.
 	 * 
-	 * @throws StartAtmosphereServiceFailedException
+	 * @throws AtmosphereOnDeviceComponentStartFailedException
 	 */
 	private void startAtmosphereService()
 	{
@@ -80,7 +86,7 @@ public class ServiceCommunicator
 		catch (RemoteException | CommandFailedException e)
 		{
 			String errorMessage = String.format("Starting ATMOSPHERE service failed for %s.", deviceSerialNumber);
-			throw new StartAtmosphereServiceFailedException(errorMessage, e);
+			throw new AtmosphereOnDeviceComponentStartFailedException(errorMessage, e);
 		}
 	}
 
@@ -120,7 +126,6 @@ public class ServiceCommunicator
 	 */
 	public int getBatteryLevel() throws CommandFailedException
 	{
-		portForwardingService.forwardServicePort();
 		Request<ServiceRequest> serviceRequest = new Request<ServiceRequest>(ServiceRequest.GET_BATTERY_LEVEL);
 
 		try
@@ -143,7 +148,6 @@ public class ServiceCommunicator
 	 */
 	public boolean getPowerState() throws CommandFailedException
 	{
-		portForwardingService.forwardServicePort();
 		Request<ServiceRequest> serviceRequest = new Request<ServiceRequest>(ServiceRequest.GET_POWER_STATE);
 		boolean powerState;
 
@@ -167,7 +171,6 @@ public class ServiceCommunicator
 	 */
 	public DeviceOrientation getDeviceOrientation() throws CommandFailedException
 	{
-		portForwardingService.forwardServicePort();
 		Request<ServiceRequest> request = new Request<ServiceRequest>(ServiceRequest.GET_ORIENTATION_READINGS);
 
 		try
@@ -197,7 +200,6 @@ public class ServiceCommunicator
 	 */
 	public BatteryState getBatteryState() throws CommandFailedException
 	{
-		portForwardingService.forwardServicePort();
 		Request<ServiceRequest> serviceRequest = new Request<ServiceRequest>(ServiceRequest.GET_BATTERY_STATE);
 
 		try
@@ -228,7 +230,6 @@ public class ServiceCommunicator
 	 */
 	public ConnectionType getConnectionType() throws CommandFailedException
 	{
-		portForwardingService.forwardServicePort();
 		Request<ServiceRequest> serviceRequest = new Request<ServiceRequest>(ServiceRequest.GET_CONNECTION_TYPE);
 
 		try
@@ -252,7 +253,6 @@ public class ServiceCommunicator
 	 */
 	public void setWiFi(boolean state) throws CommandFailedException
 	{
-		portForwardingService.forwardServicePort();
 		Request<ServiceRequest> serviceRequest = new Request<ServiceRequest>(ServiceRequest.SET_WIFI);
 		Boolean[] arguments = new Boolean[] {state};
 		serviceRequest.setArguments(arguments);
@@ -275,7 +275,6 @@ public class ServiceCommunicator
 	 */
 	public DeviceAcceleration getAcceleration() throws CommandFailedException
 	{
-		portForwardingService.forwardServicePort();
 		Request<ServiceRequest> serviceRequest = new Request<ServiceRequest>(ServiceRequest.GET_ACCELERATION_READINGS);
 		try
 		{

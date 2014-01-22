@@ -24,6 +24,7 @@ import com.android.ddmlib.DdmPreferences;
 import com.android.ddmlib.IDevice;
 import com.android.ddmlib.Log;
 import com.musala.atmosphere.agent.util.AgentPropertiesLoader;
+import com.musala.atmosphere.agent.util.FakeOnDeviceComponentAnswer;
 import com.musala.atmosphere.agent.util.FakeServiceAnswer;
 import com.musala.atmosphere.commons.DeviceInformation;
 import com.musala.atmosphere.commons.sa.DeviceParameters;
@@ -89,7 +90,7 @@ public class AgentManagerTest
 		when(mockDevice.arePropertiesSet()).thenReturn(true);
 		when(mockDevice.getProperties()).thenReturn(mockPropMap);
 
-		Mockito.doAnswer(new FakeServiceAnswer()).when(mockDevice).createForward(anyInt(), anyInt());
+		Mockito.doAnswer(new FakeOnDeviceComponentAnswer()).when(mockDevice).createForward(anyInt(), anyInt());
 
 		agentManager.registerDeviceOnAgent(mockDevice);
 

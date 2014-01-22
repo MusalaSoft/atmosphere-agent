@@ -27,10 +27,11 @@ import com.android.ddmlib.TimeoutException;
 import com.musala.atmosphere.agent.DevicePropertyStringConstants;
 import com.musala.atmosphere.agent.devicewrapper.util.DeviceProfiler;
 import com.musala.atmosphere.agent.devicewrapper.util.ForwardingPortFailedException;
+import com.musala.atmosphere.agent.devicewrapper.util.GesturePlayerCommunicator;
 import com.musala.atmosphere.agent.devicewrapper.util.ServiceCommunicator;
 import com.musala.atmosphere.agent.exception.InitializeServiceRequestHandlerFailedException;
-import com.musala.atmosphere.agent.exception.ServiceCommunicationFailedException;
-import com.musala.atmosphere.agent.exception.StartAtmosphereServiceFailedException;
+import com.musala.atmosphere.agent.exception.OnDeviceComponentCommunicationFailed;
+import com.musala.atmosphere.agent.exception.AtmosphereOnDeviceComponentStartFailedException;
 import com.musala.atmosphere.agent.exception.StopAtmosphereServiceFailedException;
 import com.musala.atmosphere.agent.util.AgentPropertiesLoader;
 import com.musala.atmosphere.agent.util.DeviceScreenResolutionParser;
@@ -68,6 +69,8 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 
 	protected ServiceCommunicator serviceCommunicator;
 
+	protected GesturePlayerCommunicator gesturePlayerCommunicator;
+
 	protected IDevice wrappedDevice;
 
 	private final static Logger LOGGER = Logger.getLogger(AbstractWrapDevice.class.getCanonicalName());
@@ -80,15 +83,16 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 		try
 		{
 			serviceCommunicator = new ServiceCommunicator(forwardingService, this);
+			gesturePlayerCommunicator = new GesturePlayerCommunicator(forwardingService, this);
 		}
-		catch (ForwardingPortFailedException | StartAtmosphereServiceFailedException
+		catch (ForwardingPortFailedException | AtmosphereOnDeviceComponentStartFailedException
 				| InitializeServiceRequestHandlerFailedException e)
 		{
 			// TODO throw a new exception here when the preconditions are implemented.
 
-			String errorMessage = String.format("Could not initialize communication to service for %s.",
+			String errorMessage = String.format("Could not initialize communication to a on-device component for %s.",
 												wrappedDevice.getSerialNumber());
-			throw new ServiceCommunicationFailedException(errorMessage, e);
+			throw new OnDeviceComponentCommunicationFailed(errorMessage, e);
 		}
 	}
 
