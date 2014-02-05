@@ -17,6 +17,7 @@ import com.musala.atmosphere.commons.ConnectionType;
 import com.musala.atmosphere.commons.DeviceAcceleration;
 import com.musala.atmosphere.commons.DeviceOrientation;
 import com.musala.atmosphere.commons.MobileDataState;
+import com.musala.atmosphere.commons.PhoneNumber;
 import com.musala.atmosphere.commons.SmsMessage;
 import com.musala.atmosphere.commons.util.Pair;
 
@@ -43,25 +44,21 @@ public class AbstractWrapDeviceTest
 				throws CommandFailedException,
 					RemoteException
 			{
-
 			}
 
 			@Override
 			public void setPowerState(boolean state) throws RemoteException, CommandFailedException
 			{
-
 			}
 
 			@Override
 			public void setNetworkSpeed(Pair<Integer, Integer> speeds) throws RemoteException, CommandFailedException
 			{
-
 			}
 
 			@Override
 			public void setNetworkLatency(int latency) throws RemoteException
 			{
-
 			}
 
 			@Override
@@ -75,19 +72,16 @@ public class AbstractWrapDeviceTest
 			@Override
 			public void setBatteryState(BatteryState state) throws RemoteException, CommandFailedException
 			{
-
 			}
 
 			@Override
 			public void setBatteryLevel(int level) throws RemoteException, CommandFailedException
 			{
-
 			}
 
 			@Override
 			public void setMobileDataState(MobileDataState state) throws CommandFailedException, RemoteException
 			{
-
 			}
 
 			@Override
@@ -106,6 +100,26 @@ public class AbstractWrapDeviceTest
 			public void receiveSms(SmsMessage smsMessage) throws CommandFailedException, RemoteException
 			{
 
+			}
+
+			@Override
+			public void receiveCall(PhoneNumber phoneNumber) throws CommandFailedException, RemoteException
+			{
+			}
+
+			@Override
+			public void acceptCall(PhoneNumber phoneNumber) throws CommandFailedException, RemoteException
+			{
+			}
+
+			@Override
+			public void holdCall(PhoneNumber phoneNumber) throws CommandFailedException, RemoteException
+			{
+			}
+
+			@Override
+			public void cancelCall(PhoneNumber phoneNumber) throws CommandFailedException, RemoteException
+			{
 			}
 		};
 

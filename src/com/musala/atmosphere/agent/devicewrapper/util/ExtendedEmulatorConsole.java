@@ -15,6 +15,7 @@ import com.musala.atmosphere.commons.BatteryState;
 import com.musala.atmosphere.commons.DeviceAcceleration;
 import com.musala.atmosphere.commons.DeviceOrientation;
 import com.musala.atmosphere.commons.MobileDataState;
+import com.musala.atmosphere.commons.PhoneNumber;
 import com.musala.atmosphere.commons.SmsMessage;
 import com.musala.atmosphere.commons.sa.exceptions.NotPossibleForDeviceException;
 
@@ -57,6 +58,14 @@ public class ExtendedEmulatorConsole
 	private final static String COMMAND_GSM_STATUS = "gsm status\r\n";
 
 	private final static String COMMAND_SMS_SEND = "sms send %s %s\r\n";
+
+	private final static String COMMAND_RECEIVE_CALL = "gsm call %s\r\n";
+
+	private final static String COMMAND_ACCEPT_CALL = "gsm accept %s\r\n";
+
+	private final static String COMMAND_CANCEL_CALL = "gsm cancel %s\r\n";
+
+	private final static String COMMAND_HOLD_CALL = "gsm hold %s\r\n";
 
 	/**
 	 * Socket read/write buffer.
@@ -356,7 +365,71 @@ public class ExtendedEmulatorConsole
 	 */
 	public synchronized boolean receiveSms(SmsMessage smsMessage) throws EmulatorConnectionFailedException
 	{
-		String command = String.format(COMMAND_SMS_SEND, smsMessage.getPhoneNumber(), smsMessage.getText());
+		String command = String.format(COMMAND_SMS_SEND, smsMessage.getPhoneNumber().toString(), smsMessage.getText());
+		boolean commandIsOk = executeCommand(command);
+		return commandIsOk;
+	}
+
+	/**
+	 * Sends a call to the emulator.
+	 * 
+	 * @param phoneNumber
+	 *        - the phone number, that will call the emulator.
+	 * 
+	 * @return the command response from the emulator console.
+	 * @throws EmulatorConnectionFailedException
+	 */
+	public synchronized boolean receiveCall(PhoneNumber phoneNumber) throws EmulatorConnectionFailedException
+	{
+		String command = String.format(COMMAND_RECEIVE_CALL, phoneNumber.toString());
+		boolean commandIsOk = executeCommand(command);
+		return commandIsOk;
+	}
+
+	/**
+	 * Accepts a call to the emulator.
+	 * 
+	 * @param phoneNumber
+	 *        - the phone number, that calls the emulator.
+	 * 
+	 * @return the command response from the emulator console.
+	 * @throws EmulatorConnectionFailedException
+	 */
+	public synchronized boolean acceptCall(PhoneNumber phoneNumber) throws EmulatorConnectionFailedException
+	{
+		String command = String.format(COMMAND_ACCEPT_CALL, phoneNumber.toString());
+		boolean commandIsOk = executeCommand(command);
+		return commandIsOk;
+	}
+
+	/**
+	 * Holds a call to the emulator.
+	 * 
+	 * @param phoneNumber
+	 *        - the phone number, that calls the emulator.
+	 * 
+	 * @return the command response from the emulator console.
+	 * @throws EmulatorConnectionFailedException
+	 */
+	public synchronized boolean holdCall(PhoneNumber phoneNumber) throws EmulatorConnectionFailedException
+	{
+		String command = String.format(COMMAND_HOLD_CALL, phoneNumber.toString());
+		boolean commandIsOk = executeCommand(command);
+		return commandIsOk;
+	}
+
+	/**
+	 * Cancels a call to the emulator.
+	 * 
+	 * @param phoneNumber
+	 *        - the phone number, that calls the emulator.
+	 * 
+	 * @return the command response from the emulator console.
+	 * @throws EmulatorConnectionFailedException
+	 */
+	public synchronized boolean cancelCall(PhoneNumber phoneNumber) throws EmulatorConnectionFailedException
+	{
+		String command = String.format(COMMAND_CANCEL_CALL, phoneNumber.toString());
 		boolean commandIsOk = executeCommand(command);
 		return commandIsOk;
 	}

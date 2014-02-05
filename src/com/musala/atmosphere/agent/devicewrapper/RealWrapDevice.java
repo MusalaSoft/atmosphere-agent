@@ -11,6 +11,7 @@ import com.musala.atmosphere.commons.CommandFailedException;
 import com.musala.atmosphere.commons.DeviceAcceleration;
 import com.musala.atmosphere.commons.DeviceOrientation;
 import com.musala.atmosphere.commons.MobileDataState;
+import com.musala.atmosphere.commons.PhoneNumber;
 import com.musala.atmosphere.commons.SmsMessage;
 import com.musala.atmosphere.commons.sa.exceptions.NotPossibleForDeviceException;
 import com.musala.atmosphere.commons.util.IntentBuilder;
@@ -205,5 +206,33 @@ public class RealWrapDevice extends AbstractWrapDevice
 	{
 		// We can't simulate that a real device has received SMS.
 		throw new CommandFailedException("Can not send SMS to real devices.");
+	}
+
+	@Override
+	public void receiveCall(PhoneNumber phoneNumber) throws CommandFailedException, RemoteException
+	{
+		// We can't simulate that a real device has received a call.
+		throw new CommandFailedException("Can not send call to real devices.");
+	}
+
+	@Override
+	public void acceptCall(PhoneNumber phoneNumber) throws CommandFailedException, RemoteException
+	{
+		// We can't simulate that a real device accepted a certain call.
+		throw new CommandFailedException("Can not accept certain call to real devices.");
+	}
+
+	@Override
+	public void holdCall(PhoneNumber phoneNumber) throws CommandFailedException, RemoteException
+	{
+		// We can't simulate that a real device has hold a call.
+		throw new CommandFailedException("Can not hold call to real devices.");
+	}
+
+	@Override
+	public void cancelCall(PhoneNumber phoneNumber) throws CommandFailedException, RemoteException
+	{
+		// We can't simulate that a real device has canceled a certain call.
+		throw new CommandFailedException("Can not cancel certain call to real devices.");
 	}
 }

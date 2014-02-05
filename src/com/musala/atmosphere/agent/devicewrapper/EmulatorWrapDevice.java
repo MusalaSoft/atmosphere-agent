@@ -14,6 +14,7 @@ import com.musala.atmosphere.commons.CommandFailedException;
 import com.musala.atmosphere.commons.DeviceAcceleration;
 import com.musala.atmosphere.commons.DeviceOrientation;
 import com.musala.atmosphere.commons.MobileDataState;
+import com.musala.atmosphere.commons.PhoneNumber;
 import com.musala.atmosphere.commons.SmsMessage;
 import com.musala.atmosphere.commons.sa.exceptions.NotPossibleForDeviceException;
 import com.musala.atmosphere.commons.util.Pair;
@@ -279,7 +280,7 @@ public class EmulatorWrapDevice extends AbstractWrapDevice
 		}
 		catch (NotPossibleForDeviceException e)
 		{
-			throw new CommandFailedException("Illegal argument has been passed to the emulator console class. " + e);
+			throw new CommandFailedException("Illegal argument has been passed to the emulator console class. ", e);
 		}
 	}
 
@@ -332,7 +333,103 @@ public class EmulatorWrapDevice extends AbstractWrapDevice
 		}
 		catch (NotPossibleForDeviceException e)
 		{
-			throw new CommandFailedException("Illegal argument has been passed to the emulator console class. " + e);
+			throw new CommandFailedException("Illegal argument has been passed to the emulator console class. ", e);
+		}
+	}
+
+	@Override
+	public void receiveCall(PhoneNumber phoneNumber) throws CommandFailedException, RemoteException
+	{
+		try
+		{
+			ExtendedEmulatorConsole emulatorConsole = ExtendedEmulatorConsole.getExtendedEmulatorConsole(wrappedDevice);
+			boolean success = emulatorConsole.receiveCall(phoneNumber);
+			if (!success)
+			{
+				LOGGER.error("Sending call to device failed.");
+				throw new CommandFailedException("Sending call to device failed.");
+			}
+		}
+		catch (EmulatorConnectionFailedException e)
+		{
+			throw new CommandFailedException("Connection to the emulator console failed. "
+					+ "See the enclosed exception for more information.", e);
+		}
+		catch (NotPossibleForDeviceException e)
+		{
+			throw new CommandFailedException("Illegal argument has been passed to the emulator console class. ", e);
+		}
+	}
+
+	@Override
+	public void acceptCall(PhoneNumber phoneNumber) throws CommandFailedException, RemoteException
+	{
+		try
+		{
+			ExtendedEmulatorConsole emulatorConsole = ExtendedEmulatorConsole.getExtendedEmulatorConsole(wrappedDevice);
+			boolean success = emulatorConsole.acceptCall(phoneNumber);
+			if (!success)
+			{
+				LOGGER.error("Accepting call to device failed.");
+				throw new CommandFailedException("Accepting call to device failed.");
+			}
+		}
+		catch (EmulatorConnectionFailedException e)
+		{
+			throw new CommandFailedException("Connection to the emulator console failed. "
+					+ "See the enclosed exception for more information.", e);
+		}
+		catch (NotPossibleForDeviceException e)
+		{
+			throw new CommandFailedException("Illegal argument has been passed to the emulator console class. ", e);
+		}
+	}
+
+	@Override
+	public void holdCall(PhoneNumber phoneNumber) throws CommandFailedException, RemoteException
+	{
+		try
+		{
+			ExtendedEmulatorConsole emulatorConsole = ExtendedEmulatorConsole.getExtendedEmulatorConsole(wrappedDevice);
+			boolean success = emulatorConsole.holdCall(phoneNumber);
+			if (!success)
+			{
+				LOGGER.error("Holding call to device failed.");
+				throw new CommandFailedException("Holding call to device failed.");
+			}
+		}
+		catch (EmulatorConnectionFailedException e)
+		{
+			throw new CommandFailedException("Connection to the emulator console failed. "
+					+ "See the enclosed exception for more information.", e);
+		}
+		catch (NotPossibleForDeviceException e)
+		{
+			throw new CommandFailedException("Illegal argument has been passed to the emulator console class. ", e);
+		}
+	}
+
+	@Override
+	public void cancelCall(PhoneNumber phoneNumber) throws CommandFailedException, RemoteException
+	{
+		try
+		{
+			ExtendedEmulatorConsole emulatorConsole = ExtendedEmulatorConsole.getExtendedEmulatorConsole(wrappedDevice);
+			boolean success = emulatorConsole.cancelCall(phoneNumber);
+			if (!success)
+			{
+				LOGGER.error("Canceling call to device failed.");
+				throw new CommandFailedException("Canceling call to device failed.");
+			}
+		}
+		catch (EmulatorConnectionFailedException e)
+		{
+			throw new CommandFailedException("Connection to the emulator console failed. "
+					+ "See the enclosed exception for more information.", e);
+		}
+		catch (NotPossibleForDeviceException e)
+		{
+			throw new CommandFailedException("Illegal argument has been passed to the emulator console class. ", e);
 		}
 	}
 }
