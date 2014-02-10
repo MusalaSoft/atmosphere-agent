@@ -6,20 +6,20 @@ package com.musala.atmosphere.agent.exception;
  * @author yordan.petrov
  * 
  */
-public class StopAtmosphereServiceFailedException extends RuntimeException
+public class OnDeviceServiceTerminationException extends RuntimeException
 {
 	private static final long serialVersionUID = -8414514520282900457L;
 
-	public StopAtmosphereServiceFailedException()
+	public OnDeviceServiceTerminationException()
 	{
 	}
 
-	public StopAtmosphereServiceFailedException(String message)
+	public OnDeviceServiceTerminationException(String message)
 	{
 		super(message);
 	}
 
-	public StopAtmosphereServiceFailedException(String message, Throwable inner)
+	public OnDeviceServiceTerminationException(String message, Throwable inner)
 	{
 		super(message, inner);
 	}

@@ -1,15 +1,14 @@
-package com.musala.atmosphere.agent.devicewrapper;
+package com.musala.atmosphere.agent.devicewrapper.util;
 
 import java.io.IOException;
 
 import com.android.ddmlib.AdbCommandRejectedException;
 import com.android.ddmlib.IDevice;
 import com.android.ddmlib.TimeoutException;
-import com.musala.atmosphere.agent.devicewrapper.util.ForwardingPortFailedException;
-import com.musala.atmosphere.agent.exception.RemovePortForwardFailedException;
+import com.musala.atmosphere.agent.exception.PortForwardingRemovalException;
 import com.musala.atmosphere.agent.util.PortAllocator;
-import com.musala.atmosphere.commons.ad.gestureplayer.GesturePlayerConstants;
 import com.musala.atmosphere.commons.ad.service.ServiceConstants;
+import com.musala.atmosphere.commons.ad.uiautomator.UIAutomatorBridgeConstants;
 
 /**
  * Class that handles device port forwarding. Used to forward a local port (issued to a device) to a remote (on-device)
@@ -56,9 +55,9 @@ public class PortForwardingService
 	 * 
 	 * @throws ForwardingPortFailedException
 	 */
-	public void forwardGesturePlayerPort() throws ForwardingPortFailedException
+	public void forwardUIAutomatorBridgePort() throws ForwardingPortFailedException
 	{
-		forwardPort(GesturePlayerConstants.PLAYER_PORT);
+		forwardPort(UIAutomatorBridgeConstants.BRIDGE_PORT);
 	}
 
 	private void forwardPort(int remotePort) throws ForwardingPortFailedException
@@ -83,9 +82,9 @@ public class PortForwardingService
 	/**
 	 * Removes the port forwarding.
 	 * 
-	 * @throws RemovePortForwardFailedException
+	 * @throws PortForwardingRemovalException
 	 */
-	public void removeForward() throws RemovePortForwardFailedException
+	public void removeForward() throws PortForwardingRemovalException
 	{
 		if (remoteForwardedPort == NOT_FORWARDED_PORT)
 		{
@@ -100,7 +99,7 @@ public class PortForwardingService
 		catch (TimeoutException | AdbCommandRejectedException | IOException e)
 		{
 			String errorMessage = String.format("Could not remove port forwarding for %s.", device.getSerialNumber());
-			throw new RemovePortForwardFailedException(errorMessage, e);
+			throw new PortForwardingRemovalException(errorMessage, e);
 		}
 	}
 

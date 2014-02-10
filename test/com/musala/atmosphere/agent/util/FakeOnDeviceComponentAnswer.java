@@ -15,8 +15,8 @@ import org.mockito.stubbing.Answer;
 
 import com.musala.atmosphere.commons.ad.Request;
 import com.musala.atmosphere.commons.ad.RequestType;
-import com.musala.atmosphere.commons.ad.gestureplayer.GesturePlayerRequest;
 import com.musala.atmosphere.commons.ad.service.ServiceRequest;
+import com.musala.atmosphere.commons.ad.uiautomator.UIAutomatorBridgeRequest;
 
 public class FakeOnDeviceComponentAnswer implements Answer<Void>
 {
@@ -101,7 +101,7 @@ public class FakeOnDeviceComponentAnswer implements Answer<Void>
 					}
 					catch (ClassCastException e)
 					{
-						Request<GesturePlayerRequest> gesturePlayerRequest = (Request<GesturePlayerRequest>) request;
+						Request<UIAutomatorBridgeRequest> gesturePlayerRequest = (Request<UIAutomatorBridgeRequest>) request;
 						response = fakeGesturePlayerRequestHandler.handleRequest(requestType);
 					}
 

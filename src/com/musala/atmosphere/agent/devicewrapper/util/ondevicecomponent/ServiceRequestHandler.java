@@ -1,9 +1,9 @@
-package com.musala.atmosphere.agent.devicewrapper.util;
+package com.musala.atmosphere.agent.devicewrapper.util.ondevicecomponent;
 
 import java.io.IOException;
 
-import com.musala.atmosphere.agent.devicewrapper.PortForwardingService;
-import com.musala.atmosphere.agent.exception.ServiceValidationFailedException;
+import com.musala.atmosphere.agent.devicewrapper.util.PortForwardingService;
+import com.musala.atmosphere.agent.exception.OnDeviceComponentValidationException;
 import com.musala.atmosphere.commons.ad.Request;
 import com.musala.atmosphere.commons.ad.service.ServiceRequest;
 
@@ -37,12 +37,12 @@ public class ServiceRequestHandler extends OnDeviceComponentRequestHandler
 			ServiceRequest response = (ServiceRequest) request(serviceRequest);
 			if (!response.equals(ServiceRequest.VALIDATION))
 			{
-				throw new ServiceValidationFailedException("Service validation failed. Validation response did not match expected value.");
+				throw new OnDeviceComponentValidationException("Service validation failed. Validation response did not match expected value.");
 			}
 		}
 		catch (ClassNotFoundException | IOException e)
 		{
-			throw new ServiceValidationFailedException("Service validation failed.", e);
+			throw new OnDeviceComponentValidationException("Service validation failed.", e);
 		}
 	}
 }

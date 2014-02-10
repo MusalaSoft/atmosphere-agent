@@ -11,8 +11,10 @@ import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Scanner;
 
 import org.apache.log4j.Logger;
@@ -25,14 +27,16 @@ import com.android.ddmlib.ShellCommandUnresponsiveException;
 import com.android.ddmlib.SyncException;
 import com.android.ddmlib.TimeoutException;
 import com.musala.atmosphere.agent.DevicePropertyStringConstants;
+import com.musala.atmosphere.agent.devicewrapper.util.BackgroundShellCommandExecutor;
 import com.musala.atmosphere.agent.devicewrapper.util.DeviceProfiler;
 import com.musala.atmosphere.agent.devicewrapper.util.ForwardingPortFailedException;
-import com.musala.atmosphere.agent.devicewrapper.util.GesturePlayerCommunicator;
-import com.musala.atmosphere.agent.devicewrapper.util.ServiceCommunicator;
-import com.musala.atmosphere.agent.exception.InitializeServiceRequestHandlerFailedException;
-import com.musala.atmosphere.agent.exception.OnDeviceComponentCommunicationFailed;
-import com.musala.atmosphere.agent.exception.AtmosphereOnDeviceComponentStartFailedException;
-import com.musala.atmosphere.agent.exception.StopAtmosphereServiceFailedException;
+import com.musala.atmosphere.agent.devicewrapper.util.PortForwardingService;
+import com.musala.atmosphere.agent.devicewrapper.util.ondevicecomponent.ServiceCommunicator;
+import com.musala.atmosphere.agent.devicewrapper.util.ondevicecomponent.UIAutomatorBridgeCommunicator;
+import com.musala.atmosphere.agent.exception.OnDeviceComponentCommunicationException;
+import com.musala.atmosphere.agent.exception.OnDeviceComponentInitializationException;
+import com.musala.atmosphere.agent.exception.OnDeviceComponentStartingException;
+import com.musala.atmosphere.agent.exception.OnDeviceServiceTerminationException;
 import com.musala.atmosphere.agent.util.AgentPropertiesLoader;
 import com.musala.atmosphere.agent.util.DeviceScreenResolutionParser;
 import com.musala.atmosphere.agent.util.MemoryUnitConverter;
@@ -42,6 +46,7 @@ import com.musala.atmosphere.commons.ConnectionType;
 import com.musala.atmosphere.commons.DeviceAcceleration;
 import com.musala.atmosphere.commons.DeviceInformation;
 import com.musala.atmosphere.commons.DeviceOrientation;
+import com.musala.atmosphere.commons.gesture.Gesture;
 import com.musala.atmosphere.commons.sa.IWrapDevice;
 import com.musala.atmosphere.commons.util.Pair;
 
@@ -51,6 +56,8 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 	 * auto generated serialization id
 	 */
 	private static final long serialVersionUID = -9122701818928360023L;
+
+	private static final int COMMAND_EXECUTION_TIMEOUT = AgentPropertiesLoader.getCommandExecutionTimeout();
 
 	// WARNING : do not change the remote folder unless you really know what you are doing.
 	private static final String XMLDUMP_REMOTE_FILE_NAME = "/data/local/tmp/uidump.xml";
@@ -69,11 +76,13 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 
 	protected ServiceCommunicator serviceCommunicator;
 
-	protected GesturePlayerCommunicator gesturePlayerCommunicator;
+	protected UIAutomatorBridgeCommunicator uiAutomatorBridgeCommunicator;
 
 	protected IDevice wrappedDevice;
 
 	private final static Logger LOGGER = Logger.getLogger(AbstractWrapDevice.class.getCanonicalName());
+
+	private Map<String, BackgroundShellCommandExecutor> backgroundShellCommandsMap = new HashMap<String, BackgroundShellCommandExecutor>();
 
 	public AbstractWrapDevice(IDevice deviceToWrap) throws RemoteException
 	{
@@ -83,16 +92,16 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 		try
 		{
 			serviceCommunicator = new ServiceCommunicator(forwardingService, this);
-			gesturePlayerCommunicator = new GesturePlayerCommunicator(forwardingService, this);
+			uiAutomatorBridgeCommunicator = new UIAutomatorBridgeCommunicator(forwardingService, this);
 		}
-		catch (ForwardingPortFailedException | AtmosphereOnDeviceComponentStartFailedException
-				| InitializeServiceRequestHandlerFailedException e)
+		catch (ForwardingPortFailedException | OnDeviceComponentStartingException
+				| OnDeviceComponentInitializationException e)
 		{
 			// TODO throw a new exception here when the preconditions are implemented.
 
 			String errorMessage = String.format("Could not initialize communication to a on-device component for %s.",
 												wrappedDevice.getSerialNumber());
-			throw new OnDeviceComponentCommunicationFailed(errorMessage, e);
+			throw new OnDeviceComponentCommunicationException(errorMessage, e);
 		}
 	}
 
@@ -139,7 +148,6 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 	public String executeShellCommand(String command) throws RemoteException, CommandFailedException
 	{
 		String response = "";
-		final int COMMAND_EXECUTION_TIMEOUT = AgentPropertiesLoader.getCommandExecutionTimeout();
 
 		try
 		{
@@ -156,6 +164,67 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 		}
 
 		return response;
+	}
+
+	/**
+	 * Executes a shell command in the background. Returns immediately. Usage should be limited to commands which do
+	 * will not return for a long time (because of thread related performance issues).
+	 * 
+	 * @param command
+	 *        - shell command that should be executed in the background.
+	 */
+	public void executeBackgroundShellCommand(String command)
+	{
+		if (backgroundShellCommandsMap.containsKey(command))
+		{
+			terminateBackgroundShellCommand(command);
+		}
+
+		BackgroundShellCommandExecutor commandExecutor = new BackgroundShellCommandExecutor(command, wrappedDevice);
+		Thread executorThread = new Thread(commandExecutor);
+		executorThread.start();
+
+		backgroundShellCommandsMap.put(command, commandExecutor);
+	}
+
+	/**
+	 * Returns the execution exception that was thrown when a background shell command was executed (null if no
+	 * exception was thrown).
+	 * 
+	 * @param command
+	 *        - the executed command for which we want the thrown exception.
+	 * @return the exception itself.
+	 */
+	public Exception getBackgroundShellCommandExecutionException(String command)
+	{
+		if (!backgroundShellCommandsMap.containsKey(command))
+		{
+			throw new NoSuchElementException("No command '" + command + "' was found to be running or done executing.");
+		}
+		BackgroundShellCommandExecutor executor = backgroundShellCommandsMap.get(command);
+		Exception executionException = executor.getExecutionException();
+		return executionException;
+	}
+
+	/**
+	 * Terminates a background executing command.
+	 * 
+	 * @param command
+	 *        - the command to be terminated.
+	 */
+	public void terminateBackgroundShellCommand(String command)
+	{
+		if (!backgroundShellCommandsMap.containsKey(command))
+		{
+			throw new NoSuchElementException("No command '" + command + "' was found to be running or done executing.");
+		}
+		BackgroundShellCommandExecutor executor = backgroundShellCommandsMap.get(command);
+		Thread executorThread = executor.getExecutorThread();
+		if (executorThread.isAlive())
+		{
+			executorThread.stop();
+		}
+		backgroundShellCommandsMap.remove(command);
 	}
 
 	@Override
@@ -503,13 +572,26 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 	}
 
 	@Override
+	public void executeGesture(Gesture gesture) throws CommandFailedException, RemoteException
+	{
+		uiAutomatorBridgeCommunicator.playGesture(gesture);
+	}
+
+	@Override
 	protected void finalize()
 	{
+		for (BackgroundShellCommandExecutor commandExecutor : backgroundShellCommandsMap.values())
+		{
+			// we cannot modify the map here!
+			Thread executorThread = commandExecutor.getExecutorThread();
+			executorThread.stop();
+		}
+
 		try
 		{
 			serviceCommunicator.stopAtmosphereService();
 		}
-		catch (StopAtmosphereServiceFailedException e)
+		catch (OnDeviceServiceTerminationException e)
 		{
 			String loggerMessage = String.format(	"Stopping ATMOSPHERE service failed for %s.",
 													wrappedDevice.getSerialNumber());

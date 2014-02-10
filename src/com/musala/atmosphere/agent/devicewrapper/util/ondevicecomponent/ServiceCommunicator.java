@@ -1,13 +1,13 @@
-package com.musala.atmosphere.agent.devicewrapper.util;
+package com.musala.atmosphere.agent.devicewrapper.util.ondevicecomponent;
 
 import java.io.IOException;
 import java.rmi.RemoteException;
 
-import com.musala.atmosphere.agent.devicewrapper.PortForwardingService;
-import com.musala.atmosphere.agent.exception.InitializeServiceRequestHandlerFailedException;
-import com.musala.atmosphere.agent.exception.ServiceValidationFailedException;
-import com.musala.atmosphere.agent.exception.AtmosphereOnDeviceComponentStartFailedException;
-import com.musala.atmosphere.agent.exception.StopAtmosphereServiceFailedException;
+import com.musala.atmosphere.agent.devicewrapper.util.PortForwardingService;
+import com.musala.atmosphere.agent.exception.OnDeviceComponentInitializationException;
+import com.musala.atmosphere.agent.exception.OnDeviceComponentValidationException;
+import com.musala.atmosphere.agent.exception.OnDeviceComponentStartingException;
+import com.musala.atmosphere.agent.exception.OnDeviceServiceTerminationException;
 import com.musala.atmosphere.commons.BatteryState;
 import com.musala.atmosphere.commons.CommandFailedException;
 import com.musala.atmosphere.commons.ConnectionType;
@@ -55,22 +55,21 @@ public class ServiceCommunicator
 		}
 
 		startAtmosphereService();
-		portForwardingService.forwardServicePort();
 		try
 		{
 			serviceRequestHandler = new ServiceRequestHandler(portForwardingService, localPort);
 		}
-		catch (ServiceValidationFailedException e)
+		catch (OnDeviceComponentValidationException e)
 		{
 			String errorMessage = String.format("Service initialization failed for %s.", deviceSerialNumber);
-			throw new InitializeServiceRequestHandlerFailedException(errorMessage, e);
+			throw new OnDeviceComponentInitializationException(errorMessage, e);
 		}
 	}
 
 	/**
 	 * Starts the Atmosphere service on the wrappedDevice.
 	 * 
-	 * @throws AtmosphereOnDeviceComponentStartFailedException
+	 * @throws OnDeviceComponentStartingException
 	 */
 	private void startAtmosphereService()
 	{
@@ -86,12 +85,12 @@ public class ServiceCommunicator
 		catch (RemoteException | CommandFailedException e)
 		{
 			String errorMessage = String.format("Starting ATMOSPHERE service failed for %s.", deviceSerialNumber);
-			throw new AtmosphereOnDeviceComponentStartFailedException(errorMessage, e);
+			throw new OnDeviceComponentStartingException(errorMessage, e);
 		}
 	}
 
 	@Override
-	public void finalize() throws StopAtmosphereServiceFailedException
+	public void finalize() throws OnDeviceServiceTerminationException
 	{
 		stopAtmosphereService();
 	}
@@ -99,7 +98,7 @@ public class ServiceCommunicator
 	/**
 	 * Stops the ATMOSPHERE service on the wrapped device.
 	 * 
-	 * @throws StopAtmosphereServiceFailedException
+	 * @throws OnDeviceServiceTerminationException
 	 */
 	public void stopAtmosphereService()
 	{
@@ -114,7 +113,7 @@ public class ServiceCommunicator
 		catch (RemoteException | CommandFailedException e)
 		{
 			String errorMessage = String.format("Stopping ATMOSPHERE service failed for %s.", deviceSerialNumber);
-			throw new StopAtmosphereServiceFailedException(errorMessage, e);
+			throw new OnDeviceServiceTerminationException(errorMessage, e);
 		}
 	}
 

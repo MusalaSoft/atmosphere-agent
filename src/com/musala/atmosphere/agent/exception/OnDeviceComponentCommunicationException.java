@@ -6,20 +6,20 @@ package com.musala.atmosphere.agent.exception;
  * @author yordan.petrov
  * 
  */
-public class OnDeviceComponentCommunicationFailed extends RuntimeException
+public class OnDeviceComponentCommunicationException extends RuntimeException
 {
 	private static final long serialVersionUID = 1310592628758559355L;
 
-	public OnDeviceComponentCommunicationFailed()
+	public OnDeviceComponentCommunicationException()
 	{
 	}
 
-	public OnDeviceComponentCommunicationFailed(String message)
+	public OnDeviceComponentCommunicationException(String message)
 	{
 		super(message);
 	}
 
-	public OnDeviceComponentCommunicationFailed(String message, Throwable inner)
+	public OnDeviceComponentCommunicationException(String message, Throwable inner)
 	{
 		super(message, inner);
 	}

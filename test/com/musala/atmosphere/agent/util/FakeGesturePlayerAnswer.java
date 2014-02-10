@@ -2,14 +2,14 @@ package com.musala.atmosphere.agent.util;
 
 import com.musala.atmosphere.commons.ad.Request;
 import com.musala.atmosphere.commons.ad.RequestType;
-import com.musala.atmosphere.commons.ad.gestureplayer.GesturePlayerRequest;
+import com.musala.atmosphere.commons.ad.uiautomator.UIAutomatorBridgeRequest;
 
 public class FakeGesturePlayerAnswer implements FakeOnDeviceComponentRequestHandler
 {
 	@Override
 	public Object handleRequest(Request<RequestType> request)
 	{
-		GesturePlayerRequest requestType = (GesturePlayerRequest) request.getType();
+		UIAutomatorBridgeRequest requestType = (UIAutomatorBridgeRequest) request.getType();
 
 		switch (requestType)
 		{
@@ -17,7 +17,7 @@ public class FakeGesturePlayerAnswer implements FakeOnDeviceComponentRequestHand
 				return requestType;
 
 			default:
-				return GesturePlayerRequest.ANY_RESPONSE;
+				return UIAutomatorBridgeRequest.ANY_RESPONSE;
 		}
 	}
 }

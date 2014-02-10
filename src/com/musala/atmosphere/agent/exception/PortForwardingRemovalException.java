@@ -6,20 +6,20 @@ package com.musala.atmosphere.agent.exception;
  * @author yordan.petrov
  * 
  */
-public class RemovePortForwardFailedException extends RuntimeException
+public class PortForwardingRemovalException extends RuntimeException
 {
 	private static final long serialVersionUID = 1973383660575881546L;
 
-	public RemovePortForwardFailedException()
+	public PortForwardingRemovalException()
 	{
 	}
 
-	public RemovePortForwardFailedException(String message)
+	public PortForwardingRemovalException(String message)
 	{
 		super(message);
 	}
 
-	public RemovePortForwardFailedException(String message, Throwable inner)
+	public PortForwardingRemovalException(String message, Throwable inner)
 	{
 		super(message, inner);
 	}

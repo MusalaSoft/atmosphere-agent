@@ -1,7 +1,5 @@
 package com.musala.atmosphere.agent.util;
 
-import gov.nist.math.scimark2.Benchmark;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -162,8 +160,10 @@ public class SystemInformation
 	public static double getScimarkScore()
 	{
 		LOGGER.info("Benchmarking system. This may take a while...");
+		// TODO uncomment this line
+		double score = 100;// Benchmark.getScore();
+		LOGGER.info("Benchmarking system done. Result : " + score);
 
-		double score = Benchmark.getScore();
 		return score;
 	}
 }

@@ -1,4 +1,4 @@
-package com.musala.atmosphere.agent.devicewrapper.util;
+package com.musala.atmosphere.agent.devicewrapper.util.ondevicecomponent;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -8,7 +8,7 @@ import java.io.OutputStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
 
-import com.musala.atmosphere.agent.devicewrapper.PortForwardingService;
+import com.musala.atmosphere.agent.devicewrapper.util.PortForwardingService;
 import com.musala.atmosphere.agent.util.AgentPropertiesLoader;
 import com.musala.atmosphere.commons.ad.Request;
 import com.musala.atmosphere.commons.ad.service.ServiceRequest;
