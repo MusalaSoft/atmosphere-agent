@@ -11,14 +11,14 @@ import org.mockito.Mockito;
 
 import com.android.ddmlib.IDevice;
 import com.musala.atmosphere.agent.util.FakeOnDeviceComponentAnswer;
-import com.musala.atmosphere.commons.BatteryState;
-import com.musala.atmosphere.commons.CommandFailedException;
 import com.musala.atmosphere.commons.ConnectionType;
-import com.musala.atmosphere.commons.DeviceAcceleration;
-import com.musala.atmosphere.commons.DeviceOrientation;
-import com.musala.atmosphere.commons.MobileDataState;
-import com.musala.atmosphere.commons.PhoneNumber;
 import com.musala.atmosphere.commons.SmsMessage;
+import com.musala.atmosphere.commons.beans.BatteryState;
+import com.musala.atmosphere.commons.beans.DeviceAcceleration;
+import com.musala.atmosphere.commons.beans.DeviceOrientation;
+import com.musala.atmosphere.commons.beans.MobileDataState;
+import com.musala.atmosphere.commons.beans.PhoneNumber;
+import com.musala.atmosphere.commons.exceptions.CommandFailedException;
 import com.musala.atmosphere.commons.util.Pair;
 
 public class AbstractWrapDeviceTest

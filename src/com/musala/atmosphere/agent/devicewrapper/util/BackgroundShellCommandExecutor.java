@@ -7,13 +7,13 @@ import com.android.ddmlib.IDevice;
 import com.android.ddmlib.NullOutputReceiver;
 import com.android.ddmlib.ShellCommandUnresponsiveException;
 import com.android.ddmlib.TimeoutException;
-import com.musala.atmosphere.commons.CommandFailedException;
+import com.musala.atmosphere.commons.exceptions.CommandFailedException;
 
 /**
  * An executor that is used for running shell commands that do not return.
- * 
+ *
  * @author georgi.gaydarov
- * 
+ *
  */
 public class BackgroundShellCommandExecutor implements Runnable
 {
@@ -26,7 +26,7 @@ public class BackgroundShellCommandExecutor implements Runnable
 	private final IDevice wrappedDevice;
 
 	/**
-	 * 
+	 *
 	 * @param command
 	 *        - shell command to be executed.
 	 * @param wrappedDevice
@@ -58,7 +58,7 @@ public class BackgroundShellCommandExecutor implements Runnable
 	}
 
 	/**
-	 * 
+	 *
 	 * @return true if an exception was thrown when the passed shell command was executed, false otherwise.
 	 */
 	public boolean isExecutionExceptionThrown()
@@ -67,7 +67,7 @@ public class BackgroundShellCommandExecutor implements Runnable
 	}
 
 	/**
-	 * 
+	 *
 	 * @return the exception which was thrown when the passed shell command was executed (null if no exception was
 	 *         thrown).
 	 */
@@ -77,7 +77,7 @@ public class BackgroundShellCommandExecutor implements Runnable
 	}
 
 	/**
-	 * 
+	 *
 	 * @return the {@link Thread} object that is responsible for the shell command execution.
 	 */
 	public Thread getExecutorThread()

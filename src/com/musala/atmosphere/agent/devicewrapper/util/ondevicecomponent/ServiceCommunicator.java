@@ -5,26 +5,26 @@ import java.rmi.RemoteException;
 
 import com.musala.atmosphere.agent.devicewrapper.util.PortForwardingService;
 import com.musala.atmosphere.agent.exception.OnDeviceComponentInitializationException;
-import com.musala.atmosphere.agent.exception.OnDeviceComponentValidationException;
 import com.musala.atmosphere.agent.exception.OnDeviceComponentStartingException;
+import com.musala.atmosphere.agent.exception.OnDeviceComponentValidationException;
 import com.musala.atmosphere.agent.exception.OnDeviceServiceTerminationException;
-import com.musala.atmosphere.commons.BatteryState;
-import com.musala.atmosphere.commons.CommandFailedException;
 import com.musala.atmosphere.commons.ConnectionType;
-import com.musala.atmosphere.commons.DeviceAcceleration;
 import com.musala.atmosphere.commons.DeviceInformation;
-import com.musala.atmosphere.commons.DeviceOrientation;
 import com.musala.atmosphere.commons.ad.Request;
 import com.musala.atmosphere.commons.ad.service.ServiceRequest;
+import com.musala.atmosphere.commons.beans.BatteryState;
+import com.musala.atmosphere.commons.beans.DeviceAcceleration;
+import com.musala.atmosphere.commons.beans.DeviceOrientation;
+import com.musala.atmosphere.commons.exceptions.CommandFailedException;
 import com.musala.atmosphere.commons.sa.IWrapDevice;
 import com.musala.atmosphere.commons.util.IntentBuilder;
 import com.musala.atmosphere.commons.util.IntentBuilder.IntentAction;
 
 /**
  * Class that communicates with the ATMOSPHERE service.
- * 
+ *
  * @author yordan.petrov
- * 
+ *
  */
 public class ServiceCommunicator
 {
@@ -68,7 +68,7 @@ public class ServiceCommunicator
 
 	/**
 	 * Starts the Atmosphere service on the wrappedDevice.
-	 * 
+	 *
 	 * @throws OnDeviceComponentStartingException
 	 */
 	private void startAtmosphereService()
@@ -97,7 +97,7 @@ public class ServiceCommunicator
 
 	/**
 	 * Stops the ATMOSPHERE service on the wrapped device.
-	 * 
+	 *
 	 * @throws OnDeviceServiceTerminationException
 	 */
 	public void stopAtmosphereService()
@@ -119,7 +119,7 @@ public class ServiceCommunicator
 
 	/**
 	 * Gets the battery level of the device.
-	 * 
+	 *
 	 * @return Capacity in percents.
 	 * @throws CommandFailedException
 	 */
@@ -141,7 +141,7 @@ public class ServiceCommunicator
 
 	/**
 	 * Gets the power state of the device.
-	 * 
+	 *
 	 * @return boolean value; true if power is connected and false if power is disconnected.
 	 * @throws CommandFailedException
 	 */
@@ -164,7 +164,7 @@ public class ServiceCommunicator
 
 	/**
 	 * Fetches the sensor orientation readings of the device.
-	 * 
+	 *
 	 * @return a {@link DeviceOrientation} instance.
 	 * @throws CommandFailedException
 	 */
@@ -193,7 +193,7 @@ public class ServiceCommunicator
 
 	/**
 	 * Gets the battery state of the device.
-	 * 
+	 *
 	 * @return a member of the {@link BatteryState BatteryState} enumeration.
 	 * @throws CommandFailedException
 	 */
@@ -223,7 +223,7 @@ public class ServiceCommunicator
 
 	/**
 	 * Gets the connection type of the device.
-	 * 
+	 *
 	 * @return a member of the {@link ConnectionType} enumeration.
 	 * @throws CommandFailedException
 	 */
@@ -245,7 +245,7 @@ public class ServiceCommunicator
 
 	/**
 	 * Sets the WiFi state on the device.
-	 * 
+	 *
 	 * @param state
 	 *        - true if the WiFi should be on; false if it should be off.
 	 * @throws CommandFailedException
@@ -268,7 +268,7 @@ public class ServiceCommunicator
 
 	/**
 	 * Fetches the sensor acceleration readings of the device.
-	 * 
+	 *
 	 * @return a {@link DeviceAcceleration} instance.
 	 * @throws CommandFailedException
 	 */

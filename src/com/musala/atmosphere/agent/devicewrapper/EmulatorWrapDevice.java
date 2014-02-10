@@ -9,26 +9,26 @@ import org.apache.log4j.Logger;
 import com.android.ddmlib.IDevice;
 import com.musala.atmosphere.agent.devicewrapper.util.EmulatorConnectionFailedException;
 import com.musala.atmosphere.agent.devicewrapper.util.ExtendedEmulatorConsole;
-import com.musala.atmosphere.commons.BatteryState;
-import com.musala.atmosphere.commons.CommandFailedException;
-import com.musala.atmosphere.commons.DeviceAcceleration;
-import com.musala.atmosphere.commons.DeviceOrientation;
-import com.musala.atmosphere.commons.MobileDataState;
-import com.musala.atmosphere.commons.PhoneNumber;
 import com.musala.atmosphere.commons.SmsMessage;
+import com.musala.atmosphere.commons.beans.BatteryState;
+import com.musala.atmosphere.commons.beans.DeviceAcceleration;
+import com.musala.atmosphere.commons.beans.DeviceOrientation;
+import com.musala.atmosphere.commons.beans.MobileDataState;
+import com.musala.atmosphere.commons.beans.PhoneNumber;
+import com.musala.atmosphere.commons.exceptions.CommandFailedException;
 import com.musala.atmosphere.commons.sa.exceptions.NotPossibleForDeviceException;
 import com.musala.atmosphere.commons.util.Pair;
 
 /**
  * Device wrapper for emulators. Implements methods in an emulator-specific way.
- * 
+ *
  * @author georgi.gaydarov
- * 
+ *
  */
 public class EmulatorWrapDevice extends AbstractWrapDevice
 {
 	/**
-	 * 
+	 *
 	 */
 	private static final long serialVersionUID = -112607818622127351L;
 
@@ -49,10 +49,10 @@ public class EmulatorWrapDevice extends AbstractWrapDevice
 		// service can function normally.
 		try
 		{
-			ExtendedEmulatorConsole emulatorConsole = ExtendedEmulatorConsole.getExtendedEmulatorConsole(wrappedDevice);
+			ExtendedEmulatorConsole emulatorConsole = prepareEmulatorConsole();
 			emulatorConsole.setMagneticField(50, 50, 50);
 		}
-		catch (EmulatorConnectionFailedException e)
+		catch (CommandFailedException e)
 		{
 			LOGGER.warn("Connection to emulator console failed.", e);
 		}
@@ -61,61 +61,15 @@ public class EmulatorWrapDevice extends AbstractWrapDevice
 	@Override
 	public void setNetworkSpeed(Pair<Integer, Integer> speeds) throws RemoteException, CommandFailedException
 	{
-		try
-		{
-			ExtendedEmulatorConsole emulatorConsole = ExtendedEmulatorConsole.getExtendedEmulatorConsole(wrappedDevice);
-			boolean success = emulatorConsole.setNetworkSpeed(speeds.getKey(), speeds.getValue());
-			if (!success)
-			{
-				LOGGER.error("Setting network speed on '" + wrappedDevice.getSerialNumber() + "' failed.");
-				throw new CommandFailedException("ExtendedEmulatorConsole method .setNetworkSpeed(...) "
-						+ "failed for device with serial number '" + wrappedDevice.getSerialNumber() + "'.");
-			}
-		}
-		catch (EmulatorConnectionFailedException e)
-		{
-			throw new CommandFailedException("Connection to the emulator console failed. "
-					+ "See the enclosed exception for more information.", e);
-		}
-		catch (NotPossibleForDeviceException e)
-		{
-			// would not have gotten this far.
-			e.printStackTrace();
-		}
+		ExtendedEmulatorConsole emulatorConsole = prepareEmulatorConsole();
+		emulatorConsole.setNetworkSpeed(speeds.getKey(), speeds.getValue());
 	}
 
 	@Override
 	public void setBatteryLevel(int level) throws RemoteException, CommandFailedException
 	{
-		try
-		{
-			ExtendedEmulatorConsole emulatorConsole = ExtendedEmulatorConsole.getExtendedEmulatorConsole(wrappedDevice);
-			boolean success = emulatorConsole.setBatteryLevel(level);
-			if (!success)
-			{
-				LOGGER.error("Setting battery level on '" + wrappedDevice.getSerialNumber() + "'.");
-				throw new CommandFailedException("ExtendedEmulatorConsole method .setBatteryLevel(...) failed for device with serial number '"
-						+ wrappedDevice.getSerialNumber() + "'.");
-			}
-		}
-		catch (EmulatorConnectionFailedException e)
-		{
-			throw new CommandFailedException("Connection to the emulator console failed."
-					+ "See the enclosed exception for more information.", e);
-		}
-		catch (IllegalArgumentException e)
-		{
-			throw new CommandFailedException("Illegal argument has been passed to the emulator console class. "
-					+ "See the enclosed exception for more information.", e);
-		}
-		catch (NotPossibleForDeviceException e)
-		{
-			// Not really possible, as this is an EmulatorWrapDevice and if the
-			// wrapped device was not an emulator, we
-			// would not have gotten this far.
-			e.printStackTrace();
-		}
-
+		ExtendedEmulatorConsole emulatorConsole = prepareEmulatorConsole();
+		emulatorConsole.setBatteryLevel(level);
 	}
 
 	@Override
@@ -128,68 +82,15 @@ public class EmulatorWrapDevice extends AbstractWrapDevice
 	@Override
 	public void setBatteryState(BatteryState state) throws RemoteException, CommandFailedException
 	{
-		try
-		{
-			ExtendedEmulatorConsole emulatorConsole = ExtendedEmulatorConsole.getExtendedEmulatorConsole(wrappedDevice);
-			boolean success = emulatorConsole.setBatteryState(state);
-			if (!success)
-			{
-				LOGGER.error("Setting battery state on '" + wrappedDevice.getSerialNumber() + "'.");
-				throw new CommandFailedException("ExtendedEmulatorConsole method .setBatteryState(...) "
-						+ "failed for device with serial number '" + wrappedDevice.getSerialNumber() + "'.");
-			}
-		}
-		catch (EmulatorConnectionFailedException e)
-		{
-			throw new CommandFailedException("Connection to the emulator console failed. "
-					+ "See the enclosed exception for more information.", e);
-		}
-		catch (IllegalArgumentException e)
-		{
-			throw new CommandFailedException("Illegal argument has been passed to the emulator console class. "
-					+ "See the enclosed exception for more information.", e);
-		}
-		catch (NotPossibleForDeviceException e)
-		{
-			// Not really possible, as this is an EmulatorWrapDevice and if the
-			// wrapped device was not an emulator, we
-			// would not have gotten this far.
-			e.printStackTrace();
-		}
+		ExtendedEmulatorConsole emulatorConsole = prepareEmulatorConsole();
+		emulatorConsole.setBatteryState(state);
 	}
 
 	@Override
 	public void setPowerState(boolean state) throws RemoteException, CommandFailedException
 	{
-		try
-		{
-			ExtendedEmulatorConsole emulatorConsole = ExtendedEmulatorConsole.getExtendedEmulatorConsole(wrappedDevice);
-			boolean success = emulatorConsole.setPowerState(state);
-			if (!success)
-			{
-				LOGGER.error("Setting power state on '" + wrappedDevice.getSerialNumber() + "'.");
-				throw new CommandFailedException("The setting of the power state failed for device with serial number '"
-						+ wrappedDevice.getSerialNumber() + "'.");
-			}
-		}
-		catch (EmulatorConnectionFailedException e)
-		{
-			throw new CommandFailedException("Connection to the emulator console failed. "
-					+ "See the enclosed exception for more information.", e);
-		}
-		catch (IllegalArgumentException e)
-		{
-			throw new CommandFailedException("Illegal argument has been passed to the emulator console class. "
-					+ "See the enclosed exception for more information.", e);
-		}
-		catch (NotPossibleForDeviceException e)
-		{
-			// Not really possible, as this is an EmulatorWrapDevice and if the
-			// wrapped device was not an emulator, we
-			// would not have gotten this far.
-			e.printStackTrace();
-		}
-
+		ExtendedEmulatorConsole emulatorConsole = prepareEmulatorConsole();
+		emulatorConsole.setPowerState(state);
 	}
 
 	@Override
@@ -197,91 +98,22 @@ public class EmulatorWrapDevice extends AbstractWrapDevice
 		throws RemoteException,
 			CommandFailedException
 	{
-		try
-		{
-			ExtendedEmulatorConsole emulatorConsole = ExtendedEmulatorConsole.getExtendedEmulatorConsole(wrappedDevice);
-			boolean success = emulatorConsole.setOrientation(deviceOrientation);
-			if (!success)
-			{
-				LOGGER.error("Setting orientation on '" + wrappedDevice.getSerialNumber() + "'.");
-				throw new CommandFailedException("The setting of the device orientation failed for device with serial number '"
-						+ wrappedDevice.getSerialNumber() + "'.");
-			}
-		}
-		catch (EmulatorConnectionFailedException e)
-		{
-			throw new CommandFailedException("Connection to the emulator console failed. "
-					+ "See the enclosed exception for more information.", e);
-		}
-		catch (IllegalArgumentException e)
-		{
-			throw new CommandFailedException("Illegal argument has been passed to the emulator console class. "
-					+ "See the enclosed exception for more information.", e);
-		}
-		catch (NotPossibleForDeviceException e)
-		{
-			// Not really possible, as this is an EmulatorWrapDevice and if the
-			// wrapped device was not an emulator, we
-			// would not have gotten this far.
-			e.printStackTrace();
-		}
+		ExtendedEmulatorConsole emulatorConsole = prepareEmulatorConsole();
+		emulatorConsole.setOrientation(deviceOrientation);
 	}
 
 	@Override
 	public void setAcceleration(DeviceAcceleration deviceAcceleration) throws RemoteException, CommandFailedException
 	{
-		try
-		{
-			ExtendedEmulatorConsole emulatorConsole = ExtendedEmulatorConsole.getExtendedEmulatorConsole(wrappedDevice);
-			boolean success = emulatorConsole.setAcceleration(deviceAcceleration);
-			if (!success)
-			{
-				LOGGER.error("Setting acceleration on '" + wrappedDevice.getSerialNumber() + "'.");
-				throw new CommandFailedException("The setting of the device acceleration failed for device with serial number '"
-						+ wrappedDevice.getSerialNumber() + "'.");
-			}
-		}
-		catch (EmulatorConnectionFailedException e)
-		{
-			throw new CommandFailedException("Connection to the emulator console failed. "
-					+ "See the enclosed exception for more information.", e);
-		}
-		catch (IllegalArgumentException e)
-		{
-			throw new CommandFailedException("Illegal argument has been passed to the emulator console class. "
-					+ "See the enclosed exception for more information.", e);
-		}
-		catch (NotPossibleForDeviceException e)
-		{
-			// Not really possible, as this is an EmulatorWrapDevice and if the
-			// wrapped device was not an emulator, we
-			// would not have gotten this far.
-			e.printStackTrace();
-		}
+		ExtendedEmulatorConsole emulatorConsole = prepareEmulatorConsole();
+		emulatorConsole.setAcceleration(deviceAcceleration);
 	}
 
 	@Override
 	public void setMobileDataState(MobileDataState state) throws CommandFailedException, RemoteException
 	{
-		try
-		{
-			ExtendedEmulatorConsole emulatorConsole = ExtendedEmulatorConsole.getExtendedEmulatorConsole(wrappedDevice);
-			boolean success = emulatorConsole.setMobileDataState(state);
-			if (!success)
-			{
-				LOGGER.error("Setting mobile data state on " + state.toString() + " failed.");
-				throw new CommandFailedException("Setting mobile data state on " + state.toString() + " failed.");
-			}
-		}
-		catch (EmulatorConnectionFailedException e)
-		{
-			throw new CommandFailedException("Connection to the emulator console failed. "
-					+ "See the enclosed exception for more information.", e);
-		}
-		catch (NotPossibleForDeviceException e)
-		{
-			throw new CommandFailedException("Illegal argument has been passed to the emulator console class. ", e);
-		}
+		ExtendedEmulatorConsole emulatorConsole = prepareEmulatorConsole();
+		emulatorConsole.setMobileDataState(state);
 	}
 
 	@Override
@@ -316,111 +148,45 @@ public class EmulatorWrapDevice extends AbstractWrapDevice
 	@Override
 	public void receiveSms(SmsMessage smsMessage) throws CommandFailedException, RemoteException
 	{
-		try
-		{
-			ExtendedEmulatorConsole emulatorConsole = ExtendedEmulatorConsole.getExtendedEmulatorConsole(wrappedDevice);
-			boolean success = emulatorConsole.receiveSms(smsMessage);
-			if (!success)
-			{
-				LOGGER.error("Sending SMS to device failed.");
-				throw new CommandFailedException("Sending SMS to device failed.");
-			}
-		}
-		catch (EmulatorConnectionFailedException e)
-		{
-			throw new CommandFailedException("Connection to the emulator console failed. "
-					+ "See the enclosed exception for more information.", e);
-		}
-		catch (NotPossibleForDeviceException e)
-		{
-			throw new CommandFailedException("Illegal argument has been passed to the emulator console class. ", e);
-		}
+		ExtendedEmulatorConsole emulatorConsole = prepareEmulatorConsole();
+		emulatorConsole.receiveSms(smsMessage);
 	}
 
 	@Override
 	public void receiveCall(PhoneNumber phoneNumber) throws CommandFailedException, RemoteException
 	{
-		try
-		{
-			ExtendedEmulatorConsole emulatorConsole = ExtendedEmulatorConsole.getExtendedEmulatorConsole(wrappedDevice);
-			boolean success = emulatorConsole.receiveCall(phoneNumber);
-			if (!success)
-			{
-				LOGGER.error("Sending call to device failed.");
-				throw new CommandFailedException("Sending call to device failed.");
-			}
-		}
-		catch (EmulatorConnectionFailedException e)
-		{
-			throw new CommandFailedException("Connection to the emulator console failed. "
-					+ "See the enclosed exception for more information.", e);
-		}
-		catch (NotPossibleForDeviceException e)
-		{
-			throw new CommandFailedException("Illegal argument has been passed to the emulator console class. ", e);
-		}
+		ExtendedEmulatorConsole emulatorConsole = prepareEmulatorConsole();
+		emulatorConsole.receiveCall(phoneNumber);
 	}
 
 	@Override
 	public void acceptCall(PhoneNumber phoneNumber) throws CommandFailedException, RemoteException
 	{
-		try
-		{
-			ExtendedEmulatorConsole emulatorConsole = ExtendedEmulatorConsole.getExtendedEmulatorConsole(wrappedDevice);
-			boolean success = emulatorConsole.acceptCall(phoneNumber);
-			if (!success)
-			{
-				LOGGER.error("Accepting call to device failed.");
-				throw new CommandFailedException("Accepting call to device failed.");
-			}
-		}
-		catch (EmulatorConnectionFailedException e)
-		{
-			throw new CommandFailedException("Connection to the emulator console failed. "
-					+ "See the enclosed exception for more information.", e);
-		}
-		catch (NotPossibleForDeviceException e)
-		{
-			throw new CommandFailedException("Illegal argument has been passed to the emulator console class. ", e);
-		}
+		ExtendedEmulatorConsole emulatorConsole = prepareEmulatorConsole();
+		emulatorConsole.acceptCall(phoneNumber);
 	}
 
 	@Override
 	public void holdCall(PhoneNumber phoneNumber) throws CommandFailedException, RemoteException
 	{
-		try
-		{
-			ExtendedEmulatorConsole emulatorConsole = ExtendedEmulatorConsole.getExtendedEmulatorConsole(wrappedDevice);
-			boolean success = emulatorConsole.holdCall(phoneNumber);
-			if (!success)
-			{
-				LOGGER.error("Holding call to device failed.");
-				throw new CommandFailedException("Holding call to device failed.");
-			}
-		}
-		catch (EmulatorConnectionFailedException e)
-		{
-			throw new CommandFailedException("Connection to the emulator console failed. "
-					+ "See the enclosed exception for more information.", e);
-		}
-		catch (NotPossibleForDeviceException e)
-		{
-			throw new CommandFailedException("Illegal argument has been passed to the emulator console class. ", e);
-		}
+		ExtendedEmulatorConsole emulatorConsole = prepareEmulatorConsole();
+		emulatorConsole.holdCall(phoneNumber);
 	}
 
 	@Override
 	public void cancelCall(PhoneNumber phoneNumber) throws CommandFailedException, RemoteException
 	{
+		ExtendedEmulatorConsole emulatorConsole = prepareEmulatorConsole();
+		emulatorConsole.cancelCall(phoneNumber);
+	}
+
+	/** Prepares an emulator console for usage. */
+	private ExtendedEmulatorConsole prepareEmulatorConsole() throws CommandFailedException
+	{
+		ExtendedEmulatorConsole emulatorConsole = null;
 		try
 		{
-			ExtendedEmulatorConsole emulatorConsole = ExtendedEmulatorConsole.getExtendedEmulatorConsole(wrappedDevice);
-			boolean success = emulatorConsole.cancelCall(phoneNumber);
-			if (!success)
-			{
-				LOGGER.error("Canceling call to device failed.");
-				throw new CommandFailedException("Canceling call to device failed.");
-			}
+			emulatorConsole = ExtendedEmulatorConsole.getExtendedEmulatorConsole(wrappedDevice);
 		}
 		catch (EmulatorConnectionFailedException e)
 		{
@@ -429,7 +195,9 @@ public class EmulatorWrapDevice extends AbstractWrapDevice
 		}
 		catch (NotPossibleForDeviceException e)
 		{
-			throw new CommandFailedException("Illegal argument has been passed to the emulator console class. ", e);
+			// would not have gotten this far.
+			e.printStackTrace();
 		}
+		return emulatorConsole;
 	}
 }

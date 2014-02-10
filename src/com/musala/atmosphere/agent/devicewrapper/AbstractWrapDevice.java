@@ -40,12 +40,12 @@ import com.musala.atmosphere.agent.exception.OnDeviceServiceTerminationException
 import com.musala.atmosphere.agent.util.AgentPropertiesLoader;
 import com.musala.atmosphere.agent.util.DeviceScreenResolutionParser;
 import com.musala.atmosphere.agent.util.MemoryUnitConverter;
-import com.musala.atmosphere.commons.BatteryState;
-import com.musala.atmosphere.commons.CommandFailedException;
 import com.musala.atmosphere.commons.ConnectionType;
-import com.musala.atmosphere.commons.DeviceAcceleration;
 import com.musala.atmosphere.commons.DeviceInformation;
-import com.musala.atmosphere.commons.DeviceOrientation;
+import com.musala.atmosphere.commons.beans.BatteryState;
+import com.musala.atmosphere.commons.beans.DeviceAcceleration;
+import com.musala.atmosphere.commons.beans.DeviceOrientation;
+import com.musala.atmosphere.commons.exceptions.CommandFailedException;
 import com.musala.atmosphere.commons.gesture.Gesture;
 import com.musala.atmosphere.commons.sa.IWrapDevice;
 import com.musala.atmosphere.commons.util.Pair;

@@ -9,26 +9,36 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.util.HashMap;
 
+import org.apache.log4j.Logger;
+
 import com.android.ddmlib.EmulatorConsole;
 import com.android.ddmlib.IDevice;
-import com.musala.atmosphere.commons.BatteryState;
-import com.musala.atmosphere.commons.DeviceAcceleration;
-import com.musala.atmosphere.commons.DeviceOrientation;
-import com.musala.atmosphere.commons.MobileDataState;
-import com.musala.atmosphere.commons.PhoneNumber;
 import com.musala.atmosphere.commons.SmsMessage;
+import com.musala.atmosphere.commons.beans.BatteryLevel;
+import com.musala.atmosphere.commons.beans.BatteryState;
+import com.musala.atmosphere.commons.beans.DeviceAcceleration;
+import com.musala.atmosphere.commons.beans.DeviceOrientation;
+import com.musala.atmosphere.commons.beans.MobileDataState;
+import com.musala.atmosphere.commons.beans.PhoneNumber;
+import com.musala.atmosphere.commons.beans.PowerState;
+import com.musala.atmosphere.commons.exceptions.CommandFailedException;
+import com.musala.atmosphere.commons.parameters.CommandParameter;
+import com.musala.atmosphere.commons.parameters.IntegerCommandParameter;
+import com.musala.atmosphere.commons.parameters.StringCommandParameter;
 import com.musala.atmosphere.commons.sa.exceptions.NotPossibleForDeviceException;
 
 /**
  * <p>
  * Establishes connection to the console of an emulator and transfers commands to it.
  * </p>
- * 
+ *
  * @author georgi.gaydarov
- * 
+ *
  */
 public class ExtendedEmulatorConsole
 {
+	private final static Logger LOGGER = Logger.getLogger(ExtendedEmulatorConsole.class.getCanonicalName());
+
 	private final static String LOCALHOST = "127.0.0.1";
 
 	private static final String DEFAULT_ENCODING = "ISO-8859-1";
@@ -37,35 +47,7 @@ public class ExtendedEmulatorConsole
 
 	private static final long SOCKET_TIMEOUT = 5000; // maximum socket delay, in ms
 
-	private final static String COMMAND_PING_FORMAT = "help\r\n";
-
-	private final static String COMMAND_POWER_CAPACITY_FORMAT = "power capacity %d\r\n";
-
-	private final static String COMMAND_POWER_STATUS_FORMAT = "power status %s\r\n";
-
-	private final static String COMMAND_NETOWRK_SPEED_FORMAT = "network speed %d:%d\r\n";
-
-	private final static String COMMAND_POWER_STATE_FORMAT = "power ac %s\r\n";
-
-	private final static String COMMAND_SET_ORIENTATION_FORMAT = "sensor set orientation %s\r\n";
-
-	private final static String COMMAND_SET_ACCELERATION_FORMAT = "sensor set acceleration %s\r\n";
-
-	private final static String COMMAND_SET_MOBILE_DATA_STATE = "gsm data %s\r\n";
-
-	private static final String COMMAND_SET_MAGNETIC_FIELD = "sensor set magnetic-field %d:%d:%d";
-
 	private final static String COMMAND_GSM_STATUS = "gsm status\r\n";
-
-	private final static String COMMAND_SMS_SEND = "sms send %s %s\r\n";
-
-	private final static String COMMAND_RECEIVE_CALL = "gsm call %s\r\n";
-
-	private final static String COMMAND_ACCEPT_CALL = "gsm accept %s\r\n";
-
-	private final static String COMMAND_CANCEL_CALL = "gsm cancel %s\r\n";
-
-	private final static String COMMAND_HOLD_CALL = "gsm hold %s\r\n";
 
 	/**
 	 * Socket read/write buffer.
@@ -76,6 +58,9 @@ public class ExtendedEmulatorConsole
 
 	private final int port;
 
+	/** Used for more detailed error logging. */
+	private String emulatorSerialNumber;
+
 	/**
 	 * Hash map that maps emulator console ports to ExtendedEmulatorConsole instances. Used for the singleton pattern.
 	 * (one ExtendedEmulatorConsole for a port)
@@ -85,24 +70,25 @@ public class ExtendedEmulatorConsole
 	/**
 	 * Returns the {@link ExtendedEmulatorConsole ExtendedEmulatorConsole} instance (or creates one and then returns it)
 	 * for a specific emulator.
-	 * 
-	 * @param forEmulator
-	 *        Emulator that we want to send commands to.
+	 *
+	 * @param targetDevice
+	 *        The device that we want to send commands to.
 	 * @return {@link ExtendedEmulatorConsole} for the passed IDevice.
 	 * @throws EmulatorConnectionFailedException
 	 * @throws NotPossibleForDeviceException
+	 *         If the given device is not emulator
 	 */
-	public static synchronized ExtendedEmulatorConsole getExtendedEmulatorConsole(IDevice forEmulator)
+	public static synchronized ExtendedEmulatorConsole getExtendedEmulatorConsole(IDevice targetDevice)
 		throws EmulatorConnectionFailedException,
 			NotPossibleForDeviceException
 	{
-		if (forEmulator.isEmulator() == false)
+		if (targetDevice.isEmulator() == false)
 		{
 			throw new NotPossibleForDeviceException("Cannot create emulator console class for real devices.");
 		}
 
 		// Using the static getEmulatorPort method from the EmulatorConsole in ddmlib
-		String emulatorSerialNumber = forEmulator.getSerialNumber();
+		String emulatorSerialNumber = targetDevice.getSerialNumber();
 		Integer port = EmulatorConsole.getEmulatorPort(emulatorSerialNumber);
 		if (port == null)
 		{
@@ -114,15 +100,14 @@ public class ExtendedEmulatorConsole
 		if (emulatorConsoles.containsKey(port))
 		{
 			ExtendedEmulatorConsole console = emulatorConsoles.get(port);
+			console.setEmulatorSerialNumber(emulatorSerialNumber);
 			try
 			{
-				if (console.ping() == true)
-				{
-					return console;
-				}
-				// Else, the console is bad and it will be discarded.
+				// this command will throw if the operation fails
+				console.ping();
+				return console;
 			}
-			catch (EmulatorConnectionFailedException e)
+			catch (CommandFailedException e)
 			{
 				// The console for this port is invalid.
 				// Do nothing, we will just create a new ExtendedEmulatorConsole next.
@@ -132,21 +117,24 @@ public class ExtendedEmulatorConsole
 		}
 
 		// Create a new console
-		ExtendedEmulatorConsole console = new ExtendedEmulatorConsole(port);
+		ExtendedEmulatorConsole console = new ExtendedEmulatorConsole(port, emulatorSerialNumber);
 
 		return console;
 	}
 
 	/**
 	 * Private constructor for the extended emulator console.
-	 * 
+	 *
 	 * @param port
 	 *        Port to which this class will connect.
+	 * @param emulatorSerialNumber
+	 *        The serial number of the emulator a new console is created for
 	 * @throws EmulatorConnectionFailedException
 	 */
-	private ExtendedEmulatorConsole(int port) throws EmulatorConnectionFailedException
+	private ExtendedEmulatorConsole(int port, String emulatorSerialNumber) throws EmulatorConnectionFailedException
 	{
 		this.port = port;
+		this.emulatorSerialNumber = emulatorSerialNumber;
 
 		InetSocketAddress socketAddress;
 		try
@@ -180,6 +168,11 @@ public class ExtendedEmulatorConsole
 		emulatorConsoles.put(port, this);
 	}
 
+	private void setEmulatorSerialNumber(String emulatorSerialNumber)
+	{
+		this.emulatorSerialNumber = emulatorSerialNumber;
+	}
+
 	/**
 	 * Closes all open resources and removes this instance from the {@link #emulatorConsoles emulatorConsoles} hash map.
 	 */
@@ -193,91 +186,72 @@ public class ExtendedEmulatorConsole
 
 	/**
 	 * Checks if the connection to the emulator console is OK by sending a 'help' command and inspecting the response.
-	 * 
-	 * @return True if ping was OK, false if the response was unexpected.
-	 * @throws EmulatorConnectionFailedException
+	 *
+	 * @throws CommandFailedException
+	 *         In case of an error in the execution
 	 */
-	protected synchronized boolean ping() throws EmulatorConnectionFailedException
+	protected synchronized void ping() throws CommandFailedException
 	{
-		String command = String.format(COMMAND_PING_FORMAT);
-		return executeCommand(command);
+		adaptAndExecuteCommand(EmulatorCommand.PING);
 	}
 
 	/**
 	 * Sets the battery level of the emulator.
-	 * 
+	 *
 	 * @param level
 	 *        Integer between 0 and 100 inclusive.
-	 * @return True if setting the level was successful, false otherwise.
-	 * @throws EmulatorConnectionFailedException
+	 * @throws CommandFailedException
+	 *         In case of an error in the execution
 	 */
-	public synchronized boolean setBatteryLevel(int level)
-		throws EmulatorConnectionFailedException,
-			IllegalArgumentException
+	public synchronized void setBatteryLevel(int level) throws CommandFailedException
 	{
-		if (level < 0 || level > 100)
-		{
-			throw new IllegalArgumentException("Battery level should be in the range [0, 100].");
-		}
-		String command = String.format(COMMAND_POWER_CAPACITY_FORMAT, level);
-		return executeCommand(command);
+		adaptAndExecuteCommand(EmulatorCommand.SET_BATTERY_LEVEL, new BatteryLevel(level));
 	}
 
 	/**
 	 * Sets the power state of the emulator.
-	 * 
+	 *
 	 * @param status
 	 *        {@link BatteryState BatteryState} enumerated constant.
-	 * @return True if setting the power state was successful, false otherwise.
-	 * @throws EmulatorConnectionFailedException
+	 * @throws CommandFailedException
+	 *         In case of an error in the execution
 	 */
-	public synchronized boolean setBatteryState(BatteryState status) throws EmulatorConnectionFailedException
+	public synchronized void setBatteryState(BatteryState status) throws CommandFailedException
 	{
-		String statusString = status.toString();
-
-		// NOT_CHARGING battery state string in emulator console differs from that for real devices
-		if (status.equals(BatteryState.NOT_CHARGING))
-		{
-			statusString = "not-charging";
-		}
-
-		String command = String.format(COMMAND_POWER_STATUS_FORMAT, statusString);
-		return executeCommand(command);
+		adaptAndExecuteCommand(EmulatorCommand.SET_BATTERY_STATE, status);
 	}
 
 	/**
 	 * Sets the power state of the emulator to connected or disconnected.
-	 * 
+	 *
 	 * @param state
-	 * @return True if setting the power state was successful and false if not.
-	 * @throws EmulatorConnectionFailedException
+	 *        The state to set - true if the power state is on.
+	 * @throws CommandFailedException
+	 *         In case of an error in the execution
 	 */
-	public synchronized boolean setPowerState(boolean state) throws EmulatorConnectionFailedException
+	public synchronized void setPowerState(boolean state) throws CommandFailedException
 	{
-
-		String stateToAppend = state ? "on" : "off";
-		String command = String.format(COMMAND_POWER_STATE_FORMAT, stateToAppend);
-		return executeCommand(command);
+		adaptAndExecuteCommand(EmulatorCommand.SET_POWER_STATE, new PowerState(state));
 	}
 
 	/**
 	 * Sets the network up/down speed of the emulator.
-	 * 
+	 *
 	 * @param uploadSpeed
 	 * @param downloadSpeed
-	 * @return True if setting the network speed was successful, false otherwise.
-	 * @throws EmulatorConnectionFailedException
+	 * @throws CommandFailedException
+	 *         In case of an error in the execution
 	 */
-	public synchronized boolean setNetworkSpeed(int uploadSpeed, int downloadSpeed)
-		throws EmulatorConnectionFailedException
+	public synchronized void setNetworkSpeed(int uploadSpeed, int downloadSpeed) throws CommandFailedException
 	{
-		String command = String.format(COMMAND_NETOWRK_SPEED_FORMAT, uploadSpeed, downloadSpeed);
-		return executeCommand(command);
+		adaptAndExecuteCommand(	EmulatorCommand.SET_NETWORK_SPEED,
+								new IntegerCommandParameter(uploadSpeed),
+								new IntegerCommandParameter(downloadSpeed));
 	}
 
 	/**
 	 * Gets the mobile data state of the emulator through the emulator console and returns the response.
-	 * 
+	 *
 	 * @return the response from the emulator console.
 	 * @throws EmulatorConnectionFailedException
 	 */
@@ -290,153 +264,200 @@ public class ExtendedEmulatorConsole
 
 	/**
 	 * Sets the orientation in space of the testing device.
-	 * 
+	 *
 	 * @param deviceOrientation
 	 *        - desired device orientation.
-	 * @return
-	 * @throws EmulatorConnectionFailedException
+	 * @throws CommandFailedException
+	 *         In case of an error in the execution
 	 */
-	public synchronized boolean setOrientation(DeviceOrientation deviceOrientation)
-		throws EmulatorConnectionFailedException
+	public synchronized void setOrientation(DeviceOrientation deviceOrientation) throws CommandFailedException
 	{
-		String orientationToAppend = deviceOrientation.parseCommand();
-		String command = String.format(COMMAND_SET_ORIENTATION_FORMAT, orientationToAppend);
-		return executeCommand(command);
+		adaptAndExecuteCommand(EmulatorCommand.SET_ORIENTATION, deviceOrientation);
 	}
 
 	/**
 	 * Sets the acceleration of the testing device.
-	 * 
+	 *
 	 * @param deviceAcceleration
-	 *        - desired device acceleration.
-	 * @return
-	 * @throws EmulatorConnectionFailedException
+	 *        The desired device acceleration.
+	 * @throws CommandFailedException
+	 *         In case of an error in the execution
 	 */
-	public synchronized boolean setAcceleration(DeviceAcceleration deviceAcceleration)
-		throws EmulatorConnectionFailedException
+	public synchronized void setAcceleration(DeviceAcceleration deviceAcceleration) throws CommandFailedException
 	{
-		String accelerationToAppend = deviceAcceleration.parseCommand();
-		String command = String.format(COMMAND_SET_ACCELERATION_FORMAT, accelerationToAppend);
-		return executeCommand(command);
+		adaptAndExecuteCommand(EmulatorCommand.SET_ACCELERATION, deviceAcceleration);
 	}
 
 	/**
 	 * Sets the mobile data state of an emulator through the emulator console.
-	 * 
-	 * @return the command response from the emulator console.
-	 * @throws EmulatorConnectionFailedException
+	 *
+	 * @param state
+	 *        The mobile data state to set
+	 * @throws CommandFailedException
+	 *         In case of an error in the execution
 	 */
-	public synchronized boolean setMobileDataState(MobileDataState state) throws EmulatorConnectionFailedException
+	public synchronized void setMobileDataState(MobileDataState state) throws CommandFailedException
 	{
-		String stateToAppend = state.toString();
-		String command = String.format(COMMAND_SET_MOBILE_DATA_STATE, stateToAppend);
-		boolean commandIsOk = executeCommand(command);
-		return commandIsOk;
+		adaptAndExecuteCommand(EmulatorCommand.SET_MOBILE_DATA_STATE, state);
 	}
 
 	/**
 	 * Sets the magnetic field sensor reading through the emulator console. Note : This sensor provides raw field
 	 * strength data (in uT) for each of the three coordinate axes
-	 * 
+	 *
 	 * @param x
 	 *        - x coordinate magnetic field sensor data.
 	 * @param y
 	 *        - y coordinate magnetic field sensor data.
 	 * @param z
 	 *        - z coordinate magnetic field sensor data.
-	 * @return the command response from the emulator console.
-	 * @throws EmulatorConnectionFailedException
+	 * @throws CommandFailedException
+	 *         In case of an error in the execution
 	 */
-	public synchronized boolean setMagneticField(int x, int y, int z) throws EmulatorConnectionFailedException
+	public synchronized void setMagneticField(int x, int y, int z) throws CommandFailedException
 	{
-		String command = String.format(COMMAND_SET_MAGNETIC_FIELD, x, y, z);
-		boolean commandIsOk = executeCommand(command);
-		return commandIsOk;
+		adaptAndExecuteCommand(	EmulatorCommand.SET_MAGNETIC_FIELD,
+								new IntegerCommandParameter(x),
+								new IntegerCommandParameter(y),
+								new IntegerCommandParameter(z));
 	}
 
 	/**
 	 * Sends SMS to the emulator.
-	 * 
+	 *
 	 * @param smsMessage
 	 *        - the SMS message, that will be sent to emulator.
-	 * 
-	 * @return the command response from the emulator console.
-	 * @throws EmulatorConnectionFailedException
+	 *
+	 * @throws CommandFailedException
+	 *         In case of an error in the execution
 	 */
-	public synchronized boolean receiveSms(SmsMessage smsMessage) throws EmulatorConnectionFailedException
+	public synchronized void receiveSms(SmsMessage smsMessage) throws CommandFailedException
 	{
-		String command = String.format(COMMAND_SMS_SEND, smsMessage.getPhoneNumber().toString(), smsMessage.getText());
-		boolean commandIsOk = executeCommand(command);
-		return commandIsOk;
+		adaptAndExecuteCommand(	EmulatorCommand.SEND_SMS,
+								smsMessage.getPhoneNumber(),
+								new StringCommandParameter(smsMessage.getText()));
 	}
 
 	/**
 	 * Sends a call to the emulator.
-	 * 
+	 *
 	 * @param phoneNumber
 	 *        - the phone number, that will call the emulator.
-	 * 
-	 * @return the command response from the emulator console.
-	 * @throws EmulatorConnectionFailedException
+	 *
+	 * @throws CommandFailedException
+	 *         In case of an error in the execution
 	 */
-	public synchronized boolean receiveCall(PhoneNumber phoneNumber) throws EmulatorConnectionFailedException
+	public synchronized void receiveCall(PhoneNumber phoneNumber) throws CommandFailedException
 	{
-		String command = String.format(COMMAND_RECEIVE_CALL, phoneNumber.toString());
-		boolean commandIsOk = executeCommand(command);
-		return commandIsOk;
+		adaptAndExecuteCommand(EmulatorCommand.RECEIVE_CALL, phoneNumber);
 	}
 
 	/**
 	 * Accepts a call to the emulator.
-	 * 
+	 *
 	 * @param phoneNumber
 	 *        - the phone number, that calls the emulator.
-	 * 
-	 * @return the command response from the emulator console.
-	 * @throws EmulatorConnectionFailedException
+	 *
+	 * @throws CommandFailedException
+	 *         In case of an error in the execution
 	 */
-	public synchronized boolean acceptCall(PhoneNumber phoneNumber) throws EmulatorConnectionFailedException
+	public synchronized void acceptCall(PhoneNumber phoneNumber) throws CommandFailedException
 	{
-		String command = String.format(COMMAND_ACCEPT_CALL, phoneNumber.toString());
-		boolean commandIsOk = executeCommand(command);
-		return commandIsOk;
+		adaptAndExecuteCommand(EmulatorCommand.ACCEPT_CALL, phoneNumber);
 	}
 
 	/**
 	 * Holds a call to the emulator.
-	 * 
+	 *
 	 * @param phoneNumber
 	 *        - the phone number, that calls the emulator.
-	 * 
-	 * @return the command response from the emulator console.
-	 * @throws EmulatorConnectionFailedException
+	 *
+	 * @throws CommandFailedException
+	 *         In case of an error in the execution
 	 */
-	public synchronized boolean holdCall(PhoneNumber phoneNumber) throws EmulatorConnectionFailedException
+	public synchronized void holdCall(PhoneNumber phoneNumber) throws CommandFailedException
 	{
-		String command = String.format(COMMAND_HOLD_CALL, phoneNumber.toString());
-		boolean commandIsOk = executeCommand(command);
-		return commandIsOk;
+		adaptAndExecuteCommand(EmulatorCommand.HOLD_CALL, phoneNumber);
 	}
 
 	/**
 	 * Cancels a call to the emulator.
-	 * 
+	 *
 	 * @param phoneNumber
 	 *        - the phone number, that calls the emulator.
-	 * 
-	 * @return the command response from the emulator console.
-	 * @throws EmulatorConnectionFailedException
+	 *
+	 * @throws CommandFailedException
+	 *         In case of an error in the execution
 	 */
-	public synchronized boolean cancelCall(PhoneNumber phoneNumber) throws EmulatorConnectionFailedException
+	public synchronized void cancelCall(PhoneNumber phoneNumber) throws CommandFailedException
 	{
-		String command = String.format(COMMAND_CANCEL_CALL, phoneNumber.toString());
-		boolean commandIsOk = executeCommand(command);
-		return commandIsOk;
+		adaptAndExecuteCommand(EmulatorCommand.CANCEL_CALL, phoneNumber);
+	}
+
+	/**
+	 * A generic method for execution of console commands.
+	 *
+	 * @param command
+	 *        The {@link EmulatorCommand} to execute
+	 * @param parameters
+	 *        The parameters to use for the command
+	 * @throws CommandFailedException
+	 *         In case of an error in the execution
+	 */
+	private synchronized void adaptAndExecuteCommand(EmulatorCommand command, CommandParameter... parameters)
+		throws CommandFailedException
+	{
+		String[] parameterValues = getParameterValues(parameters);
+		String formattedCommand = String.format(command.getCommandString(), (Object[]) parameterValues);
+		try
+		{
+			boolean success = executeCommand(formattedCommand);
+			if (!success)
+			{
+				String errorMessage = String.format("Execution of operation '%s' on device '%s' failed",
+													command.getErrorHumanReadableDescription(),
+													emulatorSerialNumber);
+				LOGGER.error(errorMessage);
+				throw new CommandFailedException(errorMessage);
+			}
+		}
+		catch (IllegalArgumentException e)
+		{
+			throw new CommandFailedException("Illegal argument has been passed to the emulator console class. "
+					+ "See the enclosed exception for more information.", e);
+		}
+		catch (EmulatorConnectionFailedException e)
+		{
+			throw new CommandFailedException("Connection to the emulator console failed. "
+					+ "See the enclosed exception for more information.", e);
+		}
+
+	}
+
+	/**
+	 * Fetches the values to use for the given parameters.
+	 *
+	 * @param parameters
+	 *        the parameters whose values to get
+	 * @return The values to use for each parameter
+	 */
+	private String[] getParameterValues(CommandParameter... parameters)
+	{
+		if (parameters == null)
+		{
+			return null;
+		}
+		String[] parameterValues = new String[parameters.length];
+		for (int i = 0; i < parameters.length; i++)
+		{
+			parameterValues[i] = parameters[i].getParameterValue(true);
+		}
+		return parameterValues;
 	}
 
 	/**
 	 * Sends a string to the emulator console and returns a value indicating if the response was OK or KO.
-	 * 
+	 *
 	 * @param command
 	 *        The command string.
 	 * @return true if OK was found, false if KO was found.
@@ -446,7 +467,7 @@ public class ExtendedEmulatorConsole
 	{
 		// if the command does not end with a newline, this call will block.
 		// so we make sure this never happens.
-		if (command.endsWith("\n") == false)
+		if (!command.endsWith("\n"))
 		{
 			command = command + "\n";
 		}
@@ -456,7 +477,7 @@ public class ExtendedEmulatorConsole
 
 	/**
 	 * Executes command in the emulator console and returns the output.
-	 * 
+	 *
 	 * @param command
 	 *        - the command to be executed.
 	 * @return - the command output.
@@ -471,7 +492,7 @@ public class ExtendedEmulatorConsole
 
 	/**
 	 * Sends a string to the emulator console.
-	 * 
+	 *
 	 * @param command
 	 *        The command string. <b>MUST BE TERMINATED BY \n</b>.
 	 * @throws EmulatorConnectionFailedException
@@ -542,7 +563,7 @@ public class ExtendedEmulatorConsole
 	 * <li>OK\r\n</li>
 	 * <li>KO\r\n</li>
 	 * </ul>
-	 * 
+	 *
 	 * @return true if we found OK, false if we found KO.
 	 * @throws EmulatorConnectionFailedException
 	 */
@@ -613,7 +634,7 @@ public class ExtendedEmulatorConsole
 
 	/**
 	 * Returns true if the 4 characters *before* the current position are "OK\r\n".
-	 * 
+	 *
 	 * @param currentPosition
 	 *        The current position.
 	 */
@@ -629,7 +650,7 @@ public class ExtendedEmulatorConsole
 
 	/**
 	 * Returns true if the last line starts with KO and is also terminated by \r\n.
-	 * 
+	 *
 	 * @param currentPosition
 	 *        The current position.
 	 */

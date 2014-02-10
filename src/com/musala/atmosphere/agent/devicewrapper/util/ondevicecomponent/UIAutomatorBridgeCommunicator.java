@@ -9,17 +9,17 @@ import com.musala.atmosphere.agent.devicewrapper.util.PortForwardingService;
 import com.musala.atmosphere.agent.exception.OnDeviceComponentInitializationException;
 import com.musala.atmosphere.agent.exception.OnDeviceComponentStartingException;
 import com.musala.atmosphere.agent.exception.OnDeviceComponentValidationException;
-import com.musala.atmosphere.commons.CommandFailedException;
 import com.musala.atmosphere.commons.DeviceInformation;
 import com.musala.atmosphere.commons.ad.Request;
 import com.musala.atmosphere.commons.ad.uiautomator.UIAutomatorBridgeRequest;
+import com.musala.atmosphere.commons.exceptions.CommandFailedException;
 import com.musala.atmosphere.commons.gesture.Timeline;
 
 /**
  * Class that communicates with the ATMOSPHERE UIAutomator bridge.
- * 
+ *
  * @author yordan.petrov
- * 
+ *
  */
 public class UIAutomatorBridgeCommunicator
 {
@@ -94,10 +94,10 @@ public class UIAutomatorBridgeCommunicator
 
 	/**
 	 * Plays the passed list of {@link Timeline} instances.
-	 * 
+	 *
 	 * @param pointerTimelines
 	 *        - a list of {@link Timeline} instances.
-	 * 
+	 *
 	 * @throws CommandFailedException
 	 */
 	public void playGesture(List<Timeline> pointerTimelines) throws CommandFailedException
