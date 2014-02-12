@@ -162,4 +162,10 @@ public class AbstractWrapDeviceTest
 	{
 		testWrapDevice.getConnectionType();
 	}
+
+	@Test
+	public void testGetTelephonyInformation() throws Throwable
+	{
+		testWrapDevice.getTelephonyInformation();
+	}
 }

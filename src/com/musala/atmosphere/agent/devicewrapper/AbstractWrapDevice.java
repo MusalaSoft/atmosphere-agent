@@ -42,6 +42,7 @@ import com.musala.atmosphere.agent.util.DeviceScreenResolutionParser;
 import com.musala.atmosphere.agent.util.MemoryUnitConverter;
 import com.musala.atmosphere.commons.ConnectionType;
 import com.musala.atmosphere.commons.DeviceInformation;
+import com.musala.atmosphere.commons.TelephonyInformation;
 import com.musala.atmosphere.commons.beans.BatteryState;
 import com.musala.atmosphere.commons.beans.DeviceAcceleration;
 import com.musala.atmosphere.commons.beans.DeviceOrientation;
@@ -575,6 +576,20 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 	public void executeGesture(Gesture gesture) throws CommandFailedException, RemoteException
 	{
 		uiAutomatorBridgeCommunicator.playGesture(gesture);
+	}
+
+	@Override
+	public TelephonyInformation getTelephonyInformation() throws CommandFailedException, RemoteException
+	{
+		try
+		{
+			return serviceCommunicator.getTelephonyInformation();
+		}
+		catch (CommandFailedException e)
+		{
+			LOGGER.fatal("Getting telephony information failed.", e);
+			throw e;
+		}
 	}
 
 	@Override

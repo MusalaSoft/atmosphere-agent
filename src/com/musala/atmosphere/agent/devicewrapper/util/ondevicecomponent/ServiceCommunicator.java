@@ -10,6 +10,7 @@ import com.musala.atmosphere.agent.exception.OnDeviceComponentValidationExceptio
 import com.musala.atmosphere.agent.exception.OnDeviceServiceTerminationException;
 import com.musala.atmosphere.commons.ConnectionType;
 import com.musala.atmosphere.commons.DeviceInformation;
+import com.musala.atmosphere.commons.TelephonyInformation;
 import com.musala.atmosphere.commons.ad.Request;
 import com.musala.atmosphere.commons.ad.service.ServiceRequest;
 import com.musala.atmosphere.commons.beans.BatteryState;
@@ -22,9 +23,9 @@ import com.musala.atmosphere.commons.util.IntentBuilder.IntentAction;
 
 /**
  * Class that communicates with the ATMOSPHERE service.
- *
+ * 
  * @author yordan.petrov
- *
+ * 
  */
 public class ServiceCommunicator
 {
@@ -68,7 +69,7 @@ public class ServiceCommunicator
 
 	/**
 	 * Starts the Atmosphere service on the wrappedDevice.
-	 *
+	 * 
 	 * @throws OnDeviceComponentStartingException
 	 */
 	private void startAtmosphereService()
@@ -97,7 +98,7 @@ public class ServiceCommunicator
 
 	/**
 	 * Stops the ATMOSPHERE service on the wrapped device.
-	 *
+	 * 
 	 * @throws OnDeviceServiceTerminationException
 	 */
 	public void stopAtmosphereService()
@@ -119,7 +120,7 @@ public class ServiceCommunicator
 
 	/**
 	 * Gets the battery level of the device.
-	 *
+	 * 
 	 * @return Capacity in percents.
 	 * @throws CommandFailedException
 	 */
@@ -141,7 +142,7 @@ public class ServiceCommunicator
 
 	/**
 	 * Gets the power state of the device.
-	 *
+	 * 
 	 * @return boolean value; true if power is connected and false if power is disconnected.
 	 * @throws CommandFailedException
 	 */
@@ -164,7 +165,7 @@ public class ServiceCommunicator
 
 	/**
 	 * Fetches the sensor orientation readings of the device.
-	 *
+	 * 
 	 * @return a {@link DeviceOrientation} instance.
 	 * @throws CommandFailedException
 	 */
@@ -193,7 +194,7 @@ public class ServiceCommunicator
 
 	/**
 	 * Gets the battery state of the device.
-	 *
+	 * 
 	 * @return a member of the {@link BatteryState BatteryState} enumeration.
 	 * @throws CommandFailedException
 	 */
@@ -216,14 +217,13 @@ public class ServiceCommunicator
 		}
 		catch (ClassNotFoundException | IOException e)
 		{
-			throw new CommandFailedException(	"Getting battery status failed. See enclosed exception for more information.",
-												e);
+			throw new CommandFailedException("Getting battery status failed.", e);
 		}
 	}
 
 	/**
 	 * Gets the connection type of the device.
-	 *
+	 * 
 	 * @return a member of the {@link ConnectionType} enumeration.
 	 * @throws CommandFailedException
 	 */
@@ -245,7 +245,7 @@ public class ServiceCommunicator
 
 	/**
 	 * Sets the WiFi state on the device.
-	 *
+	 * 
 	 * @param state
 	 *        - true if the WiFi should be on; false if it should be off.
 	 * @throws CommandFailedException
@@ -268,7 +268,7 @@ public class ServiceCommunicator
 
 	/**
 	 * Fetches the sensor acceleration readings of the device.
-	 *
+	 * 
 	 * @return a {@link DeviceAcceleration} instance.
 	 * @throws CommandFailedException
 	 */
@@ -286,6 +286,27 @@ public class ServiceCommunicator
 		catch (ClassNotFoundException | IOException e)
 		{
 			throw new CommandFailedException(	"Getting acceleration failed. See enclosed exception for more information.",
+												e);
+		}
+	}
+
+	/**
+	 * Gets information about the telephony services on the device.
+	 * 
+	 * @return {@link TelephonyInformation} instance.
+	 * @throws CommandFailedException
+	 */
+	public TelephonyInformation getTelephonyInformation() throws CommandFailedException
+	{
+		Request<ServiceRequest> serviceRequest = new Request<ServiceRequest>(ServiceRequest.GET_TELEPHONY_INFORMATION);
+		try
+		{
+			TelephonyInformation telephonyInformation = (TelephonyInformation) serviceRequestHandler.request(serviceRequest);
+			return telephonyInformation;
+		}
+		catch (ClassNotFoundException | IOException e)
+		{
+			throw new CommandFailedException(	"Getting telephony information failed. See enclosed exception for more information.",
 												e);
 		}
 	}
