@@ -6,12 +6,15 @@ import org.apache.log4j.Logger;
 
 import com.android.ddmlib.IDevice;
 import com.musala.atmosphere.agent.devicewrapper.util.BatteryChangedIntentData;
+import com.musala.atmosphere.commons.PowerProperties;
 import com.musala.atmosphere.commons.SmsMessage;
+import com.musala.atmosphere.commons.beans.BatteryLevel;
 import com.musala.atmosphere.commons.beans.BatteryState;
 import com.musala.atmosphere.commons.beans.DeviceAcceleration;
 import com.musala.atmosphere.commons.beans.DeviceOrientation;
 import com.musala.atmosphere.commons.beans.MobileDataState;
 import com.musala.atmosphere.commons.beans.PhoneNumber;
+import com.musala.atmosphere.commons.beans.PowerSource;
 import com.musala.atmosphere.commons.exceptions.CommandFailedException;
 import com.musala.atmosphere.commons.sa.exceptions.NotPossibleForDeviceException;
 import com.musala.atmosphere.commons.util.IntentBuilder;
@@ -36,14 +39,6 @@ public class RealWrapDevice extends AbstractWrapDevice
 
 	private final static int BATTERY_LEVEL_THRESHOLD = 15;
 
-	private int batteryLevel;
-
-	private int batteryState;
-
-	private boolean powerState;
-
-	private boolean batteryHasBeenLow;
-
 	public RealWrapDevice(IDevice deviceToWrap) throws NotPossibleForDeviceException, RemoteException
 	{
 		super(deviceToWrap);
@@ -52,24 +47,6 @@ public class RealWrapDevice extends AbstractWrapDevice
 		{
 			throw new NotPossibleForDeviceException("Cannot create real wrap device for an emulator.");
 		}
-
-		try
-		{
-			batteryLevel = super.getBatteryLevel();
-			batteryState = super.getBatteryState().getStateId();
-			powerState = super.getPowerState();
-		}
-		catch (CommandFailedException e)
-		{
-			// If the device is offline, the following invocations will fail as well. The unresponsive device state will
-			// be handled there. Assuming the battery is full, so BATTERY_LOW will not be left unsent when the battery
-			// is set to be low.
-			LOGGER.error("Initial battery level fetching failed.", e);
-			batteryLevel = 100;
-		}
-
-		batteryHasBeenLow = (batteryLevel <= BATTERY_LEVEL_THRESHOLD)
-				&& (batteryState != BatteryState.UNKNOWN.getStateId()) && !powerState;
 	}
 
 	@Override
@@ -80,52 +57,92 @@ public class RealWrapDevice extends AbstractWrapDevice
 	}
 
 	@Override
-	public void setBatteryLevel(int level) throws RemoteException, CommandFailedException
+	public void setPowerProperties(PowerProperties properties) throws RemoteException, CommandFailedException
 	{
-		batteryLevel = level;
-		BatteryChangedIntentData data = new BatteryChangedIntentData();
-		data.setLevel(batteryLevel);
-		data.setState(batteryState);
-		String batteryChangedIntentQuery = buildBatteryChangedIntentQuery();
+		PowerProperties initialEnvironment = serviceCommunicator.getPowerProperties();
 
-		executeShellCommand(batteryChangedIntentQuery);
+		// BATTERY_CHANGED intent
+		sendBatteryChangedIntent(initialEnvironment, properties);
 
-		// Check to see whether other intents have to be sent.
-		if (batteryLevel >= BATTERY_LEVEL_THRESHOLD)
+		// POWER_CONNECTED and POWER_DISCONNECTED intent
+		PowerSource newSource = properties.getPowerSource();
+		if (newSource != PowerProperties.LEAVE_POWER_SOURCE_UNCHANGED)
 		{
-			if (batteryHasBeenLow)
+			PowerSource currentSource = initialEnvironment.getPowerSource();
+			if (currentSource != newSource)
 			{
-				// If the battery level is more than the low battery level threshold
-				// and the battery level has already been below that threshold, a BATTERY_OKAY intent has to be sent.
-				batteryHasBeenLow = false;
-				IntentBuilder intentBuilder = new IntentBuilder(IntentAction.BATTERY_OKAY);
-				String command = intentBuilder.buildIntentCommand();
-				executeShellCommand(command);
-			}
-			else
-			{
-				// If the battery level is above the low battery level threshold and the battery level
-				// has not been below that threshold, then there is no need to broadcast intents.
+				sendPowerStateIntent(newSource);
 			}
 		}
-		else
-		{
-			if (batteryHasBeenLow)
-			{
-				// If the battery level is set below the battery level threshold and before that the battery level
-				// has been below the low battery level threshold, then there is no need to broadcast BATTERY_LOW intent
-				// again.
-			}
-			else
-			{
-				// If the battery is set below the low battery level threshold and the battery has been above that
-				// threshold before that a BATTERY_LOW intent should be broadcasted.
-				batteryHasBeenLow = true;
-				IntentBuilder intentBuilder = new IntentBuilder(IntentAction.BATTERY_LOW);
-				String command = intentBuilder.buildIntentCommand();
-				executeShellCommand(command);
 
-			}
+		// BATTERY_LOW and BATTERY_OKAY intent
+		BatteryLevel newBatteryLevel = properties.getBatteryLevel();
+		if (newBatteryLevel != PowerProperties.LEAVE_BATTERY_LEVEL_UNCHANGED)
+		{
+			sendBatteryLevelIntent(initialEnvironment, properties);
+		}
+	}
+
+	private void sendBatteryChangedIntent(PowerProperties currentProperties, PowerProperties newProperties)
+		throws RemoteException,
+			CommandFailedException
+	{
+		BatteryChangedIntentData builder = new BatteryChangedIntentData();
+
+		BatteryLevel batteryLevel = newProperties.getBatteryLevel();
+		if (batteryLevel == PowerProperties.LEAVE_BATTERY_LEVEL_UNCHANGED)
+		{
+			batteryLevel = currentProperties.getBatteryLevel();
+		}
+		builder.setLevel(batteryLevel.getLevel());
+		builder.setScale(1); // 1 scale => level is the actual value.
+
+		BatteryState batteryState = newProperties.getBatteryState();
+		if (batteryState == PowerProperties.LEAVE_BATTERY_STATE_UNCHANGED)
+		{
+			batteryState = currentProperties.getBatteryState();
+		}
+		builder.setState(batteryState.getStateId());
+
+		PowerSource powerSource = currentProperties.getPowerSource();
+		if (powerSource == PowerProperties.LEAVE_POWER_SOURCE_UNCHANGED)
+		{
+			powerSource = currentProperties.getPowerSource();
+		}
+		int powerSourceId = powerSource.getStateId();
+		builder.setPlugged(powerSourceId);
+
+		String intentCommand = builder.buildIntentQuery();
+		executeShellCommand(intentCommand);
+	}
+
+	private void sendPowerStateIntent(PowerSource source) throws RemoteException, CommandFailedException
+	{
+		IntentAction intentAction = source != PowerSource.UNPLUGGED ? IntentAction.ACTION_POWER_CONNECTED
+				: IntentAction.ACTION_POWER_DISCONNECTED;
+		IntentBuilder intentBuilder = new IntentBuilder(intentAction);
+		String command = intentBuilder.buildIntentCommand();
+		executeShellCommand(command);
+	}
+
+	private void sendBatteryLevelIntent(PowerProperties currentPropertes, PowerProperties newProperties)
+		throws RemoteException,
+			CommandFailedException
+	{
+		int newBatteryLevel = newProperties.getBatteryLevel().getLevel();
+		int currentBatteryLevel = currentPropertes.getBatteryLevel().getLevel();
+
+		if (currentBatteryLevel > BATTERY_LEVEL_THRESHOLD && newBatteryLevel <= BATTERY_LEVEL_THRESHOLD)
+		{
+			IntentBuilder intentBuilder = new IntentBuilder(IntentAction.BATTERY_LOW);
+			String command = intentBuilder.buildIntentCommand();
+			executeShellCommand(command);
+		}
+		else if (currentBatteryLevel <= BATTERY_LEVEL_THRESHOLD && newBatteryLevel > BATTERY_LEVEL_THRESHOLD)
+		{
+			IntentBuilder intentBuilder = new IntentBuilder(IntentAction.BATTERY_OKAY);
+			String command = intentBuilder.buildIntentCommand();
+			executeShellCommand(command);
 		}
 	}
 
@@ -134,41 +151,6 @@ public class RealWrapDevice extends AbstractWrapDevice
 	{
 		// TODO implement set network latency
 
-	}
-
-	private String buildBatteryChangedIntentQuery()
-	{
-		BatteryChangedIntentData data = new BatteryChangedIntentData();
-		data.setLevel(batteryLevel);
-		data.setState(batteryState);
-
-		String query = data.buildIntentQuery();
-		return query;
-	}
-
-	@Override
-	public void setBatteryState(BatteryState state) throws RemoteException, CommandFailedException
-	{
-		batteryState = state.getStateId();
-		String batteryChangedIntentQuery = buildBatteryChangedIntentQuery();
-		executeShellCommand(batteryChangedIntentQuery);
-	}
-
-	@Override
-	public void setPowerState(boolean state) throws RemoteException, CommandFailedException
-	{
-		BatteryChangedIntentData data = new BatteryChangedIntentData();
-		data.setPlugged(state ? 1 : 0);
-		data.setLevel(batteryLevel);
-		data.setState(batteryState);
-		String batteryChangedIntentQuery = data.buildIntentQuery();
-		executeShellCommand(batteryChangedIntentQuery);
-
-		IntentAction intentAction = state ? IntentAction.ACTION_POWER_CONNECTED
-				: IntentAction.ACTION_POWER_DISCONNECTED;
-		IntentBuilder intentBuilder = new IntentBuilder(intentAction);
-		String command = intentBuilder.buildIntentCommand();
-		executeShellCommand(command);
 	}
 
 	@Override

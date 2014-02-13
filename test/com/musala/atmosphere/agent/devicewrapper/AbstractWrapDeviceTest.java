@@ -12,8 +12,8 @@ import org.mockito.Mockito;
 import com.android.ddmlib.IDevice;
 import com.musala.atmosphere.agent.util.FakeOnDeviceComponentAnswer;
 import com.musala.atmosphere.commons.ConnectionType;
+import com.musala.atmosphere.commons.PowerProperties;
 import com.musala.atmosphere.commons.SmsMessage;
-import com.musala.atmosphere.commons.beans.BatteryState;
 import com.musala.atmosphere.commons.beans.DeviceAcceleration;
 import com.musala.atmosphere.commons.beans.DeviceOrientation;
 import com.musala.atmosphere.commons.beans.MobileDataState;
@@ -38,6 +38,10 @@ public class AbstractWrapDeviceTest
 
 		testWrapDevice = new AbstractWrapDevice(device)
 		{
+			/**
+			 * auto-generated serialization id
+			 */
+			private static final long serialVersionUID = -1975205948325404220L;
 
 			@Override
 			public void setAcceleration(DeviceAcceleration deviceAcceleration)
@@ -47,7 +51,7 @@ public class AbstractWrapDeviceTest
 			}
 
 			@Override
-			public void setPowerState(boolean state) throws RemoteException, CommandFailedException
+			public void setPowerProperties(PowerProperties state) throws RemoteException, CommandFailedException
 			{
 			}
 
@@ -65,17 +69,6 @@ public class AbstractWrapDeviceTest
 			public void setDeviceOrientation(DeviceOrientation deviceOrientation)
 				throws RemoteException,
 					CommandFailedException
-			{
-
-			}
-
-			@Override
-			public void setBatteryState(BatteryState state) throws RemoteException, CommandFailedException
-			{
-			}
-
-			@Override
-			public void setBatteryLevel(int level) throws RemoteException, CommandFailedException
 			{
 			}
 
@@ -138,9 +131,9 @@ public class AbstractWrapDeviceTest
 	}
 
 	@Test
-	public void testGetBatteryLevel() throws Throwable
+	public void testGetPowerProperties() throws Throwable
 	{
-		testWrapDevice.getBatteryLevel();
+		testWrapDevice.getPowerProperties();
 	}
 
 	@Test
@@ -149,12 +142,6 @@ public class AbstractWrapDeviceTest
 		testWrapDevice.setWiFi(true);
 
 		testWrapDevice.setWiFi(false);
-	}
-
-	@Test
-	public void testGetBatteryState() throws Throwable
-	{
-		testWrapDevice.getBatteryState();
 	}
 
 	@Test

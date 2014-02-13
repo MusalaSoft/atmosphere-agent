@@ -42,8 +42,8 @@ import com.musala.atmosphere.agent.util.DeviceScreenResolutionParser;
 import com.musala.atmosphere.agent.util.MemoryUnitConverter;
 import com.musala.atmosphere.commons.ConnectionType;
 import com.musala.atmosphere.commons.DeviceInformation;
+import com.musala.atmosphere.commons.PowerProperties;
 import com.musala.atmosphere.commons.TelephonyInformation;
-import com.musala.atmosphere.commons.beans.BatteryState;
 import com.musala.atmosphere.commons.beans.DeviceAcceleration;
 import com.musala.atmosphere.commons.beans.DeviceOrientation;
 import com.musala.atmosphere.commons.exceptions.CommandFailedException;
@@ -111,20 +111,6 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 	{
 		// TODO get network speed for abstract devices
 		return null;
-	}
-
-	@Override
-	public int getBatteryLevel() throws RemoteException, CommandFailedException
-	{
-		try
-		{
-			return serviceCommunicator.getBatteryLevel();
-		}
-		catch (CommandFailedException e)
-		{
-			LOGGER.fatal("Getting battery level failed.", e);
-			throw e;
-		}
 	}
 
 	@Override
@@ -486,32 +472,18 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 	}
 
 	@Override
-	public BatteryState getBatteryState() throws RemoteException, CommandFailedException
+	public PowerProperties getPowerProperties() throws RemoteException, CommandFailedException
 	{
 		try
 		{
-			return serviceCommunicator.getBatteryState();
+			return serviceCommunicator.getPowerProperties();
 		}
 		catch (CommandFailedException e)
 		{
-			LOGGER.fatal("Getting battery state failed.", e);
+			LOGGER.fatal("Getting power related environment information failed.", e);
 			throw e;
 		}
 
-	}
-
-	@Override
-	public boolean getPowerState() throws RemoteException, CommandFailedException
-	{
-		try
-		{
-			return serviceCommunicator.getPowerState();
-		}
-		catch (CommandFailedException e)
-		{
-			LOGGER.fatal("Getting power state failed.", e);
-			throw e;
-		}
 	}
 
 	@Override

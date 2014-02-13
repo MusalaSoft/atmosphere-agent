@@ -20,7 +20,7 @@ import com.musala.atmosphere.commons.beans.DeviceAcceleration;
 import com.musala.atmosphere.commons.beans.DeviceOrientation;
 import com.musala.atmosphere.commons.beans.MobileDataState;
 import com.musala.atmosphere.commons.beans.PhoneNumber;
-import com.musala.atmosphere.commons.beans.PowerState;
+import com.musala.atmosphere.commons.beans.PowerSource;
 import com.musala.atmosphere.commons.exceptions.CommandFailedException;
 import com.musala.atmosphere.commons.parameters.CommandParameter;
 import com.musala.atmosphere.commons.parameters.IntegerCommandParameter;
@@ -31,9 +31,9 @@ import com.musala.atmosphere.commons.sa.exceptions.NotPossibleForDeviceException
  * <p>
  * Establishes connection to the console of an emulator and transfers commands to it.
  * </p>
- *
+ * 
  * @author georgi.gaydarov
- *
+ * 
  */
 public class ExtendedEmulatorConsole
 {
@@ -70,7 +70,7 @@ public class ExtendedEmulatorConsole
 	/**
 	 * Returns the {@link ExtendedEmulatorConsole ExtendedEmulatorConsole} instance (or creates one and then returns it)
 	 * for a specific emulator.
-	 *
+	 * 
 	 * @param targetDevice
 	 *        The device that we want to send commands to.
 	 * @return {@link ExtendedEmulatorConsole} for the passed IDevice.
@@ -124,7 +124,7 @@ public class ExtendedEmulatorConsole
 
 	/**
 	 * Private constructor for the extended emulator console.
-	 *
+	 * 
 	 * @param port
 	 *        Port to which this class will connect.
 	 * @param emulatorSerialNumber
@@ -186,7 +186,7 @@ public class ExtendedEmulatorConsole
 
 	/**
 	 * Checks if the connection to the emulator console is OK by sending a 'help' command and inspecting the response.
-	 *
+	 * 
 	 * @throws CommandFailedException
 	 *         In case of an error in the execution
 	 */
@@ -197,20 +197,20 @@ public class ExtendedEmulatorConsole
 
 	/**
 	 * Sets the battery level of the emulator.
-	 *
+	 * 
 	 * @param level
 	 *        Integer between 0 and 100 inclusive.
 	 * @throws CommandFailedException
 	 *         In case of an error in the execution
 	 */
-	public synchronized void setBatteryLevel(int level) throws CommandFailedException
+	public synchronized void setBatteryLevel(BatteryLevel level) throws CommandFailedException
 	{
-		adaptAndExecuteCommand(EmulatorCommand.SET_BATTERY_LEVEL, new BatteryLevel(level));
+		adaptAndExecuteCommand(EmulatorCommand.SET_BATTERY_LEVEL, level);
 	}
 
 	/**
 	 * Sets the power state of the emulator.
-	 *
+	 * 
 	 * @param status
 	 *        {@link BatteryState BatteryState} enumerated constant.
 	 * @throws CommandFailedException
@@ -222,21 +222,21 @@ public class ExtendedEmulatorConsole
 	}
 
 	/**
-	 * Sets the power state of the emulator to connected or disconnected.
-	 *
-	 * @param state
-	 *        The state to set - true if the power state is on.
+	 * Sets the power state of the emulator to AC connected or disconnected.
+	 * 
+	 * @param source
+	 *        - The source to set - a {@link PowerSource} enum instance.
 	 * @throws CommandFailedException
 	 *         In case of an error in the execution
 	 */
-	public synchronized void setPowerState(boolean state) throws CommandFailedException
+	public synchronized void setPowerSource(PowerSource source) throws CommandFailedException
 	{
-		adaptAndExecuteCommand(EmulatorCommand.SET_POWER_STATE, new PowerState(state));
+		adaptAndExecuteCommand(EmulatorCommand.SET_POWER_STATE, source);
 	}
 
 	/**
 	 * Sets the network up/down speed of the emulator.
-	 *
+	 * 
 	 * @param uploadSpeed
 	 * @param downloadSpeed
 	 * @throws CommandFailedException
@@ -251,7 +251,7 @@ public class ExtendedEmulatorConsole
 
 	/**
 	 * Gets the mobile data state of the emulator through the emulator console and returns the response.
-	 *
+	 * 
 	 * @return the response from the emulator console.
 	 * @throws EmulatorConnectionFailedException
 	 */
@@ -264,7 +264,7 @@ public class ExtendedEmulatorConsole
 
 	/**
 	 * Sets the orientation in space of the testing device.
-	 *
+	 * 
 	 * @param deviceOrientation
 	 *        - desired device orientation.
 	 * @throws CommandFailedException
@@ -277,7 +277,7 @@ public class ExtendedEmulatorConsole
 
 	/**
 	 * Sets the acceleration of the testing device.
-	 *
+	 * 
 	 * @param deviceAcceleration
 	 *        The desired device acceleration.
 	 * @throws CommandFailedException
@@ -290,7 +290,7 @@ public class ExtendedEmulatorConsole
 
 	/**
 	 * Sets the mobile data state of an emulator through the emulator console.
-	 *
+	 * 
 	 * @param state
 	 *        The mobile data state to set
 	 * @throws CommandFailedException
@@ -304,7 +304,7 @@ public class ExtendedEmulatorConsole
 	/**
 	 * Sets the magnetic field sensor reading through the emulator console. Note : This sensor provides raw field
 	 * strength data (in uT) for each of the three coordinate axes
-	 *
+	 * 
 	 * @param x
 	 *        - x coordinate magnetic field sensor data.
 	 * @param y
@@ -324,10 +324,10 @@ public class ExtendedEmulatorConsole
 
 	/**
 	 * Sends SMS to the emulator.
-	 *
+	 * 
 	 * @param smsMessage
 	 *        - the SMS message, that will be sent to emulator.
-	 *
+	 * 
 	 * @throws CommandFailedException
 	 *         In case of an error in the execution
 	 */
@@ -340,10 +340,10 @@ public class ExtendedEmulatorConsole
 
 	/**
 	 * Sends a call to the emulator.
-	 *
+	 * 
 	 * @param phoneNumber
 	 *        - the phone number, that will call the emulator.
-	 *
+	 * 
 	 * @throws CommandFailedException
 	 *         In case of an error in the execution
 	 */
@@ -354,10 +354,10 @@ public class ExtendedEmulatorConsole
 
 	/**
 	 * Accepts a call to the emulator.
-	 *
+	 * 
 	 * @param phoneNumber
 	 *        - the phone number, that calls the emulator.
-	 *
+	 * 
 	 * @throws CommandFailedException
 	 *         In case of an error in the execution
 	 */
@@ -368,10 +368,10 @@ public class ExtendedEmulatorConsole
 
 	/**
 	 * Holds a call to the emulator.
-	 *
+	 * 
 	 * @param phoneNumber
 	 *        - the phone number, that calls the emulator.
-	 *
+	 * 
 	 * @throws CommandFailedException
 	 *         In case of an error in the execution
 	 */
@@ -382,10 +382,10 @@ public class ExtendedEmulatorConsole
 
 	/**
 	 * Cancels a call to the emulator.
-	 *
+	 * 
 	 * @param phoneNumber
 	 *        - the phone number, that calls the emulator.
-	 *
+	 * 
 	 * @throws CommandFailedException
 	 *         In case of an error in the execution
 	 */
@@ -396,7 +396,7 @@ public class ExtendedEmulatorConsole
 
 	/**
 	 * A generic method for execution of console commands.
-	 *
+	 * 
 	 * @param command
 	 *        The {@link EmulatorCommand} to execute
 	 * @param parameters
@@ -431,12 +431,11 @@ public class ExtendedEmulatorConsole
 			throw new CommandFailedException("Connection to the emulator console failed. "
 					+ "See the enclosed exception for more information.", e);
 		}
-
 	}
 
 	/**
 	 * Fetches the values to use for the given parameters.
-	 *
+	 * 
 	 * @param parameters
 	 *        the parameters whose values to get
 	 * @return The values to use for each parameter
@@ -457,7 +456,7 @@ public class ExtendedEmulatorConsole
 
 	/**
 	 * Sends a string to the emulator console and returns a value indicating if the response was OK or KO.
-	 *
+	 * 
 	 * @param command
 	 *        The command string.
 	 * @return true if OK was found, false if KO was found.
@@ -477,7 +476,7 @@ public class ExtendedEmulatorConsole
 
 	/**
 	 * Executes command in the emulator console and returns the output.
-	 *
+	 * 
 	 * @param command
 	 *        - the command to be executed.
 	 * @return - the command output.
@@ -492,7 +491,7 @@ public class ExtendedEmulatorConsole
 
 	/**
 	 * Sends a string to the emulator console.
-	 *
+	 * 
 	 * @param command
 	 *        The command string. <b>MUST BE TERMINATED BY \n</b>.
 	 * @throws EmulatorConnectionFailedException
@@ -563,7 +562,7 @@ public class ExtendedEmulatorConsole
 	 * <li>OK\r\n</li>
 	 * <li>KO\r\n</li>
 	 * </ul>
-	 *
+	 * 
 	 * @return true if we found OK, false if we found KO.
 	 * @throws EmulatorConnectionFailedException
 	 */
@@ -634,7 +633,7 @@ public class ExtendedEmulatorConsole
 
 	/**
 	 * Returns true if the 4 characters *before* the current position are "OK\r\n".
-	 *
+	 * 
 	 * @param currentPosition
 	 *        The current position.
 	 */
@@ -650,7 +649,7 @@ public class ExtendedEmulatorConsole
 
 	/**
 	 * Returns true if the last line starts with KO and is also terminated by \r\n.
-	 *
+	 * 
 	 * @param currentPosition
 	 *        The current position.
 	 */

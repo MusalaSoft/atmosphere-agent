@@ -10,6 +10,7 @@ import com.musala.atmosphere.agent.exception.OnDeviceComponentValidationExceptio
 import com.musala.atmosphere.agent.exception.OnDeviceServiceTerminationException;
 import com.musala.atmosphere.commons.ConnectionType;
 import com.musala.atmosphere.commons.DeviceInformation;
+import com.musala.atmosphere.commons.PowerProperties;
 import com.musala.atmosphere.commons.TelephonyInformation;
 import com.musala.atmosphere.commons.ad.Request;
 import com.musala.atmosphere.commons.ad.service.ServiceRequest;
@@ -119,48 +120,25 @@ public class ServiceCommunicator
 	}
 
 	/**
-	 * Gets the battery level of the device.
+	 * Gets the device power environment properties.
 	 * 
-	 * @return Capacity in percents.
+	 * @return a {@link PowerProperties} data container instance.
 	 * @throws CommandFailedException
 	 */
-	public int getBatteryLevel() throws CommandFailedException
+	public PowerProperties getPowerProperties() throws CommandFailedException
 	{
-		Request<ServiceRequest> serviceRequest = new Request<ServiceRequest>(ServiceRequest.GET_BATTERY_LEVEL);
+		Request<ServiceRequest> serviceRequest = new Request<ServiceRequest>(ServiceRequest.GET_POWER_PROPERTIES);
 
 		try
 		{
-			int level = (Integer) serviceRequestHandler.request(serviceRequest);
-			return level;
+			PowerProperties properties = (PowerProperties) serviceRequestHandler.request(serviceRequest);
+			return properties;
 		}
 		catch (ClassNotFoundException | IOException e)
 		{
 			// Redirect the exception to the server
-			throw new CommandFailedException("Getting battery level failed.", e);
+			throw new CommandFailedException("Getting environment power properties failed.", e);
 		}
-	}
-
-	/**
-	 * Gets the power state of the device.
-	 * 
-	 * @return boolean value; true if power is connected and false if power is disconnected.
-	 * @throws CommandFailedException
-	 */
-	public boolean getPowerState() throws CommandFailedException
-	{
-		Request<ServiceRequest> serviceRequest = new Request<ServiceRequest>(ServiceRequest.GET_POWER_STATE);
-		boolean powerState;
-
-		try
-		{
-			powerState = (Boolean) serviceRequestHandler.request(serviceRequest);
-		}
-		catch (ClassNotFoundException | IOException e)
-		{
-			// Redirect the exception to the server
-			throw new CommandFailedException("Getting power state failed.", e);
-		}
-		return powerState;
 	}
 
 	/**
@@ -200,7 +178,7 @@ public class ServiceCommunicator
 	 */
 	public BatteryState getBatteryState() throws CommandFailedException
 	{
-		Request<ServiceRequest> serviceRequest = new Request<ServiceRequest>(ServiceRequest.GET_BATTERY_STATE);
+		Request<ServiceRequest> serviceRequest = new Request<ServiceRequest>(ServiceRequest.GET_POWER_PROPERTIES);
 
 		try
 		{

@@ -9,21 +9,24 @@ import org.apache.log4j.Logger;
 import com.android.ddmlib.IDevice;
 import com.musala.atmosphere.agent.devicewrapper.util.EmulatorConnectionFailedException;
 import com.musala.atmosphere.agent.devicewrapper.util.ExtendedEmulatorConsole;
+import com.musala.atmosphere.commons.PowerProperties;
 import com.musala.atmosphere.commons.SmsMessage;
+import com.musala.atmosphere.commons.beans.BatteryLevel;
 import com.musala.atmosphere.commons.beans.BatteryState;
 import com.musala.atmosphere.commons.beans.DeviceAcceleration;
 import com.musala.atmosphere.commons.beans.DeviceOrientation;
 import com.musala.atmosphere.commons.beans.MobileDataState;
 import com.musala.atmosphere.commons.beans.PhoneNumber;
+import com.musala.atmosphere.commons.beans.PowerSource;
 import com.musala.atmosphere.commons.exceptions.CommandFailedException;
 import com.musala.atmosphere.commons.sa.exceptions.NotPossibleForDeviceException;
 import com.musala.atmosphere.commons.util.Pair;
 
 /**
  * Device wrapper for emulators. Implements methods in an emulator-specific way.
- *
+ * 
  * @author georgi.gaydarov
- *
+ * 
  */
 public class EmulatorWrapDevice extends AbstractWrapDevice
 {
@@ -38,7 +41,7 @@ public class EmulatorWrapDevice extends AbstractWrapDevice
 	{
 		super(deviceToWrap);
 
-		if (deviceToWrap.isEmulator() == false)
+		if (!deviceToWrap.isEmulator())
 		{
 			throw new NotPossibleForDeviceException("Cannot create emulator wrap device for a real, physical device.");
 		}
@@ -65,11 +68,44 @@ public class EmulatorWrapDevice extends AbstractWrapDevice
 		emulatorConsole.setNetworkSpeed(speeds.getKey(), speeds.getValue());
 	}
 
-	@Override
-	public void setBatteryLevel(int level) throws RemoteException, CommandFailedException
+	private void setBatteryLevel(BatteryLevel level) throws CommandFailedException
 	{
 		ExtendedEmulatorConsole emulatorConsole = prepareEmulatorConsole();
 		emulatorConsole.setBatteryLevel(level);
+	}
+
+	private void setBatteryState(BatteryState state) throws CommandFailedException
+	{
+		ExtendedEmulatorConsole emulatorConsole = prepareEmulatorConsole();
+		emulatorConsole.setBatteryState(state);
+	}
+
+	private void setPowerSource(PowerSource source) throws CommandFailedException
+	{
+		ExtendedEmulatorConsole emulatorConsole = prepareEmulatorConsole();
+		emulatorConsole.setPowerSource(source);
+	}
+
+	@Override
+	public void setPowerProperties(PowerProperties properties) throws CommandFailedException
+	{
+		BatteryLevel level = properties.getBatteryLevel();
+		if (level != PowerProperties.LEAVE_BATTERY_LEVEL_UNCHANGED)
+		{
+			setBatteryLevel(level);
+		}
+
+		BatteryState state = properties.getBatteryState();
+		if (state != PowerProperties.LEAVE_BATTERY_STATE_UNCHANGED)
+		{
+			setBatteryState(state);
+		}
+
+		PowerSource powerSource = properties.getPowerSource();
+		if (powerSource != PowerProperties.LEAVE_POWER_SOURCE_UNCHANGED)
+		{
+			setPowerSource(powerSource);
+		}
 	}
 
 	@Override
@@ -77,20 +113,6 @@ public class EmulatorWrapDevice extends AbstractWrapDevice
 	{
 		// TODO implement set network latency
 
-	}
-
-	@Override
-	public void setBatteryState(BatteryState state) throws RemoteException, CommandFailedException
-	{
-		ExtendedEmulatorConsole emulatorConsole = prepareEmulatorConsole();
-		emulatorConsole.setBatteryState(state);
-	}
-
-	@Override
-	public void setPowerState(boolean state) throws RemoteException, CommandFailedException
-	{
-		ExtendedEmulatorConsole emulatorConsole = prepareEmulatorConsole();
-		emulatorConsole.setPowerState(state);
 	}
 
 	@Override
