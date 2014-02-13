@@ -166,7 +166,7 @@ public class ServiceCommunicator
 		}
 		catch (ClassNotFoundException | IOException e)
 		{
-			throw new CommandFailedException("Getting battery status failed.", e);
+			throw new CommandFailedException("Getting device orientation failed.", e);
 		}
 	}
 
