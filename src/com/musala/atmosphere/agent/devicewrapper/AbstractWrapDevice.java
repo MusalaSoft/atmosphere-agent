@@ -170,7 +170,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 	/**
 	 * Executes a shell command in the background. Returns immediately. Usage should be limited to commands which do
 	 * will not return for a long time (because of thread related performance issues).
-	 * 
+	 *
 	 * @param command
 	 *        - shell command that should be executed in the background.
 	 */
@@ -191,7 +191,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 	/**
 	 * Returns the execution exception that was thrown when a background shell command was executed (null if no
 	 * exception was thrown).
-	 * 
+	 *
 	 * @param command
 	 *        - the executed command for which we want the thrown exception.
 	 * @return the exception itself.
@@ -209,7 +209,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 
 	/**
 	 * Terminates a background executing command.
-	 * 
+	 *
 	 * @param command
 	 *        - the command to be terminated.
 	 */
@@ -386,13 +386,13 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 	}
 
 	@Override
-	public void appendToAPK(byte[] bytes) throws RemoteException, IOException
+	public void appendToAPK(byte[] bytes, int length) throws RemoteException, IOException
 	{
 		if (tempApkFile == null || tempApkFileOutputStream == null)
 		{
 			throw new IllegalStateException("Temp .apk file should be created (by calling initAPKInstall()) before any calls to appendToAPK() and buildAndInstallAPK().");
 		}
-		tempApkFileOutputStream.write(bytes);
+		tempApkFileOutputStream.write(bytes, 0, length);
 	}
 
 	@Override
