@@ -173,7 +173,7 @@ public class RealWrapDevice extends AbstractWrapDevice
 	public void setMobileDataState(MobileDataState state) throws CommandFailedException
 	{
 		// We can't set mobile data state on real device.
-		throw new CommandFailedException("Can not set device acceleration on real devices.");
+		throw new CommandFailedException("Can not set mobile data state on real devices.");
 	}
 
 	@Override
