@@ -14,7 +14,7 @@ import org.junit.Test;
 import com.musala.atmosphere.agent.state.ConnectedAgent;
 import com.musala.atmosphere.agent.state.DisconnectedAgent;
 
-public class ExitCommandTest extends AgentCommandBaseTest {
+public class UptimeCommandTest extends AgentCommandBaseTest {
 
     @Override
     @Before
@@ -29,22 +29,22 @@ public class ExitCommandTest extends AgentCommandBaseTest {
     }
 
     @Test
-    public void testExecuteExitCommand() {
-        agentState = new DisconnectedAgent(mockedAgent, mockedAgentManager, mockedConsole);
+    public void testExecuteUptimeCommand() {
+        agentState = new ConnectedAgent(mockedAgent, mockedAgentManager, mockedConsole, "", 0);
 
-        AgentCommand command = new AgentCommand(AgentConsoleCommands.AGENT_EXIT, new ArrayList<String>());
+        AgentCommand command = new AgentCommand(AgentConsoleCommands.AGENT_UPTIME, new ArrayList<String>());
         agentState.executeCommand(command);
 
-        verify(mockedAgent, times(1)).stop();
+        verify(mockedAgent, times(1)).getStartDate();
     }
 
     @Test
-    public void testExecuteExitCommandWrongParameters() {
-        agentState = new ConnectedAgent(mockedAgent, mockedAgentManager, mockedConsole, "", 123);
+    public void testExecuteUptimeCommandWrongParameters() {
+        agentState = new DisconnectedAgent(mockedAgent, mockedAgentManager, mockedConsole);
 
-        AgentCommand command = new AgentCommand(AgentConsoleCommands.AGENT_EXIT, Arrays.asList("param1", "param2"));
+        AgentCommand command = new AgentCommand(AgentConsoleCommands.AGENT_UPTIME, Arrays.asList("param1", "param2"));
         agentState.executeCommand(command);
 
-        verifyZeroInteractions(mockedAgent, mockedAgentManager);
+        verifyZeroInteractions(mockedAgent);
     }
 }

@@ -1,80 +1,37 @@
 package com.musala.atmosphere.agent.command;
 
-import com.musala.atmosphere.agent.Agent;
+import java.util.List;
 
 /**
- * A factory which is instantiated with an agent associated to it. For a given AgentConsoleCommand enum value it returns
- * the proper instance of command which should be used by this agent.
+ * A factory that for a given AgentConsoleCommand enumerated value returns the proper instance of command which should
+ * be used by the agent.
  * 
  * @author nikola.taushanov
  * 
  */
-public class AgentCommandFactory
-{
-	private final Agent agent;
+public class AgentCommandFactory {
+    /**
+     * Creates and returns an {@link AgentCommand} from the passed parameters, or <b>null</b> if no appropriate console
+     * command is found.
+     * 
+     * @param command
+     *        - command for execution by the agent.
+     * @param params
+     *        - additional parameters for the command.
+     * @return - instance of {@link AgentCommand} if the passed command is valid for execution by the {@link Agent
+     *         agent}, or <b>null</b> if the command is not listed in {@link AgentConsoleCommands}.
+     */
+    public static AgentCommand getCommandInstance(String command, List<String> params) {
+        AgentCommand resultCommand = null;
 
-	public AgentCommandFactory(Agent agent)
-	{
-		this.agent = agent;
-	}
+        for (AgentConsoleCommands currentAgentCommand : AgentConsoleCommands.values()) {
+            String underlyingCommand = currentAgentCommand.getCommand();
+            if (underlyingCommand.equals(command)) {
+                resultCommand = new AgentCommand(currentAgentCommand, params);
+                break;
+            }
+        }
 
-	/**
-	 * 
-	 * @param consoleCommand
-	 * @return instance of {@link AgentCommand AgentCommand} which is associated with the passed consoleCommand.
-	 */
-	public AgentCommand getCommandInstance(AgentConsoleCommands consoleCommand)
-	{
-		AgentCommand resultCommand = null;
-		switch (consoleCommand)
-		{
-			case AGENT_RUN:
-			{
-				resultCommand = new RunCommand(agent);
-				break;
-			}
-			case AGENT_CONNECT:
-			{
-				resultCommand = new ConnectCommand(agent);
-				break;
-			}
-			case AGENT_HELP:
-			{
-				resultCommand = new HelpCommand(agent);
-				break;
-			}
-			case AGENT_STOP:
-			{
-				resultCommand = new StopCommand(agent);
-				break;
-			}
-			case AGENT_DEVICES:
-			{
-				resultCommand = new ListDevicesCommand(agent);
-				break;
-			}
-			case AGENT_SERVER_ADDRESS:
-			{
-				resultCommand = new ServerAddressCommand(agent);
-				break;
-			}
-			case AGENT_EXIT:
-			{
-				resultCommand = new ExitCommand(agent);
-				break;
-			}
-			case AGENT_UPTIME:
-			{
-				resultCommand = new UptimeCommand(agent);
-				break;
-			}
-			case AGENT_PERFORMANCE:
-			{
-				resultCommand = new PerformanceScoreCommand(agent);
-				break;
-			}
-		}
-
-		return resultCommand;
-	}
+        return resultCommand;
+    }
 }

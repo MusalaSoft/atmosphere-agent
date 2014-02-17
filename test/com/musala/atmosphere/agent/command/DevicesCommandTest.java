@@ -4,6 +4,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 
+import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -14,7 +15,7 @@ import org.junit.Test;
 import com.musala.atmosphere.agent.state.ConnectedAgent;
 import com.musala.atmosphere.agent.state.DisconnectedAgent;
 
-public class ExitCommandTest extends AgentCommandBaseTest {
+public class DevicesCommandTest extends AgentCommandBaseTest {
 
     @Override
     @Before
@@ -29,20 +30,20 @@ public class ExitCommandTest extends AgentCommandBaseTest {
     }
 
     @Test
-    public void testExecuteExitCommand() {
+    public void testExecuteDeviceCommand() throws RemoteException {
         agentState = new DisconnectedAgent(mockedAgent, mockedAgentManager, mockedConsole);
 
-        AgentCommand command = new AgentCommand(AgentConsoleCommands.AGENT_EXIT, new ArrayList<String>());
+        AgentCommand command = new AgentCommand(AgentConsoleCommands.AGENT_DEVICES, new ArrayList<String>());
         agentState.executeCommand(command);
 
-        verify(mockedAgent, times(1)).stop();
+        verify(mockedAgentManager, times(1)).getAllDeviceWrappers();
     }
 
     @Test
-    public void testExecuteExitCommandWrongParameters() {
+    public void testExecuteDeviceCommandWrongParameters() {
         agentState = new ConnectedAgent(mockedAgent, mockedAgentManager, mockedConsole, "", 123);
 
-        AgentCommand command = new AgentCommand(AgentConsoleCommands.AGENT_EXIT, Arrays.asList("param1", "param2"));
+        AgentCommand command = new AgentCommand(AgentConsoleCommands.AGENT_DEVICES, Arrays.asList("param1", "param2"));
         agentState.executeCommand(command);
 
         verifyZeroInteractions(mockedAgent, mockedAgentManager);

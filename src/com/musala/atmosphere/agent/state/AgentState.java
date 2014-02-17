@@ -1,19 +1,17 @@
 package com.musala.atmosphere.agent.state;
 
-import java.io.IOException;
-import java.rmi.AccessException;
-import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.util.Date;
 import java.util.List;
 
-import com.android.ddmlib.IDevice;
+import org.apache.log4j.Logger;
+
 import com.musala.atmosphere.agent.Agent;
 import com.musala.atmosphere.agent.AgentManager;
+import com.musala.atmosphere.agent.command.AgentCommand;
+import com.musala.atmosphere.agent.command.AgentConsoleCommands;
+import com.musala.atmosphere.agent.util.date.DateClockUtil;
 import com.musala.atmosphere.commons.sa.ConsoleControl;
-import com.musala.atmosphere.commons.sa.DeviceParameters;
-import com.musala.atmosphere.commons.sa.exceptions.DeviceNotFoundException;
-import com.musala.atmosphere.commons.sa.exceptions.NotPossibleForDeviceException;
 
 /**
  * Common abstract class for each agent state.
@@ -21,149 +19,222 @@ import com.musala.atmosphere.commons.sa.exceptions.NotPossibleForDeviceException
  * @author nikola.taushanov
  * 
  */
-public abstract class AgentState
-{
-	protected ConsoleControl agentConsole;
+public abstract class AgentState {
+    private static final Logger LOGGER = Logger.getLogger(AgentState.class);
 
-	protected AgentManager agentManager;
+    protected static final String ILLEGAL_COMMAND_MESSAGE = "Execution failed: illegal command or arguments.";
 
-	protected Agent agent;
+    protected ConsoleControl agentConsole;
 
-	public AgentState(Agent agent, AgentManager agentManager, ConsoleControl agentConsole)
-	{
-		this.agent = agent;
-		this.agentManager = agentManager;
-		this.agentConsole = agentConsole;
-	}
+    protected AgentManager agentManager;
 
-	/**
-	 * Gets the date and time in which the Agent was run on.
-	 * 
-	 * @return the specified date.
-	 */
-	public abstract Date getStartDate();
+    protected Agent agent;
 
-	/**
-	 * Prints a string to the Agent's console output.
-	 * 
-	 * @param message
-	 *        - the message to be printed.
-	 */
-	public void writeToConsole(String message)
-	{
-		agentConsole.write(message);
-	}
+    public AgentState(Agent agent, AgentManager agentManager, ConsoleControl agentConsole) {
+        this.agent = agent;
+        this.agentManager = agentManager;
+        this.agentConsole = agentConsole;
+    }
 
-	/**
-	 * Prints a line to the Agent's console output.
-	 * 
-	 * @param message
-	 *        - the message to be printed.
-	 */
-	public void writeLineToConsole(String message)
-	{
-		agentConsole.writeLine(message);
-	}
+    /**
+     * Executes the passed {@link AgentCommand command} and changes
+     * 
+     * @param commandForExecution
+     */
+    public void executeCommand(AgentCommand commandForExecution) {
+        if (commandForExecution != null) {
+            AgentConsoleCommands commandType = commandForExecution.getCommandType();
 
-	/**
-	 * Gets the IP of the server to which the agent is currently connected to.
-	 * 
-	 * @return the current server's IP address.
-	 */
-	public abstract String getServerIp();
+            switch (commandType) {
+                case AGENT_CONNECT:
+                    executeConnectCommand(commandForExecution);
+                    break;
+                case AGENT_DEVICES:
+                    executeDevicesCommand(commandForExecution);
+                    break;
+                case AGENT_EXIT:
+                    executeExitCommand(commandForExecution);
+                    break;
+                case AGENT_HELP:
+                    executeHelpCommand(commandForExecution);
+                    break;
+                case AGENT_PERFORMANCE:
+                    executePerformanceCommand(commandForExecution);
+                    break;
+                case AGENT_SERVER_ADDRESS:
+                    executeServerAdressCommand(commandForExecution);
+                    break;
+                case AGENT_UPTIME:
+                    executeUptimeCommand(commandForExecution);
+                    break;
+                default:
+                    LOGGER.error("Command " + commandType.getCommand() + " is not recognized and cannot be executed.");
+            }
+        }
+        else {
+            LOGGER.error("Trying to execute null command on agent.");
+        }
+    }
 
-	/**
-	 * Gets the port of the server to which the agent is currently connected to.
-	 * 
-	 * @return - the current server's port.
-	 */
-	public abstract int getServerRmiPort();
+    /**
+     * Prints information about all available commands that can be executed on the agent, through the agent console.
+     * 
+     * @param commandForExecution
+     */
+    public void executeHelpCommand(AgentCommand commandForExecution) {
+        try {
+            validateAndVerifyCommand(AgentConsoleCommands.AGENT_HELP, commandForExecution);
 
-	/**
-	 * Connects this Agent to a Server.
-	 * 
-	 * @param ipAddress
-	 *        - server's IP address.
-	 * @param port
-	 *        - server's port.
-	 * @throws NotBoundException
-	 * @throws RemoteException
-	 * @throws AccessException
-	 */
-	public abstract void connectToServer(String ipAddress, int port)
-		throws AccessException,
-			RemoteException,
-			NotBoundException;
+            List<String> agentCommandsDescriptions = AgentConsoleCommands.getListOfCommandDescriptions();
+            for (String commandDescription : agentCommandsDescriptions) {
+                agentConsole.writeLine(commandDescription);
+            }
+        }
+        catch (IllegalArgumentException e) {
+            LOGGER.error("Could not execute command.", e);
+            agentConsole.writeLine(ILLEGAL_COMMAND_MESSAGE);
+        }
+    }
 
-	/**
-	 * Runs the Agent.
-	 */
-	public abstract void run();
+    /**
+     * Prints the time for which the {@link Agent agent} has been running.
+     * 
+     * @param commandForExecution
+     */
+    public void executeUptimeCommand(AgentCommand commandForExecution) {
+        try {
+            validateAndVerifyCommand(AgentConsoleCommands.AGENT_UPTIME, commandForExecution);
 
-	/**
-	 * Stops the agent thread and releases the Android Debug Bridge.
-	 */
-	public abstract void stop();
+            Date agentStartDate = agent.getStartDate();
+            if (agentStartDate != null) {
+                String formattedTime = DateClockUtil.formatDateAndTime(agentStartDate);
+                agentConsole.writeLine("Agent was started on " + formattedTime);
 
-	/**
-	 * Gets the Agent's port.
-	 * 
-	 * @return Agent's RMI port.
-	 */
-	public abstract int getAgentRmiPort();
+                String formattedTimeInterval = DateClockUtil.getTimeInterval(agentStartDate);
+                agentConsole.writeLine("Uptime: " + formattedTimeInterval);
+            }
+        }
+        catch (IllegalArgumentException e) {
+            LOGGER.error("Could not execute command.", e);
+            agentConsole.writeLine(ILLEGAL_COMMAND_MESSAGE);
+        }
+    }
 
-	/**
-	 * Gets a list of all attached devices' serial numbers.
-	 * 
-	 * @return list of Strings that represent device serial numbers.
-	 * @throws RemoteException
-	 */
-	public abstract List<String> getAllDevicesSerialNumbers();
+    /**
+     * Tests the hardware possibilities of the agent for supporting emulators.
+     * 
+     * @param commandForExecution
+     *        - should be {@link AgentConsoleCommands#AGENT_PERFORMANCE}
+     */
+    public void executePerformanceCommand(AgentCommand commandForExecution) {
+        try {
+            validateAndVerifyCommand(AgentConsoleCommands.AGENT_PERFORMANCE, commandForExecution);
 
-	/**
-	 * Gets list of all devices attached to this Agent.
-	 * 
-	 * @return list of {@link IDevice IDevice} objects.
-	 */
-	public abstract List<IDevice> getAllAttachedDevices();
+            // TODO Should be implemented when performance score is available.
+            LOGGER.error("Error performing benchmarking test: benchmarking mechanism not implemented.");
+            agentConsole.writeLine("Performance benchmarking not implemented yet. Command can not be executed.");
+        }
+        catch (IllegalArgumentException e) {
+            LOGGER.error("Could not execute command.", e);
+            agentConsole.writeLine(ILLEGAL_COMMAND_MESSAGE);
+        }
+    }
 
-	/**
-	 * Creates and starts an emulator with specified properties on the current Agent.
-	 * 
-	 * @param parameters
-	 *        - parameters to be passed to the emulator creation procedure.
-	 * @throws IOException
-	 */
-	public abstract void createAndStartEmulator(DeviceParameters parameters) throws IOException;
+    /**
+     * Stops the agent and releases all allocated resources.
+     * 
+     * @param commandForExecution
+     *        - it should be an {@link AgentConsoleCommands#AGENT_EXIT exit } command.
+     */
+    public void executeExitCommand(AgentCommand commandForExecution) {
+        try {
+            validateAndVerifyCommand(AgentConsoleCommands.AGENT_EXIT, commandForExecution);
 
-	/**
-	 * Closes and erases an emulator by it's serial number.
-	 * 
-	 * @param deviceSN
-	 *        - the serial number of the emulator to be closed.
-	 * @throws RemoteException
-	 * @throws NotPossibleForDeviceException
-	 *         - when the specified serial number is of a real device and, therefore, cannot be closed.
-	 * @throws DeviceNotFoundException
-	 *         - when there is no device with the specified serial number.
-	 * @throws IOException
-	 * */
-	public abstract void removeEmulatorBySerialNumber(String deviceSN)
-		throws RemoteException,
-			IOException,
-			DeviceNotFoundException,
-			NotPossibleForDeviceException;
+            agent.stop();
+        }
+        catch (IllegalArgumentException e) {
+            LOGGER.error("Could not execute command.", e);
+            agentConsole.writeLine(ILLEGAL_COMMAND_MESSAGE);
+        }
+    }
 
-	/**
-	 * Reads one line from the Agent's console.
-	 * 
-	 * @return the first line in the console buffer as a String.
-	 * @throws IOException
-	 *         - when a console reading error occurs.
-	 */
-	public String readCommandFromConsole() throws IOException
-	{
-		String command = agentConsole.readCommand();
-		return command;
-	}
+    /**
+     * Prints information about the connected devices to this agent on its console. The information consists of number
+     * of attached devices and their device wrapper identifiers.
+     * 
+     * @param commandForExecution
+     */
+    public void executeDevicesCommand(AgentCommand commandForExecution) {
+        try {
+            validateAndVerifyCommand(AgentConsoleCommands.AGENT_DEVICES, commandForExecution);
+
+            List<String> deviceWrapperIDs = agentManager.getAllDeviceWrappers();
+            agentConsole.writeLine("Number of devices, attached to this agent: " + deviceWrapperIDs.size());
+            for (String deviceWrapper : deviceWrapperIDs) {
+                agentConsole.writeLine(deviceWrapper);
+            }
+        }
+        catch (IllegalArgumentException e) {
+            LOGGER.error("Could not execute command.", e);
+            agentConsole.writeLine(ILLEGAL_COMMAND_MESSAGE);
+        }
+        catch (RemoteException e) {
+            LOGGER.error("Could not fetch list with device's serial numbers due to connection problems.", e);
+        }
+    }
+
+    /**
+     * Prints on the console the server address to which the local agent is connected.
+     * 
+     * @param commandForExecution
+     *        - it should be an {@link AgentConsoleCommands#AGENT_SERVER_ADDRESS server address} command.
+     */
+    public abstract void executeServerAdressCommand(AgentCommand commandForExecution);
+
+    /**
+     * Tries to connect the agent to a server, located on the address, specified in the passed command. If the agent is
+     * already connected to a server, the new connect command is rejected and not executed.
+     * 
+     * @param commandForExecution
+     *        it should be an {@link AgentConsoleCommands#AGENT_CONNECT connect } command.
+     */
+    public abstract void executeConnectCommand(AgentCommand commandForExecution);
+
+    /*
+     * Private and protected methods.
+     */
+    /**
+     * This method is used to validate that when method for executing a command of some type is invoked, the passed
+     * command for execution's type is valid command of the expected type, otherwise an {@link IllegalArgumentException}
+     * is thrown.
+     * 
+     * @param expectedCommandType
+     *        - the expected type of command for execution.
+     * @param actualCommandForExecution
+     *        - the actual command for execution.
+     * 
+     * @throws IllegalArgumentException
+     *         - if the expected command type differs from the command's or the number of parameters is not acceptable.
+     */
+    protected void validateAndVerifyCommand(AgentConsoleCommands expectedCommandType,
+                                            AgentCommand actualCommandForExecution) {
+        // validate type of command
+        AgentConsoleCommands actualCommandType = actualCommandForExecution.getCommandType();
+        if (actualCommandType != expectedCommandType) {
+            throw new IllegalArgumentException("Expected command " + expectedCommandType.getCommand()
+                    + " but instead got command: " + actualCommandType.getCommand());
+        }
+
+        // validate number of parameters
+        List<String> parameters = actualCommandForExecution.getCommandParameters();
+        int numberOfParameters = parameters.size();
+
+        List<Integer> acceptableNumberOfParameters = actualCommandType.getPossibleNumberOfParameters();
+        boolean isNumberOfParamsOk = acceptableNumberOfParameters.contains(numberOfParameters);
+
+        if (!isNumberOfParamsOk) {
+            throw new IllegalArgumentException("Illegal number of parameters (" + numberOfParameters
+                    + ") passed to command.");
+        }
+    }
 }

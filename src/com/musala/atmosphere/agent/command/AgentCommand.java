@@ -1,38 +1,28 @@
 package com.musala.atmosphere.agent.command;
 
-import com.musala.atmosphere.agent.Agent;
+import java.util.List;
 
 /**
- * Common class for commands executed by the agent for a given console input.
+ * Common class used to represent commands which are executed by the agent.
  * 
  * @author nikola.taushanov
  * 
  */
-public abstract class AgentCommand
-{
-	private static String ILLEGAL_ARGUMENTS_MESSAGE = "Illegal arguments for command. "
-			+ "Use command 'help' for more information.";
+public class AgentCommand {
+    private List<String> commandParameters;
 
-	protected Agent agent;
+    private AgentConsoleCommands commandType;
 
-	public AgentCommand(Agent agent)
-	{
-		this.agent = agent;
-	}
+    public AgentCommand(AgentConsoleCommands aCommandType, List<String> aParameters) {
+        commandType = aCommandType;
+        commandParameters = aParameters;
+    }
 
-	public void execute(String[] params)
-	{
-		if (!verifyParams(params))
-		{
-			agent.writeLineToConsole(ILLEGAL_ARGUMENTS_MESSAGE);
-		}
-		else
-		{
-			executeCommand(params);
-		}
-	}
+    public AgentConsoleCommands getCommandType() {
+        return commandType;
+    }
 
-	protected abstract boolean verifyParams(String[] params);
-
-	protected abstract void executeCommand(String[] params);
+    public List<String> getCommandParameters() {
+        return commandParameters;
+    }
 }
