@@ -15,7 +15,7 @@ import org.junit.Test;
 import com.musala.atmosphere.agent.state.ConnectedAgent;
 import com.musala.atmosphere.agent.state.DisconnectedAgent;
 
-public class DevicesCommandTest extends AgentCommandBaseTest {
+public class DevicesCommandTest extends AgentCommandTestBase {
 
     @Override
     @Before

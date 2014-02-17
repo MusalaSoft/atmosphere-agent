@@ -14,7 +14,7 @@ import com.musala.atmosphere.commons.sa.ConsoleControl;
  * @author vladimir.vladimirov
  * 
  */
-public abstract class AgentCommandBaseTest {
+public abstract class AgentCommandTestBase {
 
     protected AgentState agentState;
 

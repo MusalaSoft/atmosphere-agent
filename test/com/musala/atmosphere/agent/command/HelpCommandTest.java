@@ -12,7 +12,7 @@ import org.junit.Test;
 import com.musala.atmosphere.agent.state.ConnectedAgent;
 import com.musala.atmosphere.agent.state.DisconnectedAgent;
 
-public class HelpCommandTest extends AgentCommandBaseTest {
+public class HelpCommandTest extends AgentCommandTestBase {
 
     @Override
     @Before
