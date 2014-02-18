@@ -278,9 +278,9 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
             LOGGER.warn("Getting device RAM failed.", e);
         }
 
-        ramMemoryString.replaceAll(pattern, "$3");
+        String extractedRamMemoryString = ramMemoryString.replaceAll(pattern, "$3");
 
-        deviceInformation.setRam(MemoryUnitConverter.convertMemoryToMB(ramMemoryString));
+        deviceInformation.setRam(MemoryUnitConverter.convertMemoryToMB(extractedRamMemoryString));
 
         // Resolution
         try {
