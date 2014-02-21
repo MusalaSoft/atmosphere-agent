@@ -100,15 +100,13 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager {
             androidDebugBridge = AndroidDebugBridge.createBridge(adbPath, false /*
                                                                                  * force new bridge, no need for that
                                                                                  */);
-        }
-        catch (IllegalStateException e) {
+        } catch (IllegalStateException e) {
             // The debug bridge library was already init-ed.
             // This means we are creating a new AgentManager while another is active, which is not okay.
             close();
             throw new ADBridgeFailException("The debug bridge failed to init, see the enclosed exception for more information.",
                                             e);
-        }
-        catch (NullPointerException e) {
+        } catch (NullPointerException e) {
             // The debug bridge creation failed internally.
             close();
             throw new ADBridgeFailException("The debug bridge failed to init, see the enclosed exception for more information.",
@@ -122,8 +120,7 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager {
         try {
             rmiRegistry = LocateRegistry.createRegistry(rmiPort);
             rmiRegistry.rebind(RmiStringConstants.AGENT_MANAGER.toString(), this);
-        }
-        catch (RemoteException e) {
+        } catch (RemoteException e) {
             close();
             throw e;
         }
@@ -133,8 +130,7 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager {
         List<IDevice> initialDevicesList = null;
         try {
             initialDevicesList = getInitialDeviceList();
-        }
-        catch (ADBridgeFailException e) {
+        } catch (ADBridgeFailException e) {
             close();
             throw e;
         }
@@ -176,8 +172,7 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager {
             try {
                 Thread.sleep(100);
                 timeout++;
-            }
-            catch (InterruptedException e) {
+            } catch (InterruptedException e) {
             }
             // let's not wait > timeout milliseconds.
             if (timeout * 100 > AgentPropertiesLoader.getADBConnectionTimeout()) {
@@ -220,16 +215,14 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager {
                     rmiRegistry.unbind(currentRmiIdObject);
                     try {
                         UnicastRemoteObject.unexportObject((Remote) registeredObject, true);
-                    }
-                    catch (NoSuchObjectException e) {
+                    } catch (NoSuchObjectException e) {
                         LOGGER.warn("Could not unexport RMI object with ID: " + currentRmiIdObject);
                     }
                 }
 
                 UnicastRemoteObject.unexportObject(rmiRegistry, true);
             }
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             // If something cannot be closed it was never opened, so it's okay.
             // Nothing to do here.
             LOGGER.info(e);
@@ -272,8 +265,7 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager {
             String publishId = createWrapperForDevice(connectedDevice);
             devicesList.add(connectedDevice);
             return publishId;
-        }
-        catch (RemoteException | OnDeviceComponentCommunicationException e) {
+        } catch (RemoteException | OnDeviceComponentCommunicationException e) {
             LOGGER.fatal("Could not publish a wrapper for a device in the RMI registry.", e);
         }
         return "";
@@ -300,8 +292,7 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager {
             String publishId = unbindWrapperForDevice(disconnectedDevice);
             devicesList.remove(disconnectedDevice);
             return publishId;
-        }
-        catch (RemoteException e) {
+        } catch (RemoteException e) {
             LOGGER.error("Device wrapper unbinding failed.", e);
         }
         return "";
@@ -323,12 +314,10 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager {
         try {
             if (device.isEmulator()) {
                 deviceWrapper = new EmulatorWrapDevice(device);
-            }
-            else {
+            } else {
                 deviceWrapper = new RealWrapDevice(device);
             }
-        }
-        catch (NotPossibleForDeviceException e) {
+        } catch (NotPossibleForDeviceException e) {
             // Not really possible as we have just checked.
             // Nothing to do here.
             e.printStackTrace();
@@ -366,14 +355,12 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager {
 
         try {
             rmiRegistry.unbind(rmiWrapperBindingId);
-        }
-        catch (NotBoundException e) {
+        } catch (NotBoundException e) {
             // Wrapper for the device was never published, so we have nothing to unbind.
             // Nothing to do here.
             LOGGER.error("Unbinding device wrapper [" + rmiWrapperBindingId + "] failed.", e);
             return "";
-        }
-        catch (AccessException e) {
+        } catch (AccessException e) {
             throw new RemoteException("Unbinding device wrapper [" + rmiWrapperBindingId + "] failed.", e);
         }
 
@@ -474,12 +461,10 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager {
             String hash = (new HexBinaryAdapter()).marshal(hashBytes);
 
             return hash;
-        }
-        catch (SocketException e) {
+        } catch (SocketException e) {
             LOGGER.fatal("Calculating unique ID failed.", e);
             throw new RuntimeException("Unique ID for the current Agent calculation failed.", e);
-        }
-        catch (NoSuchAlgorithmException e) {
+        } catch (NoSuchAlgorithmException e) {
             LOGGER.fatal("Could not get instance of MessageDigest for the passed hash algorithm.", e);
             throw new RuntimeException("Unique ID for the current Agent calculation failed.", e);
         }
@@ -489,8 +474,7 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager {
     public String getInvokerIpAddress() throws RemoteException {
         try {
             return RemoteServer.getClientHost();
-        }
-        catch (ServerNotActiveException e) {
+        } catch (ServerNotActiveException e) {
             // Thrown when this method is not invoked by RMI. Nothing to do here, this should not happen.
             LOGGER.warn("The getInvokerIpAddress method was invoked locally and resulted in exception.");
         }
@@ -566,8 +550,7 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager {
         if (requiredDeviceParameters.getRam() >= freeRam) {
             // If there's no free RAM memory on the agent, running new emulator on it should not happen.
             return 0d;
-        }
-        else {
+        } else {
             score += freeRam;
         }
 
@@ -577,8 +560,7 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager {
         if (isHaxm) {
             // Emulators using HAXM perform ~50% faster.
             score += 1.5d * scimarkScore;
-        }
-        else {
+        } else {
             score += scimarkScore;
         }
 

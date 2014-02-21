@@ -6,26 +6,31 @@ package com.musala.atmosphere.agent.util;
  * @author valyo.yolovski
  * 
  */
-public enum AgentProperties
-{
-	ADB_PATH("adb.path"), ADB_CONNECTION_TIMEOUT("adb.connection.timeout"), AGENT_RMI_PORT("agent.rmi.port"), EMULATOR_CREATION_WAIT_TIMEOUT(
-			"emulator.creation.wait.timeout"), ANDROID_TOOL_PATH("android.tool.path"), ANDROID_SDK_TOOLS_PATH(
-			"android.sdk.tools.path"), ANDROID_TOOL_WORKDIR_PATH("android.tool.workdir.path"), ANDROID_TOOL_CLASS(
-			"android.tool.class"), EMULATOR_EXECUTABLE_PATH("emulator.executable.path"), COMMAND_EXECUTION_TIMEOUT(
-			"command.execution.timeout"), ADB_MIN_FORWARD_PORT("adb.min.forward.port"), ADB_MAX_FORWARD_PORT(
-			"adb.max.forward.port"), ON_DEVICE_COMPONENT_CONNECTION_RETRY_LIMIT(
-			"ondevicecomponent.connection.retry.limit");
+public enum AgentProperties {
+    ADB_PATH("adb.path"),
+    ADB_CONNECTION_TIMEOUT("adb.connection.timeout"),
+    AGENT_RMI_PORT("agent.rmi.port"),
+    EMULATOR_CREATION_WAIT_TIMEOUT("emulator.creation.wait.timeout"),
+    ANDROID_TOOL_PATH("android.tool.path"),
+    ANDROID_SDK_TOOLS_PATH("android.sdk.tools.path"),
+    ANDROID_TOOL_WORKDIR_PATH("android.tool.workdir.path"),
+    ANDROID_TOOL_CLASS("android.tool.class"),
+    EMULATOR_EXECUTABLE_PATH("emulator.executable.path"),
+    COMMAND_EXECUTION_TIMEOUT("command.execution.timeout"),
+    ADB_MIN_FORWARD_PORT("adb.min.forward.port"),
+    ADB_MAX_FORWARD_PORT("adb.max.forward.port"),
+    ON_DEVICE_COMPONENT_CONNECTION_RETRY_LIMIT("ondevicecomponent.connection.retry.limit"),
+    DEVICE_AUTOMATIC_SETUP("device.automatic.setup"),
+    ON_DEVICE_COMPONENT_FILES_PATH("ondevicecomponent.files.path");
 
-	private String value;
+    private String value;
 
-	private AgentProperties(String value)
-	{
-		this.value = value;
-	}
+    private AgentProperties(String value) {
+        this.value = value;
+    }
 
-	@Override
-	public String toString()
-	{
-		return value;
-	}
+    @Override
+    public String toString() {
+        return value;
+    }
 };

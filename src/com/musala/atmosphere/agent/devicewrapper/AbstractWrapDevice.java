@@ -31,6 +31,7 @@ import com.musala.atmosphere.agent.devicewrapper.util.BackgroundShellCommandExec
 import com.musala.atmosphere.agent.devicewrapper.util.DeviceProfiler;
 import com.musala.atmosphere.agent.devicewrapper.util.ForwardingPortFailedException;
 import com.musala.atmosphere.agent.devicewrapper.util.PortForwardingService;
+import com.musala.atmosphere.agent.devicewrapper.util.PreconditionsManager;
 import com.musala.atmosphere.agent.devicewrapper.util.ondevicecomponent.ServiceCommunicator;
 import com.musala.atmosphere.agent.devicewrapper.util.ondevicecomponent.UIAutomatorBridgeCommunicator;
 import com.musala.atmosphere.agent.exception.OnDeviceComponentCommunicationException;
@@ -70,9 +71,13 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 
     private static final String TEMP_APK_FILE_SUFFIX = ".apk";
 
+    private static final String GET_RAM_MEMORY_COMMAND = "cat /proc/meminfo | grep MemTotal";
+
     private File tempApkFile;
 
     private OutputStream tempApkFileOutputStream;
+
+    private PreconditionsManager preconditionsManager;
 
     protected ServiceCommunicator serviceCommunicator;
 
@@ -87,12 +92,15 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
     public AbstractWrapDevice(IDevice deviceToWrap) throws RemoteException {
         wrappedDevice = deviceToWrap;
 
+        preconditionsManager = new PreconditionsManager(wrappedDevice);
+
+        preconditionsManager.manageOnDeviceComponents();
+
         PortForwardingService forwardingService = new PortForwardingService(wrappedDevice);
         try {
             serviceCommunicator = new ServiceCommunicator(forwardingService, this);
             uiAutomatorBridgeCommunicator = new UIAutomatorBridgeCommunicator(forwardingService, this);
-        }
-        catch (ForwardingPortFailedException | OnDeviceComponentStartingException
+        } catch (ForwardingPortFailedException | OnDeviceComponentStartingException
                 | OnDeviceComponentInitializationException e) {
             // TODO throw a new exception here when the preconditions are implemented.
 
@@ -115,8 +123,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
             Map<String, Long> memUsage = profiler.getMeminfoDataset();
             long freeMemory = memUsage.get(DeviceProfiler.FREE_MEMORY_ID);
             return freeMemory;
-        }
-        catch (IOException | TimeoutException | AdbCommandRejectedException | ShellCommandUnresponsiveException e) {
+        } catch (IOException | TimeoutException | AdbCommandRejectedException | ShellCommandUnresponsiveException e) {
             LOGGER.warn("Getting device '" + wrappedDevice.getSerialNumber() + "' memory usage resulted in exception.",
                         e);
             throw new CommandFailedException("Getting device memory usage resulted in exception.", e);
@@ -132,8 +139,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
             wrappedDevice.executeShellCommand(command, outputReceiver, COMMAND_EXECUTION_TIMEOUT);
 
             response = outputReceiver.getOutput();
-        }
-        catch (TimeoutException | AdbCommandRejectedException | ShellCommandUnresponsiveException | IOException e) {
+        } catch (TimeoutException | AdbCommandRejectedException | ShellCommandUnresponsiveException | IOException e) {
             // Redirect the exception to the server
             throw new CommandFailedException("Shell command execution failed. See the enclosed exception for more information.",
                                              e);
@@ -240,8 +246,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
             if (devicePropertiesMap.containsKey(DevicePropertyStringConstants.PROPERTY_EMUDEVICE_LCD_DENSITY.toString())) {
                 lcdDensityString = devicePropertiesMap.get(DevicePropertyStringConstants.PROPERTY_EMUDEVICE_LCD_DENSITY.toString());
             }
-        }
-        else {
+        } else {
             if (devicePropertiesMap.containsKey(DevicePropertyStringConstants.PROPERTY_REALDEVICE_LCD_DENSITY.toString())) {
                 lcdDensityString = devicePropertiesMap.get(DevicePropertyStringConstants.PROPERTY_REALDEVICE_LCD_DENSITY.toString());
             }
@@ -269,16 +274,15 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 
         // RAM
         String ramMemoryString = DeviceInformation.FALLBACK_RAM_AMOUNT.toString();
-        String pattern = "(\\w+):(\\s+)(\\d+\\w+)";
+        String ramMemoryPattern = "(\\w+):(\\s+)(\\d+\\w+)";
 
         try {
-            ramMemoryString = executeShellCommand("cat /proc/meminfo | grep MemTotal");
-        }
-        catch (CommandFailedException e) {
+            ramMemoryString = executeShellCommand(GET_RAM_MEMORY_COMMAND);
+        } catch (CommandFailedException e) {
             LOGGER.warn("Getting device RAM failed.", e);
         }
 
-        String extractedRamMemoryString = ramMemoryString.replaceAll(pattern, "$3");
+        String extractedRamMemoryString = ramMemoryString.replaceAll(ramMemoryPattern, "$3");
 
         deviceInformation.setRam(MemoryUnitConverter.convertMemoryToMB(extractedRamMemoryString));
 
@@ -291,12 +295,10 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
             Pair<Integer, Integer> screenResolution = DeviceScreenResolutionParser.parseScreenResolutionFromShell(shellResponse);
             deviceInformation.setResolution(screenResolution);
 
-        }
-        catch (ShellCommandUnresponsiveException | TimeoutException | AdbCommandRejectedException | IOException e) {
+        } catch (ShellCommandUnresponsiveException | TimeoutException | AdbCommandRejectedException | IOException e) {
             // Shell command execution failed.
             LOGGER.error("Shell command execution failed.", e);
-        }
-        catch (StringIndexOutOfBoundsException e) {
+        } catch (StringIndexOutOfBoundsException e) {
             LOGGER.warn("Parsing shell response failed when attempting to get device screen size.");
         }
 
@@ -314,8 +316,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
             Path screenshotPath = Paths.get(SCREENSHOT_LOCAL_FILE_NAME);
             byte[] screenshotData = Files.readAllBytes(screenshotPath);
             return screenshotData;
-        }
-        catch (IOException | AdbCommandRejectedException | TimeoutException | SyncException e) {
+        } catch (IOException | AdbCommandRejectedException | TimeoutException | SyncException e) {
             LOGGER.error("Screenshot fetching failed.", e);
             throw new CommandFailedException("Screenshot fetching failed.", e);
         }
@@ -362,8 +363,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
                 throw new CommandFailedException("PacketManager installation returned error code '" + installResult
                         + "'.");
             }
-        }
-        catch (InstallException e) {
+        } catch (InstallException e) {
             LOGGER.error("Installing apk failed.", e);
             throw new CommandFailedException("Installing .apk file failed. See the enclosed exception for more information.",
                                              e);
@@ -375,8 +375,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
         if (tempApkFileOutputStream != null) {
             try {
                 tempApkFileOutputStream.close();
-            }
-            catch (IOException e) {
+            } catch (IOException e) {
                 // closing failed, it was never functional. nothing to do here.
             }
             tempApkFileOutputStream = null;
@@ -404,8 +403,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
             String uiDumpContents = xmlDumpFileScanner.next();
             xmlDumpFileScanner.close();
             return uiDumpContents;
-        }
-        catch (SyncException | IOException | AdbCommandRejectedException | TimeoutException e) {
+        } catch (SyncException | IOException | AdbCommandRejectedException | TimeoutException e) {
             LOGGER.error("UI dump failed.", e);
             throw new CommandFailedException("UI dump failed. See the enclosed exception for more information.", e);
         }
@@ -421,8 +419,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
     public PowerProperties getPowerProperties() throws RemoteException, CommandFailedException {
         try {
             return serviceCommunicator.getPowerProperties();
-        }
-        catch (CommandFailedException e) {
+        } catch (CommandFailedException e) {
             LOGGER.fatal("Getting power related environment information failed.", e);
             throw e;
         }
@@ -434,8 +431,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
         try {
             DeviceOrientation result = serviceCommunicator.getDeviceOrientation();
             return result;
-        }
-        catch (CommandFailedException e) {
+        } catch (CommandFailedException e) {
             LOGGER.fatal("Getting device orientation failed.", e);
             throw e;
         }
@@ -445,8 +441,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
     public DeviceAcceleration getDeviceAcceleration() throws RemoteException, CommandFailedException {
         try {
             return serviceCommunicator.getAcceleration();
-        }
-        catch (CommandFailedException e) {
+        } catch (CommandFailedException e) {
             LOGGER.fatal("Getting acceleation failed.", e);
             throw e;
         }
@@ -457,8 +452,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
     public ConnectionType getConnectionType() throws RemoteException, CommandFailedException {
         try {
             return serviceCommunicator.getConnectionType();
-        }
-        catch (CommandFailedException e) {
+        } catch (CommandFailedException e) {
             LOGGER.fatal("Getting connection type failed.", e);
             throw e;
         }
@@ -468,8 +462,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
     public void setWiFi(boolean state) throws CommandFailedException, RemoteException {
         try {
             serviceCommunicator.setWiFi(state);
-        }
-        catch (CommandFailedException e) {
+        } catch (CommandFailedException e) {
             LOGGER.fatal("Setting WiFi failed.", e);
             throw e;
         }
@@ -484,8 +477,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
     public TelephonyInformation getTelephonyInformation() throws CommandFailedException, RemoteException {
         try {
             return serviceCommunicator.getTelephonyInformation();
-        }
-        catch (CommandFailedException e) {
+        } catch (CommandFailedException e) {
             LOGGER.fatal("Getting telephony information failed.", e);
             throw e;
         }
@@ -501,8 +493,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 
         try {
             serviceCommunicator.stopAtmosphereService();
-        }
-        catch (OnDeviceServiceTerminationException e) {
+        } catch (OnDeviceServiceTerminationException e) {
             String loggerMessage = String.format("Stopping ATMOSPHERE service failed for %s.",
                                                  wrappedDevice.getSerialNumber());
             LOGGER.warn(loggerMessage, e);
