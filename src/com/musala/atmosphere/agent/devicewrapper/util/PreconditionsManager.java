@@ -348,6 +348,27 @@ public class PreconditionsManager {
     }
 
     /**
+     * Installs all components.
+     */
+
+    private void installAllComponents() {
+
+        installService();
+
+        installIme();
+        setIme();
+
+        installUiAutomatorBridge();
+        installUiAutomatorBridgeLibs();
+
+        try {
+            Thread.sleep(POST_INSTALLATION_TIMEOUT);
+        } catch (InterruptedException e) {
+            // Nothing to do here.
+        }
+    }
+
+    /**
      * Takes care of automatic on-device component setup and verification.
      */
     public void manageOnDeviceComponents() {
@@ -371,6 +392,10 @@ public class PreconditionsManager {
 
             case OFF:
                 checkComponentsAreInstalled(currentComponentInstalledStatus);
+                break;
+
+            case FORCE_INSTALL:
+                installAllComponents();
                 break;
 
             default:

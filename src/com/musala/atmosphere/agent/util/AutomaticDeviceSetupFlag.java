@@ -9,7 +9,8 @@ package com.musala.atmosphere.agent.util;
 public enum AutomaticDeviceSetupFlag {
     ON("on"),
     OFF("off"),
-    ASK("ask");
+    ASK("ask"),
+    FORCE_INSTALL("force install");
 
     private String value;
 
