@@ -1,20 +1,14 @@
 package com.musala.atmosphere.agent.devicewrapper;
 
-import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Scanner;
 
 import org.apache.log4j.Logger;
@@ -22,34 +16,36 @@ import org.apache.log4j.Logger;
 import com.android.ddmlib.AdbCommandRejectedException;
 import com.android.ddmlib.CollectingOutputReceiver;
 import com.android.ddmlib.IDevice;
-import com.android.ddmlib.InstallException;
 import com.android.ddmlib.ShellCommandUnresponsiveException;
 import com.android.ddmlib.SyncException;
 import com.android.ddmlib.TimeoutException;
 import com.musala.atmosphere.agent.DevicePropertyStringConstants;
-import com.musala.atmosphere.agent.devicewrapper.util.BackgroundShellCommandExecutor;
+import com.musala.atmosphere.agent.devicewrapper.util.ApkInstaller;
 import com.musala.atmosphere.agent.devicewrapper.util.DeviceProfiler;
 import com.musala.atmosphere.agent.devicewrapper.util.ForwardingPortFailedException;
 import com.musala.atmosphere.agent.devicewrapper.util.PortForwardingService;
 import com.musala.atmosphere.agent.devicewrapper.util.PreconditionsManager;
+import com.musala.atmosphere.agent.devicewrapper.util.ShellCommandExecutor;
 import com.musala.atmosphere.agent.devicewrapper.util.ondevicecomponent.ServiceCommunicator;
 import com.musala.atmosphere.agent.devicewrapper.util.ondevicecomponent.UIAutomatorBridgeCommunicator;
 import com.musala.atmosphere.agent.exception.OnDeviceComponentCommunicationException;
 import com.musala.atmosphere.agent.exception.OnDeviceComponentInitializationException;
 import com.musala.atmosphere.agent.exception.OnDeviceComponentStartingException;
 import com.musala.atmosphere.agent.exception.OnDeviceServiceTerminationException;
-import com.musala.atmosphere.agent.util.AgentPropertiesLoader;
 import com.musala.atmosphere.agent.util.DeviceScreenResolutionParser;
 import com.musala.atmosphere.agent.util.MemoryUnitConverter;
-import com.musala.atmosphere.commons.ConnectionType;
 import com.musala.atmosphere.commons.DeviceInformation;
 import com.musala.atmosphere.commons.PowerProperties;
-import com.musala.atmosphere.commons.TelephonyInformation;
+import com.musala.atmosphere.commons.RoutingAction;
+import com.musala.atmosphere.commons.SmsMessage;
 import com.musala.atmosphere.commons.beans.DeviceAcceleration;
 import com.musala.atmosphere.commons.beans.DeviceOrientation;
+import com.musala.atmosphere.commons.beans.MobileDataState;
+import com.musala.atmosphere.commons.beans.PhoneNumber;
 import com.musala.atmosphere.commons.exceptions.CommandFailedException;
 import com.musala.atmosphere.commons.gesture.Gesture;
 import com.musala.atmosphere.commons.sa.IWrapDevice;
+import com.musala.atmosphere.commons.ui.UiElementDescriptor;
 import com.musala.atmosphere.commons.util.Pair;
 
 public abstract class AbstractWrapDevice extends UnicastRemoteObject implements IWrapDevice {
@@ -58,42 +54,42 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
      */
     private static final long serialVersionUID = -9122701818928360023L;
 
-    private static final int COMMAND_EXECUTION_TIMEOUT = AgentPropertiesLoader.getCommandExecutionTimeout();
+    private static final Logger LOGGER = Logger.getLogger(AbstractWrapDevice.class.getCanonicalName());
 
     // WARNING : do not change the remote folder unless you really know what you are doing.
     private static final String XMLDUMP_REMOTE_FILE_NAME = "/data/local/tmp/uidump.xml";
+
+    private static final String XMLDUMP_COMMAND = "uiautomator dump " + XMLDUMP_REMOTE_FILE_NAME;
 
     private static final String XMLDUMP_LOCAL_FILE_NAME = "uidump.xml";
 
     private static final String SCREENSHOT_REMOTE_FILE_NAME = "/data/local/tmp/screen.png";
 
+    private static final String SCREENSHOT_COMMAND = "screencap -p " + SCREENSHOT_REMOTE_FILE_NAME;
+
     private static final String SCREENSHOT_LOCAL_FILE_NAME = "screen.png";
 
-    private static final String TEMP_APK_FILE_SUFFIX = ".apk";
+    protected final ServiceCommunicator serviceCommunicator;
+
+    protected final UIAutomatorBridgeCommunicator uiAutomatorBridgeCommunicator;
 
     private static final String GET_RAM_MEMORY_COMMAND = "cat /proc/meminfo | grep MemTotal";
 
-    private File tempApkFile;
+    protected final ShellCommandExecutor shellCommandExecutor;
 
-    private OutputStream tempApkFileOutputStream;
+    protected final IDevice wrappedDevice;
 
-    private PreconditionsManager preconditionsManager;
+    private final PreconditionsManager preconditionsManager;
 
-    protected ServiceCommunicator serviceCommunicator;
-
-    protected UIAutomatorBridgeCommunicator uiAutomatorBridgeCommunicator;
-
-    protected IDevice wrappedDevice;
-
-    private final static Logger LOGGER = Logger.getLogger(AbstractWrapDevice.class.getCanonicalName());
-
-    private Map<String, BackgroundShellCommandExecutor> backgroundShellCommandsMap = new HashMap<String, BackgroundShellCommandExecutor>();
+    private final ApkInstaller apkInstaller;
 
     public AbstractWrapDevice(IDevice deviceToWrap) throws RemoteException {
         wrappedDevice = deviceToWrap;
 
-        preconditionsManager = new PreconditionsManager(wrappedDevice);
+        shellCommandExecutor = new ShellCommandExecutor(wrappedDevice);
+        apkInstaller = new ApkInstaller(wrappedDevice);
 
+        preconditionsManager = new PreconditionsManager(wrappedDevice);
         preconditionsManager.manageOnDeviceComponents();
 
         PortForwardingService forwardingService = new PortForwardingService(wrappedDevice);
@@ -111,13 +107,128 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
     }
 
     @Override
-    public Pair<Integer, Integer> getNetworkSpeed() throws RemoteException {
-        // TODO get network speed for abstract devices
-        return null;
+    public Object route(RoutingAction action, Object... args) throws RemoteException, CommandFailedException {
+        try {
+            action.validateArguments(args);
+        } catch (IllegalArgumentException e) {
+            throw new CommandFailedException("Command arguments are not valid.", e);
+        }
+
+        Object returnValue = null;
+
+        switch (action) {
+        // Shell command related
+            case EXECUTE_SHELL_COMMAND:
+                returnValue = shellCommandExecutor.execute((String) args[0]);
+                break;
+            case EXECUTE_SHELL_COMMAND_SEQUENCE:
+                returnValue = shellCommandExecutor.executeSequence((List<String>) args[0]);
+                break;
+
+            // APK file installation related
+            case APK_INIT_INSTALL:
+                apkInstaller.initAPKInstall();
+                break;
+            case APK_APPEND_DATA:
+                apkInstaller.appendToAPK((byte[]) args[0], (int) args[1]);
+                break;
+            case APK_BUILD_AND_INSTALL:
+                apkInstaller.buildAndInstallAPK();
+                break;
+            case APK_DISCARD:
+                apkInstaller.discardAPK();
+                break;
+
+            // Getters
+            case GET_DEVICE_INFORMATION:
+                returnValue = getDeviceInformation();
+                break;
+            case GET_SCREENSHOT:
+                returnValue = getScreenshot();
+                break;
+            case GET_UI_XML_DUMP:
+                returnValue = getUiXml();
+                break;
+            case GET_POWER_PROPERTIES:
+                returnValue = serviceCommunicator.getPowerProperties();
+                break;
+            case GET_TELEPHONY_INFO:
+                returnValue = serviceCommunicator.getTelephonyInformation();
+                break;
+            case GET_CONNECTION_TYPE:
+                returnValue = serviceCommunicator.getConnectionType();
+                break;
+            case GET_DEVICE_ORIENTATION:
+                returnValue = serviceCommunicator.getDeviceOrientation();
+                break;
+            case GET_DEVICE_ACCELERATION:
+                returnValue = serviceCommunicator.getAcceleration();
+                break;
+            case GET_FREE_RAM:
+                returnValue = getFreeRAM();
+                break;
+            case GET_MOBILE_DATA_STATE:
+                returnValue = getMobileDataState();
+                break;
+
+            // Setters
+            case SET_POWER_PROPERTIES:
+                setPowerProperties((PowerProperties) args[0]);
+                break;
+            case SET_WIFI_STATE:
+                serviceCommunicator.setWiFi((boolean) args[0]);
+                break;
+            case SET_MOBILE_DATA_STATE:
+                setMobileDataState((MobileDataState) args[0]);
+                break;
+            case SET_ACCELERATION:
+                setAcceleration((DeviceAcceleration) args[0]);
+                break;
+            case SET_ORIENTATION:
+                setOrientation((DeviceOrientation) args[0]);
+                break;
+            case SET_NETWORK_SPEED:
+                setNetworkSpeed((Pair<Integer, Integer>) args[0]);
+                break;
+
+            // Misc functionalities
+            case PLAY_GESTURE:
+                uiAutomatorBridgeCommunicator.playGesture((Gesture) args[0]);
+                break;
+            case CLEAR_FIELD:
+                uiAutomatorBridgeCommunicator.clearField((UiElementDescriptor) args[0]);
+                break;
+
+            // Call related
+            case CALL_CANCEL:
+                cancelCall((PhoneNumber) args[0]);
+                break;
+            case CALL_HOLD:
+                holdCall((PhoneNumber) args[0]);
+                break;
+            case CALL_RECEIVE:
+                receiveCall((PhoneNumber) args[0]);
+                break;
+            case CALL_ACCEPT:
+                acceptCall((PhoneNumber) args[0]);
+                break;
+
+            // SMS related
+            case SMS_RECEIVE:
+                receiveSms((SmsMessage) args[0]);
+                break;
+        }
+
+        return returnValue;
     }
 
-    @Override
-    public long getFreeRAM() throws RemoteException, CommandFailedException {
+    /**
+     * Gets the amount of free RAM on the device.
+     * 
+     * @return Memory amount in MB.
+     * @throws CommandFailedException
+     */
+    private long getFreeRAM() throws CommandFailedException {
         DeviceProfiler profiler = new DeviceProfiler(wrappedDevice);
         try {
             Map<String, Long> memUsage = profiler.getMeminfoDataset();
@@ -130,94 +241,12 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
         }
     }
 
-    @Override
-    public String executeShellCommand(String command) throws RemoteException, CommandFailedException {
-        String response = "";
-
-        try {
-            CollectingOutputReceiver outputReceiver = new CollectingOutputReceiver();
-            wrappedDevice.executeShellCommand(command, outputReceiver, COMMAND_EXECUTION_TIMEOUT);
-
-            response = outputReceiver.getOutput();
-        } catch (TimeoutException | AdbCommandRejectedException | ShellCommandUnresponsiveException | IOException e) {
-            // Redirect the exception to the server
-            throw new CommandFailedException("Shell command execution failed. See the enclosed exception for more information.",
-                                             e);
-        }
-
-        return response;
-    }
-
     /**
-     * Executes a shell command in the background. Returns immediately. Usage should be limited to commands which do
-     * will not return for a long time (because of thread related performance issues).
+     * Gets a {@link DeviceInformation} descriptor structure for the {@link IDevice} in this wrapper.
      * 
-     * @param command
-     *        - shell command that should be executed in the background.
+     * @return The populated {@link DeviceInformation} instance.
      */
-    public void executeBackgroundShellCommand(String command) {
-        if (backgroundShellCommandsMap.containsKey(command)) {
-            terminateBackgroundShellCommand(command);
-        }
-
-        BackgroundShellCommandExecutor commandExecutor = new BackgroundShellCommandExecutor(command, wrappedDevice);
-        Thread executorThread = new Thread(commandExecutor);
-        executorThread.start();
-
-        backgroundShellCommandsMap.put(command, commandExecutor);
-    }
-
-    /**
-     * Returns the execution exception that was thrown when a background shell command was executed (null if no
-     * exception was thrown).
-     * 
-     * @param command
-     *        - the executed command for which we want the thrown exception.
-     * @return the exception itself.
-     */
-    public Exception getBackgroundShellCommandExecutionException(String command) {
-        if (!backgroundShellCommandsMap.containsKey(command)) {
-            throw new NoSuchElementException("No command '" + command + "' was found to be running or done executing.");
-        }
-        BackgroundShellCommandExecutor executor = backgroundShellCommandsMap.get(command);
-        Exception executionException = executor.getExecutionException();
-        return executionException;
-    }
-
-    /**
-     * Terminates a background executing command.
-     * 
-     * @param command
-     *        - the command to be terminated.
-     */
-    public void terminateBackgroundShellCommand(String command) {
-        if (!backgroundShellCommandsMap.containsKey(command)) {
-            throw new NoSuchElementException("No command '" + command + "' was found to be running or done executing.");
-        }
-        BackgroundShellCommandExecutor executor = backgroundShellCommandsMap.get(command);
-        Thread executorThread = executor.getExecutorThread();
-        if (executorThread.isAlive()) {
-            executorThread.stop();
-        }
-        backgroundShellCommandsMap.remove(command);
-    }
-
-    @Override
-    public List<String> executeSequenceOfShellCommands(List<String> commandsList)
-        throws RemoteException,
-            CommandFailedException {
-        List<String> responses = new ArrayList<String>(commandsList.size());
-
-        for (String commandForExecution : commandsList) {
-            String responseFromCommandExecution = executeShellCommand(commandForExecution);
-            responses.add(responseFromCommandExecution);
-        }
-
-        return responses;
-    }
-
-    @Override
-    public DeviceInformation getDeviceInformation() throws RemoteException {
+    public DeviceInformation getDeviceInformation() {
         DeviceInformation deviceInformation = new DeviceInformation();
 
         // Serial number
@@ -277,7 +306,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
         String ramMemoryPattern = "(\\w+):(\\s+)(\\d+\\w+)";
 
         try {
-            ramMemoryString = executeShellCommand(GET_RAM_MEMORY_COMMAND);
+            ramMemoryString = shellCommandExecutor.execute(GET_RAM_MEMORY_COMMAND);
         } catch (CommandFailedException e) {
             LOGGER.warn("Getting device RAM failed.", e);
         }
@@ -305,10 +334,14 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
         return deviceInformation;
     }
 
-    @Override
-    public byte[] getScreenshot() throws RemoteException, CommandFailedException {
-        String screenshotCommand = "screencap -p " + SCREENSHOT_REMOTE_FILE_NAME;
-        executeShellCommand(screenshotCommand);
+    /**
+     * Returns a JPEG compressed display screenshot.
+     * 
+     * @return Image in an array of bytes that, when dumped to a file, shows the device display.
+     * @throws CommandFailedException
+     */
+    private byte[] getScreenshot() throws CommandFailedException {
+        shellCommandExecutor.execute(SCREENSHOT_COMMAND);
 
         try {
             wrappedDevice.pullFile(SCREENSHOT_REMOTE_FILE_NAME, SCREENSHOT_LOCAL_FILE_NAME);
@@ -322,77 +355,15 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
         }
     }
 
-    @Override
-    public void initAPKInstall() throws RemoteException, IOException {
-        discardAPK();
+    /**
+     * Gets the UIAutomator UI XML dump.
+     * 
+     * @return UI XML file dump in a string.
+     * @throws CommandFailedException
+     */
+    private String getUiXml() throws CommandFailedException {
 
-        String tempApkFilePrefix = wrappedDevice.getSerialNumber();
-        // replaces everything that is not a letter,
-        // number or underscore with an underscore
-        tempApkFilePrefix = tempApkFilePrefix.replaceAll("\\W+", "_");
-
-        tempApkFile = File.createTempFile(tempApkFilePrefix, TEMP_APK_FILE_SUFFIX);
-        tempApkFileOutputStream = new BufferedOutputStream(new FileOutputStream(tempApkFile));
-    }
-
-    @Override
-    public void appendToAPK(byte[] bytes, int length) throws RemoteException, IOException {
-        if (tempApkFile == null || tempApkFileOutputStream == null) {
-            throw new IllegalStateException("Temp .apk file should be created (by calling initAPKInstall()) before any calls to appendToAPK() and buildAndInstallAPK().");
-        }
-        tempApkFileOutputStream.write(bytes, 0, length);
-    }
-
-    @Override
-    public void buildAndInstallAPK() throws RemoteException, IOException, CommandFailedException {
-        if (tempApkFile == null || tempApkFileOutputStream == null) {
-            throw new IllegalStateException("Temp .apk file should be created (by calling initAPKInstall()) before any calls to appendToAPK() and buildAndInstallAPK().");
-        }
-
-        try {
-            tempApkFileOutputStream.flush();
-            tempApkFileOutputStream.close();
-            tempApkFileOutputStream = null;
-            String absolutePathToApk = tempApkFile.getAbsolutePath();
-
-            String installResult = wrappedDevice.installPackage(absolutePathToApk, true /* force reinstall */);
-            discardAPK();
-
-            if (installResult != null) {
-                LOGGER.error("PacketManager installation returned error code '" + installResult + "'.");
-                throw new CommandFailedException("PacketManager installation returned error code '" + installResult
-                        + "'.");
-            }
-        } catch (InstallException e) {
-            LOGGER.error("Installing apk failed.", e);
-            throw new CommandFailedException("Installing .apk file failed. See the enclosed exception for more information.",
-                                             e);
-        }
-    }
-
-    @Override
-    public void discardAPK() throws RemoteException {
-        if (tempApkFileOutputStream != null) {
-            try {
-                tempApkFileOutputStream.close();
-            } catch (IOException e) {
-                // closing failed, it was never functional. nothing to do here.
-            }
-            tempApkFileOutputStream = null;
-        }
-
-        if (tempApkFile != null) {
-            if (tempApkFile.exists()) {
-                tempApkFile.delete();
-            }
-            tempApkFile = null;
-        }
-    }
-
-    @Override
-    public String getUiXml() throws RemoteException, CommandFailedException {
-        String dumpCommand = "uiautomator dump " + XMLDUMP_REMOTE_FILE_NAME;
-        executeShellCommand(dumpCommand);
+        shellCommandExecutor.execute(XMLDUMP_COMMAND);
 
         try {
             wrappedDevice.pullFile(XMLDUMP_REMOTE_FILE_NAME, XMLDUMP_LOCAL_FILE_NAME);
@@ -410,86 +381,8 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
     }
 
     @Override
-    public int getNetworkLatency() throws RemoteException {
-        // TODO implement get network latency
-        return 0;
-    }
-
-    @Override
-    public PowerProperties getPowerProperties() throws RemoteException, CommandFailedException {
-        try {
-            return serviceCommunicator.getPowerProperties();
-        } catch (CommandFailedException e) {
-            LOGGER.fatal("Getting power related environment information failed.", e);
-            throw e;
-        }
-
-    }
-
-    @Override
-    public DeviceOrientation getDeviceOrientation() throws RemoteException, CommandFailedException {
-        try {
-            DeviceOrientation result = serviceCommunicator.getDeviceOrientation();
-            return result;
-        } catch (CommandFailedException e) {
-            LOGGER.fatal("Getting device orientation failed.", e);
-            throw e;
-        }
-    }
-
-    @Override
-    public DeviceAcceleration getDeviceAcceleration() throws RemoteException, CommandFailedException {
-        try {
-            return serviceCommunicator.getAcceleration();
-        } catch (CommandFailedException e) {
-            LOGGER.fatal("Getting acceleation failed.", e);
-            throw e;
-        }
-
-    }
-
-    @Override
-    public ConnectionType getConnectionType() throws RemoteException, CommandFailedException {
-        try {
-            return serviceCommunicator.getConnectionType();
-        } catch (CommandFailedException e) {
-            LOGGER.fatal("Getting connection type failed.", e);
-            throw e;
-        }
-    }
-
-    @Override
-    public void setWiFi(boolean state) throws CommandFailedException, RemoteException {
-        try {
-            serviceCommunicator.setWiFi(state);
-        } catch (CommandFailedException e) {
-            LOGGER.fatal("Setting WiFi failed.", e);
-            throw e;
-        }
-    }
-
-    @Override
-    public void executeGesture(Gesture gesture) throws CommandFailedException, RemoteException {
-        uiAutomatorBridgeCommunicator.playGesture(gesture);
-    }
-
-    @Override
-    public TelephonyInformation getTelephonyInformation() throws CommandFailedException, RemoteException {
-        try {
-            return serviceCommunicator.getTelephonyInformation();
-        } catch (CommandFailedException e) {
-            LOGGER.fatal("Getting telephony information failed.", e);
-            throw e;
-        }
-    }
-
-    @Override
     protected void finalize() {
-        for (BackgroundShellCommandExecutor commandExecutor : backgroundShellCommandsMap.values()) {
-            // we cannot modify the map here!
-            Thread executorThread = commandExecutor.getExecutorThread();
-            executorThread.stop();
-        }
+        shellCommandExecutor.terminateAllInBackground();
 
         try {
             serviceCommunicator.stopAtmosphereService();
@@ -499,4 +392,33 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
             LOGGER.warn(loggerMessage, e);
         }
     }
+
+    /**
+     * @return the {@link ShellCommandExecutor} associated with the wrapped {@link IDevice} in this instance.
+     */
+    public ShellCommandExecutor getShellCommandExecutor() {
+        return shellCommandExecutor;
+    }
+
+    abstract protected void setPowerProperties(PowerProperties properties) throws CommandFailedException;
+
+    abstract protected void cancelCall(PhoneNumber n) throws CommandFailedException;
+
+    abstract protected void receiveCall(PhoneNumber phoneNumber) throws CommandFailedException;
+
+    abstract protected void acceptCall(PhoneNumber phoneNumber) throws CommandFailedException;
+
+    abstract protected void holdCall(PhoneNumber phoneNumber) throws CommandFailedException;
+
+    abstract protected void receiveSms(SmsMessage smsMessage) throws CommandFailedException;
+
+    abstract protected void setOrientation(DeviceOrientation deviceOrientation) throws CommandFailedException;
+
+    abstract protected void setAcceleration(DeviceAcceleration deviceAcceleration) throws CommandFailedException;
+
+    abstract protected void setMobileDataState(MobileDataState state) throws CommandFailedException;
+
+    abstract protected MobileDataState getMobileDataState() throws CommandFailedException;
+
+    abstract protected void setNetworkSpeed(Pair<Integer, Integer> speeds) throws CommandFailedException;
 }

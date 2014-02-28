@@ -2,7 +2,6 @@ package com.musala.atmosphere.agent.util;
 
 import com.musala.atmosphere.commons.PowerProperties;
 import com.musala.atmosphere.commons.ad.Request;
-import com.musala.atmosphere.commons.ad.RequestType;
 import com.musala.atmosphere.commons.ad.service.ServiceRequest;
 
 /**
@@ -11,38 +10,35 @@ import com.musala.atmosphere.commons.ad.service.ServiceRequest;
  * @author yordan.petrov
  * 
  */
-public class FakeServiceAnswer implements FakeOnDeviceComponentRequestHandler
-{
-	public final static int FAKE_BATTERY_LEVEL = 69;
+public class FakeServiceAnswer implements FakeOnDeviceComponentRequestHandler {
+    public final static int FAKE_BATTERY_LEVEL = 69;
 
-	public final static PowerProperties FAKE_POWER_PROPERTIES = new PowerProperties();
+    public final static PowerProperties FAKE_POWER_PROPERTIES = new PowerProperties();
 
-	public final static Boolean FAKE_RESPONSE = true;
+    public final static Boolean FAKE_RESPONSE = true;
 
-	@Override
-	public Object handleRequest(Request<RequestType> request)
-	{
-		ServiceRequest requestType = (ServiceRequest) request.getType();
+    @Override
+    public Object handleRequest(Request<?> request) {
+        ServiceRequest requestType = (ServiceRequest) request.getType();
 
-		switch (requestType)
-		{
-			case VALIDATION:
-				return requestType;
-			case GET_POWER_PROPERTIES:
-				return FAKE_POWER_PROPERTIES;
-			case SET_WIFI:
-			case GET_CONNECTION_TYPE:
-				return 5;
-			case GET_ACCELERATION_READINGS:
-				Float[] acceleration = new Float[3];
-				acceleration[0] = 3.7f;
-				acceleration[1] = 5.2f;
-				acceleration[2] = -7.1f;
-				return acceleration;
-			case GET_ORIENTATION_READINGS:
-				return new float[] {6.0f, 1.0f, 9.0f};
-			default:
-				return null;
-		}
-	}
+        switch (requestType) {
+            case VALIDATION:
+                return ServiceRequest.VALIDATION;
+            case GET_POWER_PROPERTIES:
+                return FAKE_POWER_PROPERTIES;
+            case SET_WIFI:
+            case GET_CONNECTION_TYPE:
+                return 5;
+            case GET_ACCELERATION_READINGS:
+                Float[] acceleration = new Float[3];
+                acceleration[0] = 3.7f;
+                acceleration[1] = 5.2f;
+                acceleration[2] = -7.1f;
+                return acceleration;
+            case GET_ORIENTATION_READINGS:
+                return new float[] {6.0f, 1.0f, 9.0f};
+            default:
+                return null;
+        }
+    }
 }

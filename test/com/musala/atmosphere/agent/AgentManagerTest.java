@@ -26,6 +26,7 @@ import com.android.ddmlib.Log;
 import com.musala.atmosphere.agent.util.AgentPropertiesLoader;
 import com.musala.atmosphere.agent.util.FakeOnDeviceComponentAnswer;
 import com.musala.atmosphere.commons.DeviceInformation;
+import com.musala.atmosphere.commons.RoutingAction;
 import com.musala.atmosphere.commons.sa.DeviceParameters;
 import com.musala.atmosphere.commons.sa.IWrapDevice;
 import com.musala.atmosphere.commons.sa.SystemSpecification;
@@ -80,14 +81,15 @@ public class AgentManagerTest {
         when(mockDevice.arePropertiesSet()).thenReturn(true);
         when(mockDevice.getProperties()).thenReturn(mockPropMap);
 
-        Mockito.doAnswer(new FakeOnDeviceComponentAnswer()).when(mockDevice).createForward(anyInt(), anyInt());
+        FakeOnDeviceComponentAnswer onDeviceAnswer = new FakeOnDeviceComponentAnswer();
+        Mockito.doAnswer(onDeviceAnswer).when(mockDevice).createForward(anyInt(), anyInt());
 
         agentManager.registerDeviceOnAgent(mockDevice);
 
         Registry agentRegistry = LocateRegistry.getRegistry("localhost", RMI_PORT);
         IWrapDevice device = (IWrapDevice) agentRegistry.lookup(mockDeviceSerialNumber);
 
-        DeviceInformation info = device.getDeviceInformation();
+        DeviceInformation info = (DeviceInformation) device.route(RoutingAction.GET_DEVICE_INFORMATION);
         assertEquals("Mock device creation / .getDeviceInformation() data mismatch. (serial number)",
                      info.getSerialNumber(),
                      mockDeviceSerialNumber);

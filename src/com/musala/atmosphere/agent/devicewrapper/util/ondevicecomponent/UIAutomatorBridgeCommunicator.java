@@ -1,7 +1,6 @@
 package com.musala.atmosphere.agent.devicewrapper.util.ondevicecomponent;
 
 import java.io.IOException;
-import java.rmi.RemoteException;
 import java.util.List;
 
 import com.musala.atmosphere.agent.devicewrapper.AbstractWrapDevice;
@@ -14,105 +13,99 @@ import com.musala.atmosphere.commons.ad.Request;
 import com.musala.atmosphere.commons.ad.uiautomator.UIAutomatorBridgeRequest;
 import com.musala.atmosphere.commons.exceptions.CommandFailedException;
 import com.musala.atmosphere.commons.gesture.Timeline;
+import com.musala.atmosphere.commons.ui.UiElementDescriptor;
 
 /**
  * Class that communicates with the ATMOSPHERE UIAutomator bridge.
- *
+ * 
  * @author yordan.petrov
- *
+ * 
  */
-public class UIAutomatorBridgeCommunicator
-{
-	private static final int START_GESTURE_PLAYER_WAIT = 2000; // milliseconds
+public class UIAutomatorBridgeCommunicator {
+    private static final int START_GESTURE_PLAYER_WAIT = 3000; // milliseconds
 
-	private static final String START_GESTURE_PLAYER_COMMAND = "uiautomator runtest AtmosphereUIAutomatorBridge.jar AtmosphereUIAutomatorBridgeLibs.jar -c com.musala.atmosphere.uiautomator.ConnectionInitializer";
+    private static final String START_GESTURE_PLAYER_COMMAND = "uiautomator runtest AtmosphereUIAutomatorBridge.jar AtmosphereUIAutomatorBridgeLibs.jar -c com.musala.atmosphere.uiautomator.ConnectionInitializer";
 
-	private final AbstractWrapDevice wrappedDevice;
+    private final AbstractWrapDevice wrappedDevice;
 
-	private UIAutomatorBridgeRequestHandler uiAutomatorBridgeRequestHandler;
+    private UIAutomatorBridgeRequestHandler uiAutomatorBridgeRequestHandler;
 
-	private PortForwardingService portForwardingService;
+    private PortForwardingService portForwardingService;
 
-	private String deviceSerialNumber;
+    private String deviceSerialNumber;
 
-	public UIAutomatorBridgeCommunicator(PortForwardingService portForwarder, AbstractWrapDevice wrappedDevice)
-	{
-		portForwardingService = portForwarder;
+    public UIAutomatorBridgeCommunicator(PortForwardingService portForwarder, AbstractWrapDevice wrappedDevice) {
+        portForwardingService = portForwarder;
 
-		int localPort = portForwardingService.getLocalForwardedPort();
+        int localPort = portForwardingService.getLocalForwardedPort();
+        this.wrappedDevice = wrappedDevice;
+        DeviceInformation deviceInformation = wrappedDevice.getDeviceInformation();
+        deviceSerialNumber = deviceInformation.getSerialNumber();
 
-		this.wrappedDevice = wrappedDevice;
-		try
-		{
-			DeviceInformation deviceInformation = wrappedDevice.getDeviceInformation();
-			deviceSerialNumber = deviceInformation.getSerialNumber();
-		}
-		catch (RemoteException e1)
-		{
-			// not possible, as this is a local invocation.
-		}
+        startUIAutomatorBridge();
+        try {
+            uiAutomatorBridgeRequestHandler = new UIAutomatorBridgeRequestHandler(portForwardingService, localPort);
+        } catch (OnDeviceComponentValidationException e) {
+            String errorMessage = String.format("UIAutomator bridge initialization failed for %s.", deviceSerialNumber);
+            throw new OnDeviceComponentInitializationException(errorMessage, e);
+        }
+    }
 
-		startUIAutomatorBridge();
-		try
-		{
-			uiAutomatorBridgeRequestHandler = new UIAutomatorBridgeRequestHandler(portForwardingService, localPort);
-		}
-		catch (OnDeviceComponentValidationException e)
-		{
-			String errorMessage = String.format("UIAutomator bridge initialization failed for %s.", deviceSerialNumber);
-			throw new OnDeviceComponentInitializationException(errorMessage, e);
-		}
-	}
+    /**
+     * Starts the Atmosphere UIAutomator bridge on the wrappedDevice.
+     */
+    private void startUIAutomatorBridge() {
 
-	/**
-	 * Starts the Atmosphere UIAutomator bridge on the wrappedDevice.
-	 */
-	private void startUIAutomatorBridge()
-	{
+        wrappedDevice.getShellCommandExecutor().executeInBackground(START_GESTURE_PLAYER_COMMAND);
 
-		wrappedDevice.executeBackgroundShellCommand(START_GESTURE_PLAYER_COMMAND);
+        try {
+            Thread.sleep(START_GESTURE_PLAYER_WAIT);
+        } catch (InterruptedException e) {
+            // cannot happen.
+            e.printStackTrace();
+        }
 
-		try
-		{
-			Thread.sleep(START_GESTURE_PLAYER_WAIT);
-		}
-		catch (InterruptedException e)
-		{
-			// cannot happen.
-			e.printStackTrace();
-		}
+        // This exception fetching will probably be too soon.
+        Throwable commandExecutionException = wrappedDevice.getShellCommandExecutor()
+                                                           .getBackgroundExecutionException(START_GESTURE_PLAYER_COMMAND);
+        if (commandExecutionException != null) {
+            String errorMessage = String.format("Starting ATMOSPHERE UIAutomator bridge failed for %s.",
+                                                deviceSerialNumber);
+            throw new OnDeviceComponentStartingException(errorMessage, commandExecutionException);
+        }
+    }
 
-		// This exception fetching will probably be too soon.
-		Exception commandExecutionException = wrappedDevice.getBackgroundShellCommandExecutionException(START_GESTURE_PLAYER_COMMAND);
-		if (commandExecutionException != null)
-		{
-			String errorMessage = String.format("Starting ATMOSPHERE UIAutomator bridge failed for %s.",
-												deviceSerialNumber);
-			throw new OnDeviceComponentStartingException(errorMessage, commandExecutionException);
-		}
-	}
+    /**
+     * Plays the passed list of {@link Timeline} instances.
+     * 
+     * @param pointerTimelines
+     *        - a list of {@link Timeline} instances.
+     * 
+     * @throws CommandFailedException
+     */
+    public void playGesture(List<Timeline> pointerTimelines) throws CommandFailedException {
+        Object[] arguments = new Object[] {pointerTimelines};
+        Request<UIAutomatorBridgeRequest> uiAutomatorBridgeRequest = new Request<UIAutomatorBridgeRequest>(UIAutomatorBridgeRequest.PLAY_GESTURE);
+        uiAutomatorBridgeRequest.setArguments(arguments);
 
-	/**
-	 * Plays the passed list of {@link Timeline} instances.
-	 *
-	 * @param pointerTimelines
-	 *        - a list of {@link Timeline} instances.
-	 *
-	 * @throws CommandFailedException
-	 */
-	public void playGesture(List<Timeline> pointerTimelines) throws CommandFailedException
-	{
-		Object[] arguments = new Object[] {pointerTimelines};
-		Request<UIAutomatorBridgeRequest> uiAutomatorBridgeRequest = new Request<UIAutomatorBridgeRequest>(UIAutomatorBridgeRequest.PLAY_GESTURE);
-		uiAutomatorBridgeRequest.setArguments(arguments);
+        try {
+            uiAutomatorBridgeRequestHandler.request(uiAutomatorBridgeRequest);
+        } catch (ClassNotFoundException | IOException e) {
+            throw new CommandFailedException("Gesture execution failed.", e);
+        }
+    }
 
-		try
-		{
-			uiAutomatorBridgeRequestHandler.request(uiAutomatorBridgeRequest);
-		}
-		catch (ClassNotFoundException | IOException e)
-		{
-			throw new CommandFailedException("Gesture execution failed.", e);
-		}
-	}
+    public void clearField(UiElementDescriptor descriptor) throws CommandFailedException {
+        Object[] arguments = new Object[] {descriptor};
+        Request<UIAutomatorBridgeRequest> uiAutomatorBridgeRequest = new Request<UIAutomatorBridgeRequest>(UIAutomatorBridgeRequest.CLEAR_FIELD);
+        uiAutomatorBridgeRequest.setArguments(arguments);
+        try {
+            boolean response = (Boolean) uiAutomatorBridgeRequestHandler.request(uiAutomatorBridgeRequest);
+            if (!response) {
+                throw new CommandFailedException("Clearing element failed. UI element could not be found.");
+            }
+        } catch (ClassNotFoundException | IOException e) {
+            throw new CommandFailedException("Clearing element failed.", e);
+        }
+    }
 }

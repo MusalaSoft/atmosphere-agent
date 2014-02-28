@@ -14,131 +14,111 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
 import com.musala.atmosphere.commons.ad.Request;
-import com.musala.atmosphere.commons.ad.RequestType;
 import com.musala.atmosphere.commons.ad.service.ServiceRequest;
 import com.musala.atmosphere.commons.ad.uiautomator.UIAutomatorBridgeRequest;
 
-public class FakeOnDeviceComponentAnswer implements Answer<Void>
-{
-	public final static int FAKE_BATTERY_LEVEL = 69;
+public class FakeOnDeviceComponentAnswer implements Answer<Void> {
+    public final static int FAKE_BATTERY_LEVEL = 69;
 
-	public final static boolean FAKE_POWER_STATE = false;
+    public final static boolean FAKE_POWER_STATE = false;
 
-	public final static Boolean FAKE_RESPONSE = true;
+    public final static Boolean FAKE_RESPONSE = true;
 
-	private Integer port;
+    private Integer port;
 
-	Thread thread;
+    private Thread thread;
 
-	FakeServiceAnswer fakeServiceRequestHandler;
+    private FakeServiceAnswer fakeServiceRequestHandler;
 
-	FakeGesturePlayerAnswer fakeGesturePlayerRequestHandler;
+    private FakeGesturePlayerAnswer fakeGesturePlayerRequestHandler;
 
-	public FakeOnDeviceComponentAnswer()
-	{
-		super();
-		fakeGesturePlayerRequestHandler = new FakeGesturePlayerAnswer();
-		fakeServiceRequestHandler = new FakeServiceAnswer();
-	}
+    public FakeOnDeviceComponentAnswer() {
+        super();
+        fakeGesturePlayerRequestHandler = new FakeGesturePlayerAnswer();
+        fakeServiceRequestHandler = new FakeServiceAnswer();
+    }
 
-	public void setPort(int port)
-	{
-		this.port = port;
-	}
+    public void setPort(int port) {
+        this.port = port;
+    }
 
-	@Override
-	public Void answer(InvocationOnMock invocation) throws Throwable
-	{
-		port = (Integer) invocation.getArguments()[0];
+    @Override
+    public Void answer(InvocationOnMock invocation) throws Throwable {
+        int newPort = (Integer) invocation.getArguments()[0];
+        if (thread != null && port == newPort) {
+            return null;
+        }
+        if (thread != null) {
+            thread.stop();
+        }
+        port = newPort;
+        thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    ServerSocketChannel serverSocketChannel = ServerSocketChannel.open();
+                    serverSocketChannel.configureBlocking(true);
+                    try {
+                        serverSocketChannel.socket().bind(new InetSocketAddress(port));
+                    } catch (BindException e) {
+                        e.printStackTrace();
+                        return;
+                    }
 
-		thread = new Thread(new Runnable()
-		{
-			@Override
-			public void run()
-			{
-				try
-				{
-					ServerSocketChannel serverSocketChannel = ServerSocketChannel.open();
-					serverSocketChannel.configureBlocking(true);
-					try
-					{
-						serverSocketChannel.socket().bind(new InetSocketAddress(port));
-					}
-					catch (BindException e)
-					{
-						return;
-					}
+                    while (true) {
+                        listen(serverSocketChannel);
+                    }
+                } catch (Throwable e) {
+                    e.printStackTrace();
+                }
+            }
 
-					while (true)
-					{
-						listen(serverSocketChannel);
-					}
-				}
-				catch (Throwable e)
-				{
-					e.printStackTrace();
-				}
-			}
+            private void listen(ServerSocketChannel serverSocketChannel) throws IOException {
+                SocketChannel socketChannel = serverSocketChannel.accept();
 
-			public void listen(ServerSocketChannel serverSocketChannel) throws IOException
-			{
-				SocketChannel socketChannel = serverSocketChannel.accept();
+                ObjectInputStream socketServerInputStream = null;
+                ObjectOutputStream socketServerOutputStream = null;
 
-				ObjectInputStream socketServerInputStream = null;
-				ObjectOutputStream socketServerOutputStream = null;
+                try {
+                    Socket baseSocket = socketChannel.socket();
+                    socketServerInputStream = new ObjectInputStream(baseSocket.getInputStream());
+                    socketServerOutputStream = new ObjectOutputStream(baseSocket.getOutputStream());
+                    Object response = null;
+                    Request<?> request = (Request<?>) socketServerInputStream.readObject();
+                    Object requestType = request.getType();
+                    if (requestType instanceof ServiceRequest) {
+                        response = fakeServiceRequestHandler.handleRequest(request);
+                    } else if (requestType instanceof UIAutomatorBridgeRequest) {
+                        response = fakeGesturePlayerRequestHandler.handleRequest(request);
+                    } else {
+                        System.out.println("Fake On-Device components Answer: WARNING: request could not be recognized as a known request type!");
+                    }
 
-				try
-				{
-					Socket baseSocket = socketChannel.socket();
-					socketServerInputStream = new ObjectInputStream(baseSocket.getInputStream());
-					Object response = null;
-					Object request = socketServerInputStream.readObject();
-					Request<RequestType> requestType = (Request<RequestType>) request;
-					try
-					{
-						Request<ServiceRequest> serviceRequest = (Request<ServiceRequest>) request;
-						response = fakeServiceRequestHandler.handleRequest(requestType);
-					}
-					catch (ClassCastException e)
-					{
-						Request<UIAutomatorBridgeRequest> gesturePlayerRequest = (Request<UIAutomatorBridgeRequest>) request;
-						response = fakeGesturePlayerRequestHandler.handleRequest(requestType);
-					}
+                    socketServerOutputStream.writeObject(response);
+                    socketServerOutputStream.flush();
+                } catch (EOFException | ClassNotFoundException e) {
+                    e.printStackTrace();
+                } finally {
+                    if (socketServerInputStream != null) {
+                        socketServerInputStream.close();
+                    }
+                    if (socketServerOutputStream != null) {
+                        socketServerOutputStream.close();
+                    }
+                    if (socketChannel != null) {
+                        socketChannel.close();
+                    }
+                }
+            }
 
-					socketServerOutputStream = new ObjectOutputStream(baseSocket.getOutputStream());
-					socketServerOutputStream.writeObject(response);
-					socketServerOutputStream.flush();
-				}
-				catch (EOFException | ClassNotFoundException e)
-				{
-					e.printStackTrace();
-				}
-				finally
-				{
-					if (socketServerInputStream != null)
-					{
-						socketServerInputStream.close();
-					}
-					if (socketServerOutputStream != null)
-					{
-						socketServerOutputStream.close();
-					}
-					if (socketChannel != null)
-					{
-						socketChannel.close();
-					}
-				}
-			}
+        });
 
-		});
+        thread.start();
+        return null;
+    }
 
-		thread.start();
-		return null;
-	}
-
-	@Override
-	public void finalize()
-	{
-		thread.interrupt();
-	}
+    @Override
+    public void finalize() {
+        thread.interrupt();
+    }
 }
