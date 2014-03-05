@@ -29,7 +29,12 @@ public enum DevicePropertyStringConstants {
     /**
      * Property key for the API level string of a device.
      */
-    PROPERTY_API_LEVEL("ro.build.version.sdk");
+    PROPERTY_API_LEVEL("ro.build.version.sdk"),
+
+    /**
+     * Property key for the manufacturer string of a device.
+     */
+    PROPERTY_MANUFACTURER_NAME("ro.product.manufacturer");
 
     private String value;
 

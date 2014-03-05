@@ -301,6 +301,12 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
             deviceInformation.setApiLevel(deviceApiLevel);
         }
 
+        // Manufacturer
+        if (devicePropertiesMap.containsKey(DevicePropertyStringConstants.PROPERTY_MANUFACTURER_NAME.toString())) {
+            String manufacturerName = devicePropertiesMap.get(DevicePropertyStringConstants.PROPERTY_MANUFACTURER_NAME.toString());
+            deviceInformation.setManufacturer(manufacturerName);
+        }
+
         // RAM
         String ramMemoryString = DeviceInformation.FALLBACK_RAM_AMOUNT.toString();
         String ramMemoryPattern = "(\\w+):(\\s+)(\\d+\\w+)";
