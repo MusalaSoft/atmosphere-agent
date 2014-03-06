@@ -147,14 +147,6 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager {
         LOGGER.info("AgentManager created successfully.");
     }
 
-    public String getServerIPAddress() {
-        return serverIPAddress;
-    }
-
-    public int getServerRmiPort() {
-        return serverRmiPort;
-    }
-
     /**
      * Gets the initial devices list (IDevices). Gets called in the AgentManager constructor.
      * 
