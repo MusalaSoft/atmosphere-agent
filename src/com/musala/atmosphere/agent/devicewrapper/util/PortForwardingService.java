@@ -5,6 +5,7 @@ import java.io.IOException;
 import com.android.ddmlib.AdbCommandRejectedException;
 import com.android.ddmlib.IDevice;
 import com.android.ddmlib.TimeoutException;
+import com.musala.atmosphere.agent.exception.ForwardingPortFailedException;
 import com.musala.atmosphere.agent.exception.PortForwardingRemovalException;
 import com.musala.atmosphere.agent.util.PortAllocator;
 import com.musala.atmosphere.commons.ad.service.ServiceConstants;
