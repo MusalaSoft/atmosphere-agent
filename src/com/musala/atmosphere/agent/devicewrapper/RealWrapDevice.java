@@ -11,6 +11,7 @@ import com.musala.atmosphere.commons.SmsMessage;
 import com.musala.atmosphere.commons.beans.BatteryLevel;
 import com.musala.atmosphere.commons.beans.BatteryState;
 import com.musala.atmosphere.commons.beans.DeviceAcceleration;
+import com.musala.atmosphere.commons.beans.DeviceMagneticField;
 import com.musala.atmosphere.commons.beans.DeviceOrientation;
 import com.musala.atmosphere.commons.beans.MobileDataState;
 import com.musala.atmosphere.commons.beans.PhoneNumber;
@@ -129,14 +130,20 @@ public class RealWrapDevice extends AbstractWrapDevice {
 
     @Override
     protected void setOrientation(DeviceOrientation deviceOrientation) throws CommandFailedException {
-        // We can't set device orientation on real device.
-        throw new CommandFailedException("Can not set device orientation on real devices.");
+        // We can't set orientation on real device.
+        throw new CommandFailedException("Can not set orientation on real devices.");
     }
 
     @Override
     protected void setAcceleration(DeviceAcceleration deviceAcceleration) throws CommandFailedException {
-        // We can't set device acceleration on real device.
-        throw new CommandFailedException("Can not set device acceleration on real devices.");
+        // We can't set acceleration on real device.
+        throw new CommandFailedException("Can not set acceleration on real devices.");
+    }
+
+    @Override
+    protected void setMagneticField(DeviceMagneticField deviceMagneticField) throws CommandFailedException {
+        // We can't set magnetic field on real device.
+        throw new CommandFailedException("Can not set magnetic field on real devices.");
     }
 
     @Override

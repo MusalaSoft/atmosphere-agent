@@ -7,13 +7,14 @@ import java.util.regex.Pattern;
 import org.apache.log4j.Logger;
 
 import com.android.ddmlib.IDevice;
-import com.musala.atmosphere.agent.devicewrapper.util.EmulatorConnectionFailedException;
 import com.musala.atmosphere.agent.devicewrapper.util.ExtendedEmulatorConsole;
+import com.musala.atmosphere.agent.exception.EmulatorConnectionFailedException;
 import com.musala.atmosphere.commons.PowerProperties;
 import com.musala.atmosphere.commons.SmsMessage;
 import com.musala.atmosphere.commons.beans.BatteryLevel;
 import com.musala.atmosphere.commons.beans.BatteryState;
 import com.musala.atmosphere.commons.beans.DeviceAcceleration;
+import com.musala.atmosphere.commons.beans.DeviceMagneticField;
 import com.musala.atmosphere.commons.beans.DeviceOrientation;
 import com.musala.atmosphere.commons.beans.MobileDataState;
 import com.musala.atmosphere.commons.beans.PhoneNumber;
@@ -47,11 +48,17 @@ public class EmulatorWrapDevice extends AbstractWrapDevice {
         // When the android method SensorManager.getRotationMatrix(...) in invoked with 0:0:0 as magnetic field
         // readings, it fails because of the invalidity of the data. This is why we set dummy data - so the on-device
         // service can function normally.
+
         try {
+
             ExtendedEmulatorConsole emulatorConsole = prepareEmulatorConsole();
-            emulatorConsole.setMagneticField(50, 50, 50);
+
+            emulatorConsole.setMagneticField(new DeviceMagneticField(50.0f, 50.0f, 50.0f));
+
         } catch (CommandFailedException e) {
+
             LOGGER.warn("Connection to emulator console failed.", e);
+
         }
     }
 
@@ -104,6 +111,12 @@ public class EmulatorWrapDevice extends AbstractWrapDevice {
     protected void setAcceleration(DeviceAcceleration deviceAcceleration) throws CommandFailedException {
         ExtendedEmulatorConsole emulatorConsole = prepareEmulatorConsole();
         emulatorConsole.setAcceleration(deviceAcceleration);
+    }
+
+    @Override
+    protected void setMagneticField(DeviceMagneticField deviceMagneticField) throws CommandFailedException {
+        ExtendedEmulatorConsole emulatorConsole = prepareEmulatorConsole();
+        emulatorConsole.setMagneticField(deviceMagneticField);
     }
 
     @Override

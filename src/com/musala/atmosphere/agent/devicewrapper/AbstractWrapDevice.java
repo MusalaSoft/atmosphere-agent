@@ -22,12 +22,12 @@ import com.android.ddmlib.TimeoutException;
 import com.musala.atmosphere.agent.DevicePropertyStringConstants;
 import com.musala.atmosphere.agent.devicewrapper.util.ApkInstaller;
 import com.musala.atmosphere.agent.devicewrapper.util.DeviceProfiler;
-import com.musala.atmosphere.agent.devicewrapper.util.ForwardingPortFailedException;
 import com.musala.atmosphere.agent.devicewrapper.util.PortForwardingService;
 import com.musala.atmosphere.agent.devicewrapper.util.PreconditionsManager;
 import com.musala.atmosphere.agent.devicewrapper.util.ShellCommandExecutor;
 import com.musala.atmosphere.agent.devicewrapper.util.ondevicecomponent.ServiceCommunicator;
 import com.musala.atmosphere.agent.devicewrapper.util.ondevicecomponent.UIAutomatorBridgeCommunicator;
+import com.musala.atmosphere.agent.exception.ForwardingPortFailedException;
 import com.musala.atmosphere.agent.exception.OnDeviceComponentCommunicationException;
 import com.musala.atmosphere.agent.exception.OnDeviceComponentInitializationException;
 import com.musala.atmosphere.agent.exception.OnDeviceComponentStartingException;
@@ -39,6 +39,7 @@ import com.musala.atmosphere.commons.PowerProperties;
 import com.musala.atmosphere.commons.RoutingAction;
 import com.musala.atmosphere.commons.SmsMessage;
 import com.musala.atmosphere.commons.beans.DeviceAcceleration;
+import com.musala.atmosphere.commons.beans.DeviceMagneticField;
 import com.musala.atmosphere.commons.beans.DeviceOrientation;
 import com.musala.atmosphere.commons.beans.MobileDataState;
 import com.musala.atmosphere.commons.beans.PhoneNumber;
@@ -189,6 +190,9 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
                 break;
             case SET_NETWORK_SPEED:
                 setNetworkSpeed((Pair<Integer, Integer>) args[0]);
+                break;
+            case SET_MAGNETIC_FIELD:
+                setMagneticField((DeviceMagneticField) args[0]);
                 break;
 
             // Misc functionalities
@@ -421,6 +425,8 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
     abstract protected void setOrientation(DeviceOrientation deviceOrientation) throws CommandFailedException;
 
     abstract protected void setAcceleration(DeviceAcceleration deviceAcceleration) throws CommandFailedException;
+
+    abstract protected void setMagneticField(DeviceMagneticField deviceMagneticField) throws CommandFailedException;
 
     abstract protected void setMobileDataState(MobileDataState state) throws CommandFailedException;
 

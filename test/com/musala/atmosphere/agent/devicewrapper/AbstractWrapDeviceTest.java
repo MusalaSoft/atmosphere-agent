@@ -15,6 +15,7 @@ import com.musala.atmosphere.commons.PowerProperties;
 import com.musala.atmosphere.commons.RoutingAction;
 import com.musala.atmosphere.commons.SmsMessage;
 import com.musala.atmosphere.commons.beans.DeviceAcceleration;
+import com.musala.atmosphere.commons.beans.DeviceMagneticField;
 import com.musala.atmosphere.commons.beans.DeviceOrientation;
 import com.musala.atmosphere.commons.beans.MobileDataState;
 import com.musala.atmosphere.commons.beans.PhoneNumber;
@@ -84,6 +85,10 @@ public class AbstractWrapDeviceTest {
 
             @Override
             public void cancelCall(PhoneNumber phoneNumber) throws CommandFailedException {
+            }
+
+            @Override
+            protected void setMagneticField(DeviceMagneticField deviceMagneticField) throws CommandFailedException {
             }
         };
 
