@@ -1,17 +1,13 @@
 package com.musala.atmosphere.agent.devicewrapper.util;
 
 import java.io.IOException;
-import java.rmi.RemoteException;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
 
 import com.android.ddmlib.AdbCommandRejectedException;
-import com.android.ddmlib.CollectingOutputReceiver;
 import com.android.ddmlib.IDevice;
-import com.android.ddmlib.InstallException;
-import com.android.ddmlib.ShellCommandUnresponsiveException;
 import com.android.ddmlib.SyncException;
 import com.android.ddmlib.TimeoutException;
 import com.musala.atmosphere.agent.exception.ComponentInstallationFailedException;
@@ -68,7 +64,15 @@ public class PreconditionsManager {
 
     private IDevice wrappedDevice;
 
+    private ShellCommandExecutor shellCommandExecutor;
+
+    private ApkInstaller apkInstaller;
+
     public PreconditionsManager(IDevice wrappedDevice) {
+
+        this.shellCommandExecutor = new ShellCommandExecutor(wrappedDevice);
+        this.apkInstaller = new ApkInstaller(wrappedDevice);
+
         this.wrappedDevice = wrappedDevice;
     }
 
@@ -86,8 +90,8 @@ public class PreconditionsManager {
         String actualResponse = null;
 
         try {
-            actualResponse = executeShellCommand(command);
-        } catch (RemoteException | CommandFailedException e) {
+            actualResponse = shellCommandExecutor.execute(command);
+        } catch (CommandFailedException e) {
             return false;
         }
 
@@ -126,8 +130,8 @@ public class PreconditionsManager {
         String actualResponse = null;
 
         try {
-            actualResponse = executeShellCommand(command);
-        } catch (RemoteException | CommandFailedException e) {
+            actualResponse = shellCommandExecutor.execute(command);
+        } catch (CommandFailedException e) {
             return false;
         }
 
@@ -170,8 +174,8 @@ public class PreconditionsManager {
         String actualResponse = null;
 
         try {
-            actualResponse = executeShellCommand(command);
-        } catch (RemoteException | CommandFailedException e) {
+            actualResponse = shellCommandExecutor.execute(command);
+        } catch (CommandFailedException e) {
             String errorMessage = String.format("%s could not be set as the default input method.",
                                                 OnDeviceComponent.IME.getHumanReadableName());
             LOGGER.warn(errorMessage, e);
@@ -193,28 +197,6 @@ public class PreconditionsManager {
         componentInstalledStatus.put(OnDeviceComponent.UI_AUTOMATOR_BRIDGE, isUiAutomatorBridgeInstalled());
         componentInstalledStatus.put(OnDeviceComponent.UI_AUTOMATOR_BRIDGE_LIBS, isUiAutomatorBridgeLibsInstalled());
         return componentInstalledStatus;
-    }
-
-    /**
-     * Installs a component APK file on the device.
-     * 
-     * @param onDeviceComponent
-     *        - the component that should be installed.
-     */
-    private void installComponentApk(OnDeviceComponent onDeviceComponent) {
-        String statusMessage = String.format(COMPONENT_INSTALLATION_MESSAGE, onDeviceComponent.getHumanReadableName());
-        LOGGER.info(statusMessage);
-
-        String componentPath = ON_DEVICE_COMPONENT_FILES_PATH.concat(onDeviceComponent.getFileName());
-
-        try {
-            wrappedDevice.installPackage(componentPath, true, new String());
-        } catch (InstallException e) {
-            String errorMessage = String.format(COMPONENT_INSTALLATION_FAILED_MESSAGE,
-                                                onDeviceComponent.getHumanReadableName());
-            LOGGER.fatal(errorMessage, e);
-            throw new ComponentInstallationFailedException(errorMessage, e);
-        }
     }
 
     /**
@@ -244,14 +226,14 @@ public class PreconditionsManager {
      * Installs the Atmosphere Service on the device.
      */
     private void installService() {
-        installComponentApk(OnDeviceComponent.SERVICE);
+        apkInstaller.installAPK(OnDeviceComponent.SERVICE);
     }
 
     /**
      * Installs the Atmosphere IME on the device.
      */
     private void installIme() {
-        installComponentApk(OnDeviceComponent.IME);
+        apkInstaller.installAPK(OnDeviceComponent.IME);
     }
 
     /**
@@ -266,30 +248,6 @@ public class PreconditionsManager {
      */
     private void installUiAutomatorBridgeLibs() {
         pushComponentFileToTemp(OnDeviceComponent.UI_AUTOMATOR_BRIDGE_LIBS);
-    }
-
-    /**
-     * Executes a command on the device's shell and returns the result of the execution.
-     * 
-     * @param command
-     *        - Shell command to be executed
-     * @return Shell response from the command execution.
-     * @throws RemoteException
-     * @throws CommandFailedException
-     */
-    private String executeShellCommand(String command) throws RemoteException, CommandFailedException {
-        String response = "";
-
-        try {
-            CollectingOutputReceiver outputReceiver = new CollectingOutputReceiver();
-            wrappedDevice.executeShellCommand(command, outputReceiver, COMMAND_EXECUTION_TIMEOUT);
-
-            response = outputReceiver.getOutput();
-        } catch (TimeoutException | AdbCommandRejectedException | ShellCommandUnresponsiveException | IOException e) {
-            throw new CommandFailedException("Shell command execution failed.", e);
-        }
-
-        return response;
     }
 
     /**

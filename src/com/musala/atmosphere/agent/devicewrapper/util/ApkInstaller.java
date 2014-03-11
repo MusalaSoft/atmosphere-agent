@@ -10,6 +10,9 @@ import org.apache.log4j.Logger;
 
 import com.android.ddmlib.IDevice;
 import com.android.ddmlib.InstallException;
+import com.musala.atmosphere.agent.exception.ComponentInstallationFailedException;
+import com.musala.atmosphere.agent.util.AgentPropertiesLoader;
+import com.musala.atmosphere.agent.util.OnDeviceComponent;
 import com.musala.atmosphere.commons.exceptions.CommandFailedException;
 
 /**
@@ -28,6 +31,21 @@ public class ApkInstaller {
     private OutputStream tempApkFileOutputStream;
 
     private final IDevice device;
+
+    /**
+     * Message that is used when a component installation begins.
+     */
+    private static final String COMPONENT_INSTALLATION_MESSAGE = "Installing %s component on the device...";
+
+    /**
+     * The path to the on-device components' files from the config file.
+     */
+    private static final String ON_DEVICE_COMPONENT_FILES_PATH = AgentPropertiesLoader.getOnDeviceComponentFilesPath();
+
+    /**
+     * Message that is used when a component installation fails.
+     */
+    private static final String COMPONENT_INSTALLATION_FAILED_MESSAGE = "%s component installation failed.";
 
     /**
      * Creates an APK installer instance for a specified {@link IDevice}.
@@ -111,6 +129,21 @@ public class ApkInstaller {
         } catch (InstallException | IOException e) {
             LOGGER.error("Installing apk failed.", e);
             throw new CommandFailedException("Installing .apk file failed.", e);
+        }
+    }
+
+    public void installAPK(OnDeviceComponent onDeviceComponent) {
+        String statusMessage = String.format(COMPONENT_INSTALLATION_MESSAGE, onDeviceComponent.getHumanReadableName());
+        LOGGER.info(statusMessage);
+
+        String componentPath = ON_DEVICE_COMPONENT_FILES_PATH.concat(onDeviceComponent.getFileName());
+        try {
+            device.installPackage(componentPath, true, new String());
+        } catch (InstallException e) {
+            String errorMessage = String.format(COMPONENT_INSTALLATION_FAILED_MESSAGE,
+                                                onDeviceComponent.getHumanReadableName());
+            LOGGER.fatal(errorMessage, e);
+            throw new ComponentInstallationFailedException(errorMessage, e);
         }
     }
 
