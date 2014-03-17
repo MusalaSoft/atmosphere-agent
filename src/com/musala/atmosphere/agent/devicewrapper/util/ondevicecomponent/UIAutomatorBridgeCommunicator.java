@@ -22,9 +22,9 @@ import com.musala.atmosphere.commons.ui.UiElementDescriptor;
  * 
  */
 public class UIAutomatorBridgeCommunicator {
-    private static final int START_GESTURE_PLAYER_WAIT = 3000; // milliseconds
+    private static final int START_GESTURE_PLAYER_WAIT = 4000; // milliseconds
 
-    private static final String START_GESTURE_PLAYER_COMMAND = "uiautomator runtest AtmosphereUIAutomatorBridge.jar AtmosphereUIAutomatorBridgeLibs.jar -c com.musala.atmosphere.uiautomator.ConnectionInitializer";
+    private static final String START_GESTURE_PLAYER_COMMAND = "uiautomator runtest AtmosphereUIAutomatorBridge.jar AtmosphereUIAutomatorBridgeLibs.jar -c com.musala.atmosphere.uiautomator.ActionDispatcher";
 
     private final AbstractWrapDevice wrappedDevice;
 

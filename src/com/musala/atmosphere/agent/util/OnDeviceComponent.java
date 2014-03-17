@@ -10,7 +10,7 @@ public enum OnDeviceComponent {
     SERVICE("Atmosphere Service", "AtmosphereService.apk", "com.musala.atmosphere.service", null),
     UI_AUTOMATOR_BRIDGE("Atmosphere UiAutomator Bridge", "AtmosphereUIAutomatorBridge.jar", null, null),
     UI_AUTOMATOR_BRIDGE_LIBS("Atmosphere UiAutomator Bridge Libraries", "AtmosphereUIAutomatorBridgeLibs.jar", null, null),
-    IME("Atmosphere Input Method Editor", "AtmosphereIME.apk", "com.musala.atmosphere.ime", "com.musala.atmosphere.ime/.AtmosphereIME");
+    IME("Atmosphere Input Method Engine", "AtmosphereIME.apk", "com.musala.atmosphere.ime", "com.musala.atmosphere.ime/.AtmosphereIME");
 
     private OnDeviceComponent(String humanReadableName, String fileName, String packageName, String imeId) {
         this.humanReadableName = humanReadableName;
