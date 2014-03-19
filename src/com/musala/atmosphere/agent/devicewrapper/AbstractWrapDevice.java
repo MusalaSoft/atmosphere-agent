@@ -1,10 +1,8 @@
 package com.musala.atmosphere.agent.devicewrapper;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.List;
@@ -353,11 +351,19 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
     private byte[] getScreenshot() throws CommandFailedException {
         shellCommandExecutor.execute(SCREENSHOT_COMMAND);
 
+        FileInputStream fileReader = null;
+
         try {
             wrappedDevice.pullFile(SCREENSHOT_REMOTE_FILE_NAME, SCREENSHOT_LOCAL_FILE_NAME);
 
-            Path screenshotPath = Paths.get(SCREENSHOT_LOCAL_FILE_NAME);
-            byte[] screenshotData = Files.readAllBytes(screenshotPath);
+            File localScreenshotFile = new File(SCREENSHOT_LOCAL_FILE_NAME);
+            fileReader = new FileInputStream(localScreenshotFile);
+
+            final long sizeOfScreenshotFile = localScreenshotFile.length();
+            byte[] screenshotData = new byte[(int) sizeOfScreenshotFile];
+            fileReader.read(screenshotData);
+            fileReader.close();
+
             return screenshotData;
         } catch (IOException | AdbCommandRejectedException | TimeoutException | SyncException e) {
             LOGGER.error("Screenshot fetching failed.", e);
