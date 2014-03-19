@@ -64,11 +64,11 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 
     private static final String XMLDUMP_LOCAL_FILE_NAME = "uidump.xml";
 
-    private static final String SCREENSHOT_REMOTE_FILE_NAME = "/data/local/tmp/screen.png";
+    private static final String SCREENSHOT_REMOTE_FILE_NAME = "/data/local/tmp/remote_screen.png";
 
     private static final String SCREENSHOT_COMMAND = "screencap -p " + SCREENSHOT_REMOTE_FILE_NAME;
 
-    private static final String SCREENSHOT_LOCAL_FILE_NAME = "screen.png";
+    private static final String SCREENSHOT_LOCAL_FILE_NAME = "local_screen.png";
 
     protected final ServiceCommunicator serviceCommunicator;
 
