@@ -11,6 +11,7 @@ import com.musala.atmosphere.agent.exception.OnDeviceComponentValidationExceptio
 import com.musala.atmosphere.commons.DeviceInformation;
 import com.musala.atmosphere.commons.ad.Request;
 import com.musala.atmosphere.commons.ad.uiautomator.UIAutomatorBridgeRequest;
+import com.musala.atmosphere.commons.beans.SwipeDirection;
 import com.musala.atmosphere.commons.exceptions.CommandFailedException;
 import com.musala.atmosphere.commons.gesture.Timeline;
 import com.musala.atmosphere.commons.ui.UiElementDescriptor;
@@ -106,6 +107,20 @@ public class UIAutomatorBridgeCommunicator {
             }
         } catch (ClassNotFoundException | IOException e) {
             throw new CommandFailedException("Clearing element failed.", e);
+        }
+    }
+
+    public void swipeElement(UiElementDescriptor descriptor, SwipeDirection direction) throws CommandFailedException {
+        Object[] arguments = new Object[] {descriptor, direction};
+        Request<UIAutomatorBridgeRequest> uiAutomatorBridgeRequest = new Request<UIAutomatorBridgeRequest>(UIAutomatorBridgeRequest.ELEMENT_SWIPE);
+        uiAutomatorBridgeRequest.setArguments(arguments);
+        try {
+            boolean response = (Boolean) uiAutomatorBridgeRequestHandler.request(uiAutomatorBridgeRequest);
+            if (!response) {
+                throw new CommandFailedException("Swiping element failed. UI element could not be found.");
+            }
+        } catch (ClassNotFoundException | IOException e) {
+            throw new CommandFailedException("Swiping element failed.", e);
         }
     }
 }

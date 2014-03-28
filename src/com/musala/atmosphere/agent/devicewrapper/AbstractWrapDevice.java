@@ -41,6 +41,7 @@ import com.musala.atmosphere.commons.beans.DeviceMagneticField;
 import com.musala.atmosphere.commons.beans.DeviceOrientation;
 import com.musala.atmosphere.commons.beans.MobileDataState;
 import com.musala.atmosphere.commons.beans.PhoneNumber;
+import com.musala.atmosphere.commons.beans.SwipeDirection;
 import com.musala.atmosphere.commons.exceptions.CommandFailedException;
 import com.musala.atmosphere.commons.gesture.Gesture;
 import com.musala.atmosphere.commons.sa.IWrapDevice;
@@ -199,6 +200,9 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
                 break;
             case CLEAR_FIELD:
                 uiAutomatorBridgeCommunicator.clearField((UiElementDescriptor) args[0]);
+                break;
+            case ELEMENT_SWIPE:
+                uiAutomatorBridgeCommunicator.swipeElement((UiElementDescriptor) args[0], (SwipeDirection) args[1]);
                 break;
 
             // Call related
