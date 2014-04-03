@@ -1,6 +1,9 @@
 package com.musala.atmosphere.agent;
 
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
 import java.rmi.AccessException;
 import java.rmi.NoSuchObjectException;
 import java.rmi.NotBoundException;
@@ -11,21 +14,30 @@ import java.rmi.registry.Registry;
 import java.rmi.server.RemoteServer;
 import java.rmi.server.ServerNotActiveException;
 import java.rmi.server.UnicastRemoteObject;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
+import java.util.Enumeration;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+
+import javax.xml.bind.annotation.adapters.HexBinaryAdapter;
 
 import org.apache.log4j.Logger;
 
 import com.android.ddmlib.AndroidDebugBridge;
 import com.android.ddmlib.EmulatorConsole;
 import com.android.ddmlib.IDevice;
-import com.musala.atmosphere.agent.exception.IllegalPortException;
-import com.musala.atmosphere.agent.util.AgentIdCalculator;
+import com.musala.atmosphere.agent.devicewrapper.EmulatorWrapDevice;
+import com.musala.atmosphere.agent.devicewrapper.RealWrapDevice;
+import com.musala.atmosphere.agent.exception.OnDeviceComponentCommunicationException;
+import com.musala.atmosphere.agent.util.AgentPropertiesLoader;
 import com.musala.atmosphere.agent.util.SystemSpecificationLoader;
 import com.musala.atmosphere.commons.sa.DeviceParameters;
 import com.musala.atmosphere.commons.sa.IAgentManager;
 import com.musala.atmosphere.commons.sa.IConnectionRequestReceiver;
+import com.musala.atmosphere.commons.sa.IWrapDevice;
 import com.musala.atmosphere.commons.sa.RmiStringConstants;
 import com.musala.atmosphere.commons.sa.SystemSpecification;
 import com.musala.atmosphere.commons.sa.exceptions.ADBridgeFailException;
@@ -44,6 +56,8 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager {
      */
     private static final long serialVersionUID = 8467038223162311366L;
 
+    private final static String AGENTID_HASH_ALGORITHM = "md5";
+
     private final static Logger LOGGER = Logger.getLogger(AgentManager.class.getCanonicalName());
 
     private AndroidDebugBridge androidDebugBridge;
@@ -56,19 +70,15 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager {
 
     private int serverRmiPort;
 
-    private AgentIdCalculator agentIdCalculator;
-
     private SystemSpecificationLoader systemSpecificationLoader;
-
-    private DeviceChangeListener deviceChangeListener;
 
     // CopyOnWriteArrayList, as we will not have many devices (more than 10 or 15 practically) connected on a single
     // agent and we are concerned about the DeviceChangeListener not to break things.
     private volatile List<IDevice> devicesList = new CopyOnWriteArrayList<IDevice>();
 
-    private int rmiRegistryPort;
+    private DeviceChangeListener currentDeviceChangeListener;
 
-    private DeviceManager deviceManager;
+    private int rmiRegistryPort;
 
     /**
      * Creates a new AgentManager on this computer.
@@ -80,18 +90,31 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager {
      * @throws RemoteException
      * @throws ADBridgeFailException
      */
-    public AgentManager(AndroidDebugBridgeManager androidDebugBridgeManager, int rmiPort, DeviceManager deviceManager)
-        throws RemoteException {
+    public AgentManager(String adbPath, int rmiPort) throws RemoteException, ADBridgeFailException {
         systemSpecificationLoader = new SystemSpecificationLoader();
         systemSpecificationLoader.getSpecification();
 
-        this.deviceManager = deviceManager;
+        // Start the bridge
+        try {
+            AndroidDebugBridge.init(false /* debugger support */);
+            androidDebugBridge = AndroidDebugBridge.createBridge(adbPath, false /*
+                                                                                 * force new bridge, no need for that
+                                                                                 */);
+        } catch (IllegalStateException e) {
+            // The debug bridge library was already init-ed.
+            // This means we are creating a new AgentManager while another is active, which is not okay.
+            close();
+            throw new ADBridgeFailException("The debug bridge failed to init, see the enclosed exception for more information.",
+                                            e);
+        } catch (NullPointerException e) {
+            // The debug bridge creation failed internally.
+            close();
+            throw new ADBridgeFailException("The debug bridge failed to init, see the enclosed exception for more information.",
+                                            e);
+        }
 
         // Calculate the current Agent ID.
-        agentIdCalculator = new AgentIdCalculator();
-        agentId = agentIdCalculator.getId();
-
-        androidDebugBridgeManager.setListener(deviceChangeListener);
+        agentId = calculateId();
 
         // Publish this AgentManager in the RMI registry
         try {
@@ -103,7 +126,56 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager {
         }
         rmiRegistryPort = rmiPort;
 
+        // Get the initial devices list
+        List<IDevice> initialDevicesList = null;
+        try {
+            initialDevicesList = getInitialDeviceList();
+        } catch (ADBridgeFailException e) {
+            close();
+            throw e;
+        }
+
+        LOGGER.info("Initial device list fetched containing " + initialDevicesList.size() + " devices.");
+        for (IDevice initialDevice : initialDevicesList) {
+            registerDeviceOnAgent(initialDevice);
+        }
+
+        // Set up a device change listener that will update this agent, but not connect and notify any server.
+        // Server connection will be established later, when a server registers itself.
+        currentDeviceChangeListener = new DeviceChangeListener(this);
+        AndroidDebugBridge.addDeviceChangeListener(currentDeviceChangeListener);
         LOGGER.info("AgentManager created successfully.");
+    }
+
+    /**
+     * Gets the initial devices list (IDevices). Gets called in the AgentManager constructor.
+     * 
+     * @return List of IDevices
+     * @throws ADBridgeFailException
+     */
+    private List<IDevice> getInitialDeviceList() throws ADBridgeFailException {
+        // From an adb example :
+        // we can't just ask for the device list right away, as the internal thread getting
+        // them from ADB may not be done getting the first list.
+        // Since we don't really want getDevices() to be blocking, we wait here manually.
+        int timeout = 0;
+
+        while (androidDebugBridge.hasInitialDeviceList() == false) {
+            try {
+                Thread.sleep(100);
+                timeout++;
+            } catch (InterruptedException e) {
+            }
+            // let's not wait > timeout milliseconds.
+            if (timeout * 100 > AgentPropertiesLoader.getADBConnectionTimeout()) {
+                LOGGER.fatal("Timeout getting initial device list.");
+
+                throw new ADBridgeFailException("Bridge timed out.");
+            }
+        }
+
+        IDevice[] devicesArray = androidDebugBridge.getDevices();
+        return Arrays.asList(devicesArray);
     }
 
     /**
@@ -149,15 +221,162 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager {
         }
     }
 
+    public List<IDevice> getDevicesList() {
+        return devicesList;
+    }
+
+    @Override
     public List<String> getAllDeviceWrappers() throws RemoteException {
         List<String> wrappersList = new LinkedList<>();
 
         for (IDevice device : devicesList) {
-            String rmiWrapperBindingId = deviceManager.getRmiWrapperBindingIdentifier(device);
+            String rmiWrapperBindingId = getRmiWrapperBindingIdentifier(device);
             wrappersList.add(rmiWrapperBindingId);
         }
 
         return wrappersList;
+    }
+
+    /**
+     * Registers a newly connected device on this AgentManager (adds it to the internal list of devices and creates a
+     * wrapper for it in the RMI registry). Gets invoked by the DeviceChangeListener.
+     * 
+     * @param connectedDevice
+     *        the newly connected device.
+     * @return the RMI binding ID of the newly bound wrapper.
+     */
+    String registerDeviceOnAgent(IDevice connectedDevice) {
+        if (devicesList.contains(connectedDevice)) {
+            // The device is already registered, nothing to do here.
+            // This should not normally happen!
+            LOGGER.warn("Trying to register a device that is already registered.");
+            return "";
+        }
+
+        try {
+            String publishId = createWrapperForDevice(connectedDevice);
+            devicesList.add(connectedDevice);
+            return publishId;
+        } catch (RemoteException | OnDeviceComponentCommunicationException e) {
+            LOGGER.fatal("Could not publish a wrapper for a device in the RMI registry.", e);
+        }
+        return "";
+    }
+
+    /**
+     * Unregisters a disconnected device on this AgentManager (removes it from the internal list of devices and unbinds
+     * it's wrapper from the RMI registry). Gets invoked by the DeviceChangeListener.
+     * 
+     * @param disconnectedDevice
+     *        the disconnected device.
+     * @return The RMI binding ID of the unbound device.
+     */
+    String unregisterDeviceOnAgent(IDevice disconnectedDevice) {
+        if (!devicesList.contains(disconnectedDevice)) {
+            // The device was never registered, so nothing to do here.
+            // This should not normally happen!
+            LOGGER.warn("Trying to unregister a device [" + disconnectedDevice.getSerialNumber()
+                    + "] that was not present in the devices list.");
+            return "";
+        }
+
+        try {
+            String publishId = unbindWrapperForDevice(disconnectedDevice);
+            devicesList.remove(disconnectedDevice);
+            return publishId;
+        } catch (RemoteException e) {
+            LOGGER.error("Device wrapper unbinding failed.", e);
+        }
+        return "";
+    }
+
+    /**
+     * Creates a wrapper for a device with specific serial number.
+     * 
+     * @param device
+     *        that will be wrapped.
+     * @return RMI binding ID for the newly created wrapper.
+     * @throws RemoteException
+     */
+    private String createWrapperForDevice(IDevice device) throws RemoteException {
+        IWrapDevice deviceWrapper = null;
+        String rmiWrapperBindingId = getRmiWrapperBindingIdentifier(device);
+
+        // Create a device wrapper depending on the device type (emulator/real)
+        try {
+            if (device.isEmulator()) {
+                deviceWrapper = new EmulatorWrapDevice(device);
+            } else {
+                deviceWrapper = new RealWrapDevice(device);
+            }
+        } catch (NotPossibleForDeviceException e) {
+            // Not really possible as we have just checked.
+            // Nothing to do here.
+            e.printStackTrace();
+        }
+
+        rmiRegistry.rebind(rmiWrapperBindingId, deviceWrapper);
+        LOGGER.info("Created wrapper for device with bindingId = " + rmiWrapperBindingId);
+
+        return rmiWrapperBindingId;
+    }
+
+    /**
+     * Returns a unique identifier for this device, which will be used as a publishing string for the wrapper of the
+     * device in RMI.
+     * 
+     * @param device
+     *        which we want to get unique identifier for.
+     * @return unique identifier for the device.
+     */
+    private String getRmiWrapperBindingIdentifier(IDevice device) {
+        String wrapperId = device.getSerialNumber();
+        return wrapperId;
+    }
+
+    /**
+     * Unbinds a device wrapper from the RMI registry.
+     * 
+     * @param device
+     *        the device with the wrapper to be removed.
+     * @return the RMI binding ID of the unbound wrapper.
+     * @throws RemoteException
+     */
+    private String unbindWrapperForDevice(IDevice device) throws RemoteException {
+        String rmiWrapperBindingId = getRmiWrapperBindingIdentifier(device);
+
+        try {
+            rmiRegistry.unbind(rmiWrapperBindingId);
+        } catch (NotBoundException e) {
+            // Wrapper for the device was never published, so we have nothing to unbind.
+            // Nothing to do here.
+            LOGGER.error("Unbinding device wrapper [" + rmiWrapperBindingId + "] failed.", e);
+            return "";
+        } catch (AccessException e) {
+            throw new RemoteException("Unbinding device wrapper [" + rmiWrapperBindingId + "] failed.", e);
+        }
+
+        LOGGER.info("Removed wrapper for device with bindingId [" + rmiWrapperBindingId + "].");
+
+        return rmiWrapperBindingId;
+    }
+
+    /**
+     * Returns an IDevice by it's specified serial number.
+     * 
+     * @param serialNumber
+     *        Serial number of the wanted IDevice.
+     * @return The IDevice.
+     * @throws DeviceNotFoundException
+     *         If no device with serial number serialNumber is found.
+     */
+    private IDevice getDeviceBySerialNumber(String serialNumber) throws DeviceNotFoundException {
+        for (IDevice device : devicesList) {
+            if (device.getSerialNumber().equals(serialNumber)) {
+                return device;
+            }
+        }
+        throw new DeviceNotFoundException("Device with serial number " + serialNumber + " not found on this agent.");
     }
 
     @Override
@@ -172,7 +391,7 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager {
         throws RemoteException,
             NotPossibleForDeviceException,
             DeviceNotFoundException {
-        IDevice device = deviceManager.getDeviceBySerialNumber(serialNumber);
+        IDevice device = getDeviceBySerialNumber(serialNumber);
 
         // If a device is a real, physical device, throw an exception
         if (!device.isEmulator()) {
@@ -200,7 +419,7 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager {
             DeviceNotFoundException,
             NotPossibleForDeviceException {
         // FIXME remove/edit this method.
-        IDevice device = deviceManager.getDeviceBySerialNumber(serialNumber);
+        IDevice device = getDeviceBySerialNumber(serialNumber);
         if (device.isEmulator() == false) {
             throw new NotPossibleForDeviceException("Cannot close and erase a real device.");
         }
@@ -211,6 +430,36 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager {
     @Override
     public String getAgentId() throws RemoteException {
         return agentId;
+    }
+
+    private static String calculateId() {
+        try {
+            Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
+            StringBuilder ipConcatBuilder = new StringBuilder();
+            while (interfaces.hasMoreElements()) {
+                NetworkInterface netInterface = interfaces.nextElement();
+                Enumeration<InetAddress> addresses = netInterface.getInetAddresses();
+                while (addresses.hasMoreElements()) {
+                    InetAddress address = addresses.nextElement();
+                    String addressString = address.getHostAddress();
+                    ipConcatBuilder.append(addressString);
+                }
+            }
+
+            String ipConcatString = ipConcatBuilder.toString();
+            byte[] ipConcatBytes = ipConcatString.getBytes();
+            MessageDigest digest = MessageDigest.getInstance(AGENTID_HASH_ALGORITHM);
+            byte[] hashBytes = digest.digest(ipConcatBytes);
+            String hash = (new HexBinaryAdapter()).marshal(hashBytes);
+
+            return hash;
+        } catch (SocketException e) {
+            LOGGER.fatal("Calculating unique ID failed.", e);
+            throw new RuntimeException("Unique ID for the current Agent calculation failed.", e);
+        } catch (NoSuchAlgorithmException e) {
+            LOGGER.fatal("Could not get instance of MessageDigest for the passed hash algorithm.", e);
+            throw new RuntimeException("Unique ID for the current Agent calculation failed.", e);
+        }
     }
 
     @Override
@@ -233,13 +482,14 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager {
         DeviceChangeListener newDeviceChangeListener = new DeviceChangeListener(serverIPAddress,
                                                                                 serverRmiPort,
                                                                                 getAgentId(),
-                                                                                deviceManager);
+                                                                                this);
+
         // And if everything went well, unsubscribe the old device change listener
-        AndroidDebugBridge.removeDeviceChangeListener(deviceChangeListener);
+        AndroidDebugBridge.removeDeviceChangeListener(currentDeviceChangeListener);
 
         // And subscribe the new one
         AndroidDebugBridge.addDeviceChangeListener(newDeviceChangeListener);
-        deviceChangeListener = newDeviceChangeListener;
+        currentDeviceChangeListener = newDeviceChangeListener;
 
         LOGGER.info("Server with IP (" + serverIPAddress + ":" + serverRmiPort + ") registered.");
     }
