@@ -8,9 +8,10 @@ import org.apache.log4j.Logger;
 
 import com.musala.atmosphere.agent.Agent;
 import com.musala.atmosphere.agent.AgentManager;
-import com.musala.atmosphere.agent.IllegalPortException;
+import com.musala.atmosphere.agent.DeviceManager;
 import com.musala.atmosphere.agent.command.AgentCommand;
 import com.musala.atmosphere.agent.command.AgentConsoleCommands;
+import com.musala.atmosphere.agent.exception.IllegalPortException;
 import com.musala.atmosphere.commons.sa.ConsoleControl;
 
 /**
@@ -23,8 +24,11 @@ public class DisconnectedAgent extends AgentState {
 
     private static final Logger LOGGER = Logger.getLogger(DisconnectedAgent.class);
 
-    public DisconnectedAgent(Agent agent, AgentManager agentManager, ConsoleControl agentConsole) {
-        super(agent, agentManager, agentConsole);
+    public DisconnectedAgent(Agent agent,
+            AgentManager agentManager,
+            ConsoleControl agentConsole,
+            DeviceManager deviceManager) {
+        super(agent, agentManager, agentConsole, deviceManager);
     }
 
     @Override
@@ -34,8 +38,7 @@ public class DisconnectedAgent extends AgentState {
 
             String consoleMessage = "Not connected to a Server.";
             agentConsole.writeLine(consoleMessage);
-        }
-        catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException e) {
             LOGGER.error("Could not execute command.", e);
             agentConsole.writeLine(ILLEGAL_COMMAND_MESSAGE);
         }
@@ -69,18 +72,20 @@ public class DisconnectedAgent extends AgentState {
             }
             agentManager.connectToServer(serverIp, serverPort);
 
-            AgentState connectedAgent = new ConnectedAgent(agent, agentManager, agentConsole, serverIp, serverPort);
+            AgentState connectedAgent = new ConnectedAgent(agent,
+                                                           agentManager,
+                                                           agentConsole,
+                                                           deviceManager,
+                                                           serverIp,
+                                                           serverPort);
             agent.setState(connectedAgent);
-        }
-        catch (NumberFormatException e) {
+        } catch (NumberFormatException e) {
             LOGGER.error("Invalid port number passed as argument of CONNECT command: expected number; got \""
                     + serverPortAsString + "\"", e);
-        }
-        catch (RemoteException | IllegalPortException | NotBoundException e) {
+        } catch (RemoteException | IllegalPortException | NotBoundException e) {
             LOGGER.error("Could not establish connection to server on adress \"" + serverIp + ":" + serverPort
                     + "\". See log for information about the underlying exception.", e);
-        }
-        catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException e) {
             LOGGER.error("Could not execute command.", e);
             agentConsole.writeLine(ILLEGAL_COMMAND_MESSAGE);
         }
