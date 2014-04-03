@@ -1,4 +1,4 @@
-package com.musala.atmosphere.agent;
+package com.musala.atmosphere.agent.exception;
 
 public class IllegalPortException extends RuntimeException
 {
