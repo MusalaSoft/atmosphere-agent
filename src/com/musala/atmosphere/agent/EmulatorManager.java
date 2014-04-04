@@ -1,15 +1,13 @@
 package com.musala.atmosphere.agent;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.log4j.Logger;
 
@@ -17,441 +15,245 @@ import com.android.ddmlib.AndroidDebugBridge;
 import com.android.ddmlib.AndroidDebugBridge.IDeviceChangeListener;
 import com.android.ddmlib.EmulatorConsole;
 import com.android.ddmlib.IDevice;
-import com.musala.atmosphere.agent.util.AgentPropertiesLoader;
+import com.musala.atmosphere.agent.util.AndroidToolCommandBuilder;
+import com.musala.atmosphere.agent.util.EmulatorToolCommandBuilder;
+import com.musala.atmosphere.agent.util.SdkToolCommandSender;
+import com.musala.atmosphere.commons.exceptions.CommandFailedException;
 import com.musala.atmosphere.commons.sa.DeviceParameters;
-import com.musala.atmosphere.commons.util.Pair;
+import com.musala.atmosphere.commons.sa.exceptions.NotPossibleForDeviceException;
 
 /**
+ * Manages creating, closing and erasing emulators.
  * 
  * @author georgi.gaydarov
  * 
  */
-public class EmulatorManager implements IDeviceChangeListener
-{
-	private final static Logger LOGGER = Logger.getLogger(EmulatorManager.class.getCanonicalName());
+public class EmulatorManager implements IDeviceChangeListener {
+    private final static Logger LOGGER = Logger.getLogger(EmulatorManager.class.getCanonicalName());
 
-	// TODO change code related to abi selection so it can be done by code
-	private final static String EMULATOR_CPU_ARCHITECTURE = "armeabi-v7a";
+    private static final String EMULATOR_NAME_FORMAT = "AtmosphereTemporatyEmulator_%s";
 
-	private static final String EMULATOR_NAME_PREFIX = "TempEmuDevice";
+    private static EmulatorManager emulatorManagerInstance = null;
 
-	private static EmulatorManager emulatorManagerInstance = null;
+    private AndroidDebugBridge androidDebugBridge;
 
-	private AndroidDebugBridge androidDebugBridge;
+    private SdkToolCommandSender sdkToolCommandSender;
 
-	private List<IDevice> emulatorList = new LinkedList<IDevice>();
+    private List<IDevice> emulatorList = Collections.synchronizedList(new LinkedList<IDevice>());
 
-	private List<Pair<String, Process>> startedEmulatorsProcessList = new LinkedList<Pair<String, Process>>();
+    private Map<String, Process> startedEmulatorsProcess = Collections.synchronizedMap(new HashMap<String, Process>());
 
-	public static EmulatorManager getInstance()
-	{
-		if (emulatorManagerInstance == null)
-		{
-			synchronized (EmulatorManager.class)
-			{
-				if (emulatorManagerInstance == null)
-				{
-					emulatorManagerInstance = new EmulatorManager();
-					LOGGER.info("Emulator manager instance has been created.");
-				}
-			}
-		}
-		return emulatorManagerInstance;
-	}
+    public static EmulatorManager getInstance() {
+        if (emulatorManagerInstance == null) {
+            synchronized (EmulatorManager.class) {
+                if (emulatorManagerInstance == null) {
+                    emulatorManagerInstance = new EmulatorManager();
+                    LOGGER.info("Emulator manager instance has been created.");
+                }
+            }
+        }
+        return emulatorManagerInstance;
+    }
 
-	private EmulatorManager()
-	{
-		// Register the EmulatorManager for device change events so it can keep track of running emulators.
-		AndroidDebugBridge.addDeviceChangeListener(this);
+    private EmulatorManager() {
+        sdkToolCommandSender = new SdkToolCommandSender();
 
-		// Get initial device list
-		androidDebugBridge = AndroidDebugBridge.getBridge();
-		List<IDevice> initialDeviceList = getInitialDeviceList();
-		for (IDevice device : initialDeviceList)
-		{
-			deviceConnected(device);
-		}
-	}
+        // Register the EmulatorManager for device change events so it can keep track of running emulators.
+        AndroidDebugBridge.addDeviceChangeListener(this);
 
-	private List<IDevice> getInitialDeviceList()
-	{
-		// As the AgentmManager is calling methods in this class, it is already done with getting initial devices list.
-		// This means we do not have to perform initial devices list checks and timeout loops.
-		IDevice[] devicesArray = androidDebugBridge.getDevices();
-		return Arrays.asList(devicesArray);
-	}
+        // Get initial device list
+        androidDebugBridge = AndroidDebugBridge.getBridge();
+        List<IDevice> registeredDevices = getDeviceList();
+        for (IDevice device : registeredDevices) {
+            deviceConnected(device);
+        }
+    }
 
-	@Override
-	public void deviceChanged(IDevice arg0, int arg1)
-	{
-		// we do not care is a device state has changed, this has no impact to the emulator list we keep
-	}
+    /**
+     * Returns the device list obtained from Android Debug Bridge.
+     * 
+     * @return the device list obtained from Android Debug Bridge.
+     */
+    private List<IDevice> getDeviceList() {
+        // As the AgentmManager is calling methods in this class, it is already done with getting initial devices list.
+        // This means we do not have to perform initial devices list checks and timeout loops.
+        IDevice[] devicesArray = androidDebugBridge.getDevices();
+        return Arrays.asList(devicesArray);
+    }
 
-	@Override
-	public void deviceConnected(IDevice connectedDevice)
-	{
-		if (connectedDevice.isEmulator())
-		{
-			emulatorList.add(connectedDevice);
-			LOGGER.info("Emulator " + connectedDevice.getAvdName() + " connected.");
-		}
-	}
+    /**
+     * Returns an emulator device with the given serial number.
+     * 
+     * @param serialNumber
+     *        - serial number of the device.
+     * @return an emulator device with the given serial number.
+     */
+    private IDevice getEmulatorBySerialNumber(String serialNumber) {
+        synchronized (emulatorList) {
+            for (IDevice currentEmulator : emulatorList) {
+                String currentEmulatorSerialNumber = currentEmulator.getSerialNumber();
+                if (serialNumber.equals(currentEmulatorSerialNumber)) {
+                    return currentEmulator;
+                }
+            }
+        }
+        return null;
+    }
 
-	@Override
-	public void deviceDisconnected(IDevice disconnectedDevice)
-	{
-		if (disconnectedDevice.isEmulator() && emulatorList.contains(disconnectedDevice))
-		{
-			emulatorList.remove(disconnectedDevice);
-			String removedEmulatorAvdName = disconnectedDevice.getAvdName();
-			for (Pair<String, Process> emulatorProcessPair : startedEmulatorsProcessList)
-			{
-				if (emulatorProcessPair.getKey().equals(removedEmulatorAvdName))
-				{
-					startedEmulatorsProcessList.remove(emulatorProcessPair);
-					LOGGER.info("Emulator " + removedEmulatorAvdName + " disconnected.");
-				}
-			}
-		}
-	}
+    @Override
+    public void deviceChanged(IDevice arg0, int arg1) {
+        // we do not care is a device state has changed, this has no impact to the emulator list we keep
+    }
 
-	public String createAndStartEmulator(DeviceParameters parameters) throws IOException
-	{
-		Pair<Integer, Integer> resolution = parameters.getResolution();
-		String screenResolutionString = resolution.getKey() + "x" + resolution.getValue();
+    @Override
+    public void deviceConnected(IDevice connectedDevice) {
+        if (connectedDevice.isEmulator()) {
+            emulatorList.add(connectedDevice);
+            LOGGER.info("Emulator " + connectedDevice.getAvdName() + " connected.");
+        }
+    }
 
-		Date now = new Date();
-		String emulatorName = EMULATOR_NAME_PREFIX + now.getTime();
+    @Override
+    public void deviceDisconnected(IDevice disconnectedDevice) {
+        if (disconnectedDevice.isEmulator()) {
+            emulatorList.remove(disconnectedDevice);
+            String removedEmulatorAvdName = disconnectedDevice.getAvdName();
+            startedEmulatorsProcess.remove(removedEmulatorAvdName);
+            LOGGER.info("Emulator " + removedEmulatorAvdName + " disconnected.");
+        }
+    }
 
-		// ignore these constants for now
-		String target = "1"; // TODO change to get from the parameters.getApiLevel();
-		String abi = EMULATOR_CPU_ARCHITECTURE;
+    /**
+     * Returns a new unique emulator name.
+     * 
+     * @return a new unique emulator name.
+     */
+    private String getNewEmulatorName() {
+        Date timeNow = new Date();
+        String emulatorName = String.format(EMULATOR_NAME_FORMAT, timeNow.getTime());
+        return emulatorName;
+    }
 
-		StringBuilder createCommandBuilder = new StringBuilder();
-		createCommandBuilder.append("create avd -n ");
-		createCommandBuilder.append(emulatorName);
-		createCommandBuilder.append(" -t ");
-		createCommandBuilder.append(target);
-		createCommandBuilder.append(" -b ");
-		createCommandBuilder.append(abi);
-		createCommandBuilder.append(" -s ");
-		createCommandBuilder.append(screenResolutionString);
-		createCommandBuilder.append(" --force"); // force emulator creation, overwrite if emulator with this name exists
-													// already.
-		String createCommand = createCommandBuilder.toString();
-		String createCommandReturnValue = sendCommandToAndroidTool(createCommand, "\n");
-		LOGGER.info("Create AVD shell command printed: " + createCommandReturnValue);
+    /**
+     * Creates and starts a new emulator device fulfilling the desired device parameters.
+     * 
+     * @param desiredDeviceParameters
+     *        - desired device parameters.
+     * @return the name of the created emulator.
+     * @throws IOException
+     * @throws CommandFailedException
+     */
+    public String createAndStartEmulator(DeviceParameters desiredDeviceParameters)
+        throws IOException,
+            CommandFailedException {
+        String emulatorName = getNewEmulatorName();
 
-		List<String> runCommandParameters = new LinkedList<String>();
-		runCommandParameters.add("-avd " + emulatorName);
-		runCommandParameters.add("-memory " + parameters.getRam());
-		runCommandParameters.add("-dpi-device " + parameters.getDpi());
+        createEmulator(emulatorName, desiredDeviceParameters);
+        Process startedEmulatorProcess = startEmulator(emulatorName, desiredDeviceParameters);
+        startedEmulatorsProcess.put(emulatorName, startedEmulatorProcess);
 
-		Process startedEmulatorProcess = sendCommandToEmulatorToolAndReturn(runCommandParameters, "");
-		Pair<String, Process> startedEmulatorProcessPair = new Pair<String, Process>(	emulatorName,
-																						startedEmulatorProcess);
-		startedEmulatorsProcessList.add(startedEmulatorProcessPair);
+        return emulatorName;
+    }
 
-		return emulatorName;
-	}
+    /**
+     * Creates and emulator profile with the given name and device parameters.
+     * 
+     * @param emulatorName
+     *        - the name of the emulator device.
+     * @param desiredDeviceParameters
+     *        - the desired device parameters.
+     * @throws IOException
+     * @throws CommandFailedException
+     */
+    private void createEmulator(String emulatorName, DeviceParameters desiredDeviceParameters)
+        throws IOException,
+            CommandFailedException {
+        AndroidToolCommandBuilder androidToolCommandBuilder = new AndroidToolCommandBuilder(emulatorName,
+                                                                                            desiredDeviceParameters);
+        String createCommand = androidToolCommandBuilder.getCreateAvdCommand();
+        String createCommandReturnValue = sdkToolCommandSender.sendCommandToAndroidTool(createCommand, "\n");
+        LOGGER.info("Create AVD shell command printed: " + createCommandReturnValue);
+    }
 
-	public void closeAndEraseEmulator(IDevice emulator) throws IOException
-	{
-		String emulatorName = emulator.getAvdName();
-		EmulatorConsole emulatorConsole = EmulatorConsole.getConsole(emulator);
-		emulatorConsole.kill();
+    /**
+     * Starts and emulator device with the given name and device parameters.
+     * 
+     * @param emulatorName
+     *        - the name of the emulator device. Also the name of its profile.
+     * @param desiredDeviceParameters
+     *        - the desired device parameters.
+     * @return the emulator tool process.
+     * @throws IOException
+     */
+    private Process startEmulator(String emulatorName, DeviceParameters desiredDeviceParameters) throws IOException {
+        EmulatorToolCommandBuilder emulatorToolCommandBuilder = new EmulatorToolCommandBuilder(emulatorName,
+                                                                                               desiredDeviceParameters);
+        List<String> emulatorToolCommand = emulatorToolCommandBuilder.getStartCommand();
+        Process startedEmulatorProcess = sdkToolCommandSender.sendCommandToEmulatorToolAndReturn(emulatorToolCommand,
+                                                                                                 "");
 
-		// wait for the emulator to exit
-		for (Pair<String, Process> emulatorProcessPair : startedEmulatorsProcessList)
-		{
-			if (emulatorProcessPair.getKey().equals(emulatorName))
-			{
-				Process emulatorProcess = emulatorProcessPair.getValue();
-				try
-				{
-					emulatorProcess.waitFor();
-				}
-				catch (InterruptedException e)
-				{
-					// waiting for the emulator closing was interrupted. This can not happen?
-					LOGGER.warn("Waiting for emulator to close was interrupted.", e);
-				}
-				startedEmulatorsProcessList.remove(emulatorProcessPair);
-				break;
-			}
-		}
+        LOGGER.info("An emulator instance has been started.");
 
-		String returnValue = sendCommandToAndroidTool("delete avd -n " + emulatorName, "");
-		LOGGER.info("Delete AVD shell command printed: " + returnValue);
-	}
+        return startedEmulatorProcess;
 
-	/**
-	 * Sends a command to the android tool.
-	 * 
-	 * @param command
-	 *        Command to be sent.
-	 * @param commandInput
-	 *        Input that should be sent to the android tool.
-	 * @return STDOUT and STDERR output from the android tool.
-	 * @throws IOException
-	 */
-	private String sendCommandToAndroidTool(String command, String commandInput) throws IOException
-	{
-		StringBuilder androidToolCommandBuilder = new StringBuilder();
-		androidToolCommandBuilder.append("java"); // The android tool is a java application
-		androidToolCommandBuilder.append(" \"-Dcom.android.sdkmanager.toolsdir="); // We must set this variable to the
-																					// tools SDK folder
-		androidToolCommandBuilder.append(AgentPropertiesLoader.getAndroidSdkToolsDirPath());
-		androidToolCommandBuilder.append("\" \"-Dcom.android.sdkmanager.workdir="); // We must set this variable to a
-																					// desired temp folder
-		androidToolCommandBuilder.append(AgentPropertiesLoader.getAndroidToolWorkDirPath());
-		androidToolCommandBuilder.append("\" -classpath \"");
-		androidToolCommandBuilder.append(AgentPropertiesLoader.getAndroidToolPath());
-		androidToolCommandBuilder.append(File.separator);
-		androidToolCommandBuilder.append("lib");
-		androidToolCommandBuilder.append(File.separator);
-		androidToolCommandBuilder.append("sdkmanager.jar;");
-		androidToolCommandBuilder.append(AgentPropertiesLoader.getAndroidToolPath());
-		androidToolCommandBuilder.append(File.separator);
-		androidToolCommandBuilder.append("lib");
-		androidToolCommandBuilder.append(File.separator);
-		androidToolCommandBuilder.append("swtmenubar.jar;");
-		androidToolCommandBuilder.append(AgentPropertiesLoader.getAndroidToolPath());
-		androidToolCommandBuilder.append(File.separator);
-		androidToolCommandBuilder.append("lib");
-		androidToolCommandBuilder.append(File.separator);
-		androidToolCommandBuilder.append("x86");
-		androidToolCommandBuilder.append(File.separator);
-		androidToolCommandBuilder.append("swt.jar\" ");
-		androidToolCommandBuilder.append(AgentPropertiesLoader.getAndroidToolClass());
-		androidToolCommandBuilder.append(" ");
-		androidToolCommandBuilder.append(command);
+    }
 
-		String builtCommand = androidToolCommandBuilder.toString();
+    /**
+     * Closes a running emulator device.
+     * 
+     * @param emulatorDevice
+     *        - running emulator device.
+     */
+    private void closeEmulator(IDevice emulatorDevice) {
+        EmulatorConsole emulatorConsole = EmulatorConsole.getConsole(emulatorDevice);
+        emulatorConsole.kill();
 
-		String returnValue = sendCommandViaRuntime(builtCommand, commandInput, "android-tool");
-		return returnValue;
-	}
+        String emulatorName = emulatorDevice.getAvdName();
+        // wait for the emulator to exit
+        Process emulatorProcess = startedEmulatorsProcess.remove(emulatorName);
+        try {
+            if (emulatorProcess != null) {
+                emulatorProcess.waitFor();
+            }
+        } catch (InterruptedException e) {
+            // waiting for the emulator closing was interrupted. This can not happen?
+            LOGGER.warn("Waiting for emulator to close was interrupted.", e);
+        }
+    }
 
-	/**
-	 * Sends a command to the emulator executable.
-	 * 
-	 * @param parameters
-	 *        Parameters to be passed to the executable.
-	 * @param commandInput
-	 *        Input to be sent to the emulator.
-	 * @return STDOUT and STDERR of the emulator executable.
-	 * @throws IOException
-	 */
-	private String sendCommandToEmulatorTool(List<String> parameters, String commandInput) throws IOException
-	{
-		List<String> command = new LinkedList<String>();
-		command.add(AgentPropertiesLoader.getAndroidSdkToolsDirPath() + File.separator
-				+ AgentPropertiesLoader.getEmulatorExecutable());
-		command.addAll(parameters);
+    /**
+     * Erases an emulator device profile.
+     * 
+     * @param emulatorDevice
+     *        - existing emulator device.
+     * @throws IOException
+     */
+    private void eraseEmulator(IDevice emulatorDevice) throws IOException {
+        String emulatorName = emulatorDevice.getAvdName();
+        AndroidToolCommandBuilder androidToolCommandBuilder = new AndroidToolCommandBuilder(emulatorName, null);
+        String deleteAvdCommand = androidToolCommandBuilder.getDeleteAvdCommand();
+        String deleteAvdCommandResponse = sdkToolCommandSender.sendCommandToAndroidTool(deleteAvdCommand, "");
+        LOGGER.info("Delete AVD shell command printed: " + deleteAvdCommandResponse);
+    }
 
-		String returnValue = sendCommandViaProcessBuilder(command, commandInput, "emulator.exe tool");
-		return returnValue;
-	}
+    /**
+     * Closes and erases a running emulator device.
+     * 
+     * @param serialNumber
+     *        - serial number of the emulator device.
+     * @throws IOException
+     * @throws NotPossibleForDeviceException
+     */
+    public void closeAndEraseEmulator(String serialNumber) throws IOException, NotPossibleForDeviceException {
+        IDevice emulatorDevice = getEmulatorBySerialNumber(serialNumber);
+        if (emulatorDevice == null) {
+            return;
+        }
+        if (!emulatorDevice.isEmulator()) {
+            throw new NotPossibleForDeviceException("Cannot close and erase a real device.");
+        }
 
-	/**
-	 * Sends a command to the emulator executable and returns the starter process.
-	 * 
-	 * @param parameters
-	 *        Parameters to be passed to the executable.
-	 * @param commandInput
-	 *        Input to be sent to the emulator.
-	 * @return {@link Process Process} - started process
-	 * @throws IOException
-	 */
-	private Process sendCommandToEmulatorToolAndReturn(List<String> parameters, String commandInput) throws IOException
-	{
-		List<String> command = new LinkedList<String>();
-		command.add(AgentPropertiesLoader.getAndroidSdkToolsDirPath() + File.separator
-				+ AgentPropertiesLoader.getEmulatorExecutable());
-		command.addAll(parameters);
-
-		Process returnProcess = sendCommandViaProcessBuilderAndReturn(command, commandInput, "emulator.exe tool");
-		return returnProcess;
-	}
-
-	/**
-	 * Executes a command on the system via the {@link ProcessBuilder ProcessBuilder} class and waits for it to finish
-	 * executing.
-	 * 
-	 * @param command
-	 *        Command name, followed by command arguments.
-	 * @param commandInputInput
-	 *        that should be sent to the executed command.
-	 * @param commandDescription
-	 *        Description of the executed command, used in error handling.
-	 * @return The STDOUT and STDERR of the executed command.
-	 * @throws IOException
-	 */
-	private String sendCommandViaProcessBuilder(List<String> command, String commandInput, String commandDescription)
-		throws IOException
-	{
-		Process process = null;
-		try
-		{
-			ProcessBuilder processBuilder = new ProcessBuilder(command);
-			processBuilder.redirectErrorStream(true); // redirect STDERR to STDOUT
-			process = processBuilder.start();
-			BufferedWriter inputBuffer = new BufferedWriter(new OutputStreamWriter(process.getOutputStream()));
-			inputBuffer.write(commandInput);
-			inputBuffer.flush();
-			process.waitFor();
-		}
-		catch (InterruptedException e)
-		{
-			LOGGER.warn("Process execution wait was interrupted.", e);
-		}
-		catch (IOException e)
-		{
-			LOGGER.fatal("Running " + commandDescription + " resulted in an IOException.", e);
-			throw e;
-		}
-
-		if (process.exitValue() != 0)
-		{
-			LOGGER.fatal(commandDescription + " return code is nonzero for the command line '" + command + "'.");
-		}
-
-		StringBuilder responseBuilder = new StringBuilder();
-		try
-		{
-			String readLine = "";
-
-			BufferedReader responseBuffer = new BufferedReader(new InputStreamReader(process.getInputStream()));
-			while (true)
-			{
-				readLine = responseBuffer.readLine();
-				if (readLine == null)
-				{
-					break;
-				}
-				responseBuilder.append(readLine);
-				responseBuilder.append('\n');
-			}
-		}
-		catch (IOException e)
-		{
-			LOGGER.fatal("Reading the shell response of " + commandDescription + " in an IOException.", e);
-			throw e;
-		}
-
-		return responseBuilder.toString();
-	}
-
-	/**
-	 * Executes a command via the {@link ProcessBuilder ProcessBuilder} class and returns without waiting for it to
-	 * finish executing.
-	 * 
-	 * @param command
-	 *        Command name, followed by command arguments.
-	 * @param commandInputInput
-	 *        that should be sent to the executed command.
-	 * @param commandDescription
-	 *        Description of the executed command, used in error handling.
-	 * @throws IOException
-	 */
-	private Process sendCommandViaProcessBuilderAndReturn(	List<String> command,
-															String commandInput,
-															String commandDescription) throws IOException
-	{
-		Process process = null;
-		try
-		{
-			ProcessBuilder processBuilder = new ProcessBuilder(command);
-			processBuilder.redirectErrorStream(true); // redirect STDERR to STDOUT
-			process = processBuilder.start();
-			BufferedWriter inputBuffer = new BufferedWriter(new OutputStreamWriter(process.getOutputStream()));
-			inputBuffer.write(commandInput);
-			inputBuffer.flush();
-		}
-		catch (IOException e)
-		{
-			LOGGER.fatal("Running " + commandDescription + " resulted in an IOException.", e);
-			throw e;
-		}
-		return process;
-	}
-
-	/**
-	 * Executes a command on the system via the {@link Runtime Runtime} .exec() method.
-	 * 
-	 * @param command
-	 *        Command to be executed (as if being passed to the system shell).
-	 * @param commandInput
-	 *        Input that should be sent to the executed command.
-	 * @param commandDescription
-	 *        Description of the executed command, used in error handling.
-	 * @return The STDOUT and STDERR of the executed command.
-	 * @throws IOException
-	 */
-	private String sendCommandViaRuntime(String command, String commandInput, String commandDescription)
-		throws IOException
-	{
-		Process process = null;
-		try
-		{
-			Runtime runtime = Runtime.getRuntime();
-			process = runtime.exec(command);
-			BufferedWriter inputBuffer = new BufferedWriter(new OutputStreamWriter(process.getOutputStream()));
-			inputBuffer.write(commandInput);
-			inputBuffer.flush();
-			process.waitFor();
-		}
-		catch (InterruptedException e)
-		{
-			LOGGER.warn("Process execution wait was interrupted.", e);
-		}
-		catch (IOException e)
-		{
-			LOGGER.fatal("Running " + commandDescription + " resulted in an IOException.", e);
-			throw e;
-		}
-
-		if (process.exitValue() != 0)
-		{
-			LOGGER.fatal(commandDescription + " return code is nonzero for the command line '" + command + "'.");
-		}
-
-		StringBuilder responseBuilder = new StringBuilder();
-		try
-		{
-			String readLine = "";
-
-			BufferedReader responseBuffer = new BufferedReader(new InputStreamReader(process.getInputStream()));
-			while (true)
-			{
-				readLine = responseBuffer.readLine();
-				if (readLine == null)
-				{
-					break;
-				}
-				responseBuilder.append(readLine);
-				responseBuilder.append('\n');
-			}
-			responseBuffer = new BufferedReader(new InputStreamReader(process.getErrorStream()));
-			while (true)
-			{
-				readLine = responseBuffer.readLine();
-				if (readLine == null)
-				{
-					break;
-				}
-				responseBuilder.append(readLine);
-				responseBuilder.append('\n');
-			}
-		}
-		catch (IOException e)
-		{
-			LOGGER.fatal("Reading the shell response of " + commandDescription + " in an IOException.", e);
-			throw e;
-		}
-
-		return responseBuilder.toString();
-	}
-
+        closeEmulator(emulatorDevice);
+        eraseEmulator(emulatorDevice);
+    }
 }

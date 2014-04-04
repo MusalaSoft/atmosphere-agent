@@ -12,6 +12,7 @@ import com.android.ddmlib.SyncException;
 import com.android.ddmlib.TimeoutException;
 import com.musala.atmosphere.agent.exception.ComponentInstallationFailedException;
 import com.musala.atmosphere.agent.exception.ComponentNotInstalledException;
+import com.musala.atmosphere.agent.exception.DeviceBootTimeoutReachedException;
 import com.musala.atmosphere.agent.util.AgentPropertiesLoader;
 import com.musala.atmosphere.agent.util.AutomaticDeviceSetupFlag;
 import com.musala.atmosphere.agent.util.OnDeviceComponent;
@@ -25,6 +26,14 @@ import com.musala.atmosphere.commons.exceptions.CommandFailedException;
  * 
  */
 public class PreconditionsManager {
+    private static final String IS_BOOT_ANIMATION_RUNNING_COMMAND = "getprop init.svc.bootanim";
+
+    private static final String BOOT_ANIMATION_NOT_RUNNING_RESPONSE = "stopped\r\n";
+
+    private static final int BOOT_ANIMATION_REVALIDATION_SLEEP_TIME = 1000;
+
+    private static final int BOOT_TIMEOUT = 120000;
+
     /**
      * The timeout for command execution from the config file.
      */
@@ -68,12 +77,54 @@ public class PreconditionsManager {
 
     private ApkInstaller apkInstaller;
 
+    private String deviceSerialNumber;
+
     public PreconditionsManager(IDevice wrappedDevice) {
 
         this.shellCommandExecutor = new ShellCommandExecutor(wrappedDevice);
         this.apkInstaller = new ApkInstaller(wrappedDevice);
 
         this.wrappedDevice = wrappedDevice;
+        this.deviceSerialNumber = wrappedDevice.getSerialNumber();
+    }
+
+    /**
+     * Checks whether the boot animation has stopped running on the device.
+     * 
+     * @return true if the boot animation has stopped running, false if not.
+     * @throws CommandFailedException
+     */
+    private boolean hasBootloaderStopped() throws CommandFailedException {
+        String commandResponse = shellCommandExecutor.execute(IS_BOOT_ANIMATION_RUNNING_COMMAND);
+        return commandResponse.equals(BOOT_ANIMATION_NOT_RUNNING_RESPONSE);
+    }
+
+    /**
+     * Waits for the device to complete its boot process if it is in boot process.
+     * 
+     * @throws CommandFailedException
+     * @throws DeviceBootTimeoutReachedException
+     */
+    private void waitForDeviceToBoot() throws CommandFailedException, DeviceBootTimeoutReachedException {
+        if (!hasBootloaderStopped()) {
+            LOGGER.info("Waiting for device " + deviceSerialNumber + " to boot.");
+            int currentTimeout = BOOT_TIMEOUT;
+            while (!hasBootloaderStopped() || currentTimeout > 0) {
+                try {
+                    Thread.sleep(BOOT_ANIMATION_REVALIDATION_SLEEP_TIME);
+                    currentTimeout -= BOOT_ANIMATION_REVALIDATION_SLEEP_TIME;
+                } catch (InterruptedException e) {
+                    // Nothing to do here.
+                }
+            }
+            if (currentTimeout > 0 || !hasBootloaderStopped()) {
+                LOGGER.info("Device " + deviceSerialNumber + " booted.");
+            } else {
+                String message = String.format("Device %s boot timeout reahced.", deviceSerialNumber);
+                LOGGER.warn(message);
+                throw new DeviceBootTimeoutReachedException(message);
+            }
+        }
     }
 
     /**
@@ -328,12 +379,28 @@ public class PreconditionsManager {
 
     /**
      * Takes care of automatic on-device component setup and verification.
+     * 
+     * @throws CommandFailedException
      */
     public void manageOnDeviceComponents() {
+        try {
+            waitForDeviceToBoot();
+        } catch (CommandFailedException | DeviceBootTimeoutReachedException e) {
+            LOGGER.warn("Could not ensure the device has fully booted.", e);
+        }
+
         Map<OnDeviceComponent, Boolean> currentComponentInstalledStatus = getCurrentComponentInstalledStatus();
 
         if (wrappedDevice.isEmulator()) {
-            installMissingComponents(currentComponentInstalledStatus);
+            switch (AUTOMATIC_SETUP_FLAG) {
+                case FORCE_INSTALL:
+                    installAllComponents();
+                    break;
+
+                default:
+                    installMissingComponents(currentComponentInstalledStatus);
+                    break;
+            }
             return;
         }
 

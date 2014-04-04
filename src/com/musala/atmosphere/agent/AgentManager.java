@@ -27,13 +27,13 @@ import javax.xml.bind.annotation.adapters.HexBinaryAdapter;
 import org.apache.log4j.Logger;
 
 import com.android.ddmlib.AndroidDebugBridge;
-import com.android.ddmlib.EmulatorConsole;
 import com.android.ddmlib.IDevice;
 import com.musala.atmosphere.agent.devicewrapper.EmulatorWrapDevice;
 import com.musala.atmosphere.agent.devicewrapper.RealWrapDevice;
 import com.musala.atmosphere.agent.exception.OnDeviceComponentCommunicationException;
 import com.musala.atmosphere.agent.util.AgentPropertiesLoader;
 import com.musala.atmosphere.agent.util.SystemSpecificationLoader;
+import com.musala.atmosphere.commons.exceptions.CommandFailedException;
 import com.musala.atmosphere.commons.sa.DeviceParameters;
 import com.musala.atmosphere.commons.sa.IAgentManager;
 import com.musala.atmosphere.commons.sa.IConnectionRequestReceiver;
@@ -382,49 +382,20 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager {
     @Override
     public void createAndStartEmulator(DeviceParameters parameters) throws RemoteException, IOException {
         EmulatorManager emulatorManager = EmulatorManager.getInstance();
-        emulatorManager.createAndStartEmulator(parameters);
+        try {
+            emulatorManager.createAndStartEmulator(parameters);
+        } catch (CommandFailedException e) {
+            LOGGER.fatal("Creating emulator device failed.", e);
+        }
     }
 
-    // FIXME remove/edit this method
     @Override
-    public void closeEmulator(String serialNumber)
-        throws RemoteException,
+    public void closeAndEraseEmulator(String serialNumber)
+        throws DeviceNotFoundException,
             NotPossibleForDeviceException,
-            DeviceNotFoundException {
-        IDevice device = getDeviceBySerialNumber(serialNumber);
-
-        // If a device is a real, physical device, throw an exception
-        if (!device.isEmulator()) {
-            throw new NotPossibleForDeviceException("Cannot close a real device.");
-        }
-
-        // Get the emulator's EmulatorConsole and send a kill.
-        EmulatorConsole emulatorConsole = EmulatorConsole.getConsole(device);
-        emulatorConsole.kill();
-    }
-
-    @Override
-    public void wipeEmulator(String serialNumber) throws RemoteException {
-        // FIXME remove / edit this method
-        // TODO wipe emulator method
-        // from emulator.exe help :
-        // -wipe-data reset the user data image (copy it from initdata)
-
-    }
-
-    @Override
-    public void eraseEmulator(String serialNumber)
-        throws RemoteException,
-            IOException,
-            DeviceNotFoundException,
-            NotPossibleForDeviceException {
-        // FIXME remove/edit this method.
-        IDevice device = getDeviceBySerialNumber(serialNumber);
-        if (device.isEmulator() == false) {
-            throw new NotPossibleForDeviceException("Cannot close and erase a real device.");
-        }
+            IOException {
         EmulatorManager emulatorManager = EmulatorManager.getInstance();
-        emulatorManager.closeAndEraseEmulator(device);
+        emulatorManager.closeAndEraseEmulator(serialNumber);
     }
 
     @Override

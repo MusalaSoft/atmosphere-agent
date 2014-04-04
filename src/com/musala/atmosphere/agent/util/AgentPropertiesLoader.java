@@ -113,11 +113,32 @@ public class AgentPropertiesLoader {
     /**
      * Returns the path of the emulator executable file from the config file.
      * 
-     * @return - String, the path to the directory.
+     * @return - the name of the emulator executable.
      */
     public static String getEmulatorExecutable() {
         String returnValueString = getPropertyString(AgentProperties.EMULATOR_EXECUTABLE_PATH);
         return returnValueString;
+    }
+
+    /**
+     * Returns the path of the android executable file from the config file.
+     * 
+     * @return - the name of the android executable.
+     */
+    public static String getAndroidExecutable() {
+        String androidExecutable = getPropertyString(AgentProperties.ANDROID_EXECUTABLE_PATH);
+        return androidExecutable;
+    }
+
+    /**
+     * Returns the {@link AbiType} set in the config file.
+     * 
+     * @return the {@link AbiType} set in the config file.
+     */
+    public static AbiType getEmulatorAbiType() {
+        String abiTypeString = getPropertyString(AgentProperties.EMULATOR_ABI);
+        AbiType abiType = AbiType.getEnum(abiTypeString);
+        return abiType;
     }
 
     /**
