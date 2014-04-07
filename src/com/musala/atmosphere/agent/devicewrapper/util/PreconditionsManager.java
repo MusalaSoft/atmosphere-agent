@@ -109,7 +109,7 @@ public class PreconditionsManager {
         if (!hasBootloaderStopped()) {
             LOGGER.info("Waiting for device " + deviceSerialNumber + " to boot.");
             int currentTimeout = BOOT_TIMEOUT;
-            while (!hasBootloaderStopped() || currentTimeout > 0) {
+            while (!hasBootloaderStopped() && currentTimeout > 0) {
                 try {
                     Thread.sleep(BOOT_ANIMATION_REVALIDATION_SLEEP_TIME);
                     currentTimeout -= BOOT_ANIMATION_REVALIDATION_SLEEP_TIME;
