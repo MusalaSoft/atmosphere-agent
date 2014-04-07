@@ -204,6 +204,9 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
             case ELEMENT_SWIPE:
                 uiAutomatorBridgeCommunicator.swipeElement((UiElementDescriptor) args[0], (SwipeDirection) args[1]);
                 break;
+            case START_APP:
+                returnValue = serviceCommunicator.startApplication(args);
+                break;
 
             // Call related
             case CALL_CANCEL:

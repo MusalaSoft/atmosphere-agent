@@ -231,8 +231,25 @@ public class ServiceCommunicator {
             TelephonyInformation telephonyInformation = (TelephonyInformation) serviceRequestHandler.request(serviceRequest);
             return telephonyInformation;
         } catch (ClassNotFoundException | IOException e) {
-            throw new CommandFailedException("Getting telephony information failed. See enclosed exception for more information.",
-                                             e);
+            throw new CommandFailedException("Getting telephony information failed.", e);
+        }
+    }
+
+    /**
+     * Starts an application on the device.
+     * 
+     * @return <code>true</code> if the application launch is successful and <code>false</code> otherwise
+     * @throws CommandFailedException
+     */
+    public boolean startApplication(Object[] args) throws CommandFailedException {
+        Request<ServiceRequest> startAppRequest = new Request<ServiceRequest>(ServiceRequest.START_APP);
+        startAppRequest.setArguments(args);
+        
+        try {
+            boolean response = (boolean) serviceRequestHandler.request(startAppRequest);
+            return response;
+        } catch (ClassNotFoundException | IOException e) {
+            throw new CommandFailedException("Starting application faliled.", e);
         }
     }
 }
