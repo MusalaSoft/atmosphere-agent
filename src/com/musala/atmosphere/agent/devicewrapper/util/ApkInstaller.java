@@ -138,7 +138,7 @@ public class ApkInstaller {
 
         String componentPath = ON_DEVICE_COMPONENT_FILES_PATH.concat(onDeviceComponent.getFileName());
         try {
-            device.installPackage(componentPath, true, new String());
+            device.installPackage(componentPath, true);
         } catch (InstallException e) {
             String errorMessage = String.format(COMPONENT_INSTALLATION_FAILED_MESSAGE,
                                                 onDeviceComponent.getHumanReadableName());

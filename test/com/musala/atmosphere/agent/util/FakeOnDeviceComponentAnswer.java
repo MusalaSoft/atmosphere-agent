@@ -15,7 +15,7 @@ import org.mockito.stubbing.Answer;
 
 import com.musala.atmosphere.commons.ad.Request;
 import com.musala.atmosphere.commons.ad.service.ServiceRequest;
-import com.musala.atmosphere.commons.ad.uiautomator.UIAutomatorBridgeRequest;
+import com.musala.atmosphere.commons.ad.uiautomator.UIAutomatorRequest;
 
 public class FakeOnDeviceComponentAnswer implements Answer<Void> {
     public final static int FAKE_BATTERY_LEVEL = 69;
@@ -88,7 +88,7 @@ public class FakeOnDeviceComponentAnswer implements Answer<Void> {
                     Object requestType = request.getType();
                     if (requestType instanceof ServiceRequest) {
                         response = fakeServiceRequestHandler.handleRequest(request);
-                    } else if (requestType instanceof UIAutomatorBridgeRequest) {
+                    } else if (requestType instanceof UIAutomatorRequest) {
                         response = fakeGesturePlayerRequestHandler.handleRequest(request);
                     } else {
                         System.out.println("Fake On-Device components Answer: WARNING: request could not be recognized as a known request type!");

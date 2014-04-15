@@ -258,7 +258,8 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager {
             devicesList.add(connectedDevice);
             return publishId;
         } catch (RemoteException | OnDeviceComponentCommunicationException e) {
-            LOGGER.fatal("Could not publish a wrapper for a device in the RMI registry.", e);
+            LOGGER.fatal("Could not publish a wrapper for device [" + connectedDevice.getSerialNumber()
+                    + "] in the RMI registry.", e);
         }
         return "";
     }

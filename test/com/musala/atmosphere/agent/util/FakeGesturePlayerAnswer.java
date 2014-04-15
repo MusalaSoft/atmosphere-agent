@@ -1,19 +1,19 @@
 package com.musala.atmosphere.agent.util;
 
 import com.musala.atmosphere.commons.ad.Request;
-import com.musala.atmosphere.commons.ad.uiautomator.UIAutomatorBridgeRequest;
+import com.musala.atmosphere.commons.ad.uiautomator.UIAutomatorRequest;
 
 public class FakeGesturePlayerAnswer implements FakeOnDeviceComponentRequestHandler {
     @Override
     public Object handleRequest(Request<?> request) {
-        UIAutomatorBridgeRequest requestType = (UIAutomatorBridgeRequest) request.getType();
+        UIAutomatorRequest requestType = (UIAutomatorRequest) request.getType();
 
         switch (requestType) {
             case VALIDATION:
                 return requestType;
 
             default:
-                return UIAutomatorBridgeRequest.ANY_RESPONSE;
+                return UIAutomatorRequest.ANY_RESPONSE;
         }
     }
 }

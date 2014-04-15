@@ -20,11 +20,12 @@ import com.android.ddmlib.TimeoutException;
 import com.musala.atmosphere.agent.DevicePropertyStringConstants;
 import com.musala.atmosphere.agent.devicewrapper.util.ApkInstaller;
 import com.musala.atmosphere.agent.devicewrapper.util.DeviceProfiler;
+import com.musala.atmosphere.agent.devicewrapper.util.FileTransferService;
 import com.musala.atmosphere.agent.devicewrapper.util.PortForwardingService;
 import com.musala.atmosphere.agent.devicewrapper.util.PreconditionsManager;
 import com.musala.atmosphere.agent.devicewrapper.util.ShellCommandExecutor;
 import com.musala.atmosphere.agent.devicewrapper.util.ondevicecomponent.ServiceCommunicator;
-import com.musala.atmosphere.agent.devicewrapper.util.ondevicecomponent.UIAutomatorBridgeCommunicator;
+import com.musala.atmosphere.agent.devicewrapper.util.ondevicecomponent.UIAutomatorCommunicator;
 import com.musala.atmosphere.agent.exception.ForwardingPortFailedException;
 import com.musala.atmosphere.agent.exception.OnDeviceComponentCommunicationException;
 import com.musala.atmosphere.agent.exception.OnDeviceComponentInitializationException;
@@ -71,7 +72,9 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 
     protected final ServiceCommunicator serviceCommunicator;
 
-    protected final UIAutomatorBridgeCommunicator uiAutomatorBridgeCommunicator;
+    protected final UIAutomatorCommunicator uiAutomatorBridgeCommunicator;
+
+    protected final FileTransferService transferService;
 
     private static final String GET_RAM_MEMORY_COMMAND = "cat /proc/meminfo | grep MemTotal";
 
@@ -86,16 +89,18 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
     public AbstractWrapDevice(IDevice deviceToWrap) throws RemoteException {
         wrappedDevice = deviceToWrap;
 
+        transferService = new FileTransferService(wrappedDevice);
         shellCommandExecutor = new ShellCommandExecutor(wrappedDevice);
         apkInstaller = new ApkInstaller(wrappedDevice);
 
         preconditionsManager = new PreconditionsManager(wrappedDevice);
         preconditionsManager.manageOnDeviceComponents();
 
+        uiAutomatorBridgeCommunicator = new UIAutomatorCommunicator(shellCommandExecutor, transferService);
+
         PortForwardingService forwardingService = new PortForwardingService(wrappedDevice);
         try {
             serviceCommunicator = new ServiceCommunicator(forwardingService, this);
-            uiAutomatorBridgeCommunicator = new UIAutomatorBridgeCommunicator(forwardingService, this);
         } catch (ForwardingPortFailedException | OnDeviceComponentStartingException
                 | OnDeviceComponentInitializationException e) {
             // TODO throw a new exception here when the preconditions are implemented.
