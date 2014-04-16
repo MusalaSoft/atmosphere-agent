@@ -34,16 +34,17 @@ import com.musala.atmosphere.commons.sa.SystemSpecification;
 public class AgentManagerTest {
     private static AgentManager agentManager;
 
-    private static final int RMI_PORT = AgentPropertiesLoader.getAgentRmiPort();
+    private static DeviceManager deviceManager;
 
-    private static final String PATH_TO_ADB = AgentPropertiesLoader.getADBPath();
+    private static final int RMI_PORT = AgentPropertiesLoader.getAgentRmiPort();
 
     @BeforeClass
     public static void setUp() throws Exception {
         DdmPreferences.setLogLevel("warn");
         Log.setLogOutput(new DdmLibLogListener(Level.ALL, false /* do no log to a file */));
 
-        agentManager = new AgentManager(PATH_TO_ADB, RMI_PORT);
+        deviceManager = new DeviceManager(RMI_PORT);
+        agentManager = new AgentManager(RMI_PORT);
     }
 
     @AfterClass
@@ -55,7 +56,7 @@ public class AgentManagerTest {
 
     @Test
     public void testGetAllDeviceWrappers() throws RemoteException {
-        List<String> list = agentManager.getAllDeviceWrappers();
+        List<String> list = deviceManager.getAllDeviceWrappers();
         assertNotNull("The devices information list should never be 'null'.", list);
     }
 
@@ -84,7 +85,7 @@ public class AgentManagerTest {
         FakeOnDeviceComponentAnswer onDeviceAnswer = new FakeOnDeviceComponentAnswer();
         Mockito.doAnswer(onDeviceAnswer).when(mockDevice).createForward(anyInt(), anyInt());
 
-        agentManager.registerDeviceOnAgent(mockDevice);
+        deviceManager.registerDevice(mockDevice);
 
         Registry agentRegistry = LocateRegistry.getRegistry("localhost", RMI_PORT);
         IWrapDevice device = (IWrapDevice) agentRegistry.lookup(mockDeviceSerialNumber);

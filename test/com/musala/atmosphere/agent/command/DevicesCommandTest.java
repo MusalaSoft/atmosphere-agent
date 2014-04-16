@@ -36,7 +36,7 @@ public class DevicesCommandTest extends AgentCommandTestBase {
         AgentCommand command = new AgentCommand(AgentConsoleCommands.AGENT_DEVICES, new ArrayList<String>());
         agentState.executeCommand(command);
 
-        verify(mockedAgentManager, times(1)).getAllDeviceWrappers();
+        verify(mockedDeviceManager, times(1)).getAllDeviceWrappers();
     }
 
     @Test

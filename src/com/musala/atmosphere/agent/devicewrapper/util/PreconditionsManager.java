@@ -384,6 +384,7 @@ public class PreconditionsManager {
      */
     public void manageOnDeviceComponents() {
         try {
+            System.out.println(wrappedDevice.isEmulator());
             waitForDeviceToBoot();
         } catch (CommandFailedException | DeviceBootTimeoutReachedException e) {
             LOGGER.warn("Could not ensure the device has fully booted.", e);

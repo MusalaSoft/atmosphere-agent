@@ -8,6 +8,7 @@ import org.apache.log4j.Logger;
 
 import com.musala.atmosphere.agent.Agent;
 import com.musala.atmosphere.agent.AgentManager;
+import com.musala.atmosphere.agent.DeviceManager;
 import com.musala.atmosphere.agent.command.AgentCommand;
 import com.musala.atmosphere.agent.command.AgentConsoleCommands;
 import com.musala.atmosphere.agent.util.date.DateClockUtil;
@@ -70,8 +71,7 @@ public abstract class AgentState {
                 default:
                     LOGGER.error("Command " + commandType.getCommand() + " is not recognized and cannot be executed.");
             }
-        }
-        else {
+        } else {
             LOGGER.error("Trying to execute null command on agent.");
         }
     }
@@ -89,8 +89,7 @@ public abstract class AgentState {
             for (String commandDescription : agentCommandsDescriptions) {
                 agentConsole.writeLine(commandDescription);
             }
-        }
-        catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException e) {
             LOGGER.error("Could not execute command.", e);
             agentConsole.writeLine(ILLEGAL_COMMAND_MESSAGE);
         }
@@ -113,8 +112,7 @@ public abstract class AgentState {
                 String formattedTimeInterval = DateClockUtil.getTimeInterval(agentStartDate);
                 agentConsole.writeLine("Uptime: " + formattedTimeInterval);
             }
-        }
-        catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException e) {
             LOGGER.error("Could not execute command.", e);
             agentConsole.writeLine(ILLEGAL_COMMAND_MESSAGE);
         }
@@ -133,8 +131,7 @@ public abstract class AgentState {
             // TODO Should be implemented when performance score is available.
             LOGGER.error("Error performing benchmarking test: benchmarking mechanism not implemented.");
             agentConsole.writeLine("Performance benchmarking not implemented yet. Command can not be executed.");
-        }
-        catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException e) {
             LOGGER.error("Could not execute command.", e);
             agentConsole.writeLine(ILLEGAL_COMMAND_MESSAGE);
         }
@@ -151,8 +148,7 @@ public abstract class AgentState {
             validateAndVerifyCommand(AgentConsoleCommands.AGENT_EXIT, commandForExecution);
 
             agent.stop();
-        }
-        catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException e) {
             LOGGER.error("Could not execute command.", e);
             agentConsole.writeLine(ILLEGAL_COMMAND_MESSAGE);
         }
@@ -168,17 +164,16 @@ public abstract class AgentState {
         try {
             validateAndVerifyCommand(AgentConsoleCommands.AGENT_DEVICES, commandForExecution);
 
-            List<String> deviceWrapperIDs = agentManager.getAllDeviceWrappers();
+            DeviceManager deviceManager = new DeviceManager();
+            List<String> deviceWrapperIDs = deviceManager.getAllDeviceWrappers();
             agentConsole.writeLine("Number of devices, attached to this agent: " + deviceWrapperIDs.size());
             for (String deviceWrapper : deviceWrapperIDs) {
                 agentConsole.writeLine(deviceWrapper);
             }
-        }
-        catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException e) {
             LOGGER.error("Could not execute command.", e);
             agentConsole.writeLine(ILLEGAL_COMMAND_MESSAGE);
-        }
-        catch (RemoteException e) {
+        } catch (RemoteException e) {
             LOGGER.error("Could not fetch list with device's serial numbers due to connection problems.", e);
         }
     }

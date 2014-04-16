@@ -4,6 +4,7 @@ import static org.mockito.Mockito.mock;
 
 import com.musala.atmosphere.agent.Agent;
 import com.musala.atmosphere.agent.AgentManager;
+import com.musala.atmosphere.agent.DeviceManager;
 import com.musala.atmosphere.agent.state.AgentState;
 import com.musala.atmosphere.commons.sa.ConsoleControl;
 
@@ -22,12 +23,15 @@ public abstract class AgentCommandTestBase {
 
     protected AgentManager mockedAgentManager;
 
+    protected DeviceManager mockedDeviceManager;
+
     protected ConsoleControl mockedConsole;
 
     protected void setUp() {
         mockedAgent = mock(Agent.class);
         mockedAgentManager = mock(AgentManager.class);
         mockedConsole = mock(ConsoleControl.class);
+        mockedDeviceManager = mock(DeviceManager.class);
     }
 
     public void tearDown() {

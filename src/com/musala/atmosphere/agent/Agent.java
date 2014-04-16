@@ -26,7 +26,11 @@ import com.musala.atmosphere.commons.util.Pair;
 public class Agent {
     private static final Logger LOGGER = Logger.getLogger(Agent.class.getCanonicalName());
 
+    private AndroidDebugBridgeManager androidDebugBridgeManager;
+
     private AgentManager agentManager;
+
+    private DeviceManager deviceManager;
 
     private ConsoleControl agentConsole;
 
@@ -56,17 +60,21 @@ public class Agent {
         this.agentRmiPort = agentRmiPort;
 
         try {
+            // Registry registry = LocateRegistry.createRegistry(agentRmiPort);
             String pathToAdb = AgentPropertiesLoader.getADBPath();
-            agentManager = new AgentManager(pathToAdb, agentRmiPort);
+            androidDebugBridgeManager = new AndroidDebugBridgeManager();
+            androidDebugBridgeManager.setAndroidDebugBridgePath(pathToAdb);
+            androidDebugBridgeManager.startAndroidDebugBridge();
+            agentManager = new AgentManager(agentRmiPort);
+            deviceManager = new DeviceManager(agentRmiPort);
 
             agentConsole = new ConsoleControl();
             startDate = new Date();
             currentAgentState = new DisconnectedAgent(this, agentManager, agentConsole);
 
             LOGGER.info("Agent created on port: " + agentRmiPort);
-        }
-        catch (RemoteException | ADBridgeFailException e) {
-            LOGGER.fatal("Could not create agent manager. See enclosed exception for more information.", e);
+        } catch (RemoteException | ADBridgeFailException e) {
+            LOGGER.fatal("Could not create agent manager.", e);
             throw new RuntimeException("Creation of agent manager failed.", e);
         }
     }
@@ -104,16 +112,14 @@ public class Agent {
             AgentCommand commandForExecution = AgentCommandFactory.getCommandInstance(command, params);
             if (commandForExecution != null) {
                 currentAgentState.executeCommand(commandForExecution);
-            }
-            else {
+            } else {
                 String helpCommand = AgentConsoleCommands.AGENT_HELP.getCommand();
                 String errorMessage = String.format("Unknown command \"%s\". Type '%s' for all available commands.",
                                                     command,
                                                     helpCommand);
                 agentConsole.writeLine(errorMessage);
             }
-        }
-        else {
+        } else {
             LOGGER.error("Error in console: trying to execute 'null' as a command.");
             throw new IllegalArgumentException("Command passed for execution to agent is 'null'");
         }
@@ -138,8 +144,7 @@ public class Agent {
         String command = null;
         try {
             command = agentConsole.readCommand();
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             LOGGER.error(e);
         }
         return command;
@@ -180,12 +185,10 @@ public class Agent {
             if (args.length == 1) {
                 String passedRmiPort = args[0];
                 portToCreateAgentOn = Integer.parseInt(passedRmiPort);
-            }
-            else {
+            } else {
                 portToCreateAgentOn = AgentPropertiesLoader.getAgentRmiPort();
             }
-        }
-        catch (NumberFormatException e) {
+        } catch (NumberFormatException e) {
             String exceptionMessage = "Parsing passed port resulted in an exception.";
             LOGGER.fatal(exceptionMessage, e);
             throw new IllegalPortException(exceptionMessage, e);
