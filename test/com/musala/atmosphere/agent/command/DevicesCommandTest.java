@@ -11,6 +11,7 @@ import java.util.Arrays;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Matchers;
 
 import com.musala.atmosphere.agent.state.ConnectedAgent;
 import com.musala.atmosphere.agent.state.DisconnectedAgent;
@@ -36,7 +37,7 @@ public class DevicesCommandTest extends AgentCommandTestBase {
         AgentCommand command = new AgentCommand(AgentConsoleCommands.AGENT_DEVICES, new ArrayList<String>());
         agentState.executeCommand(command);
 
-        verify(mockedDeviceManager, times(1)).getAllDeviceWrappers();
+        verify(mockedConsole, times(1)).writeLine(Matchers.anyString());
     }
 
     @Test

@@ -18,12 +18,15 @@ import java.util.logging.Level;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.mockito.Matchers;
 import org.mockito.Mockito;
 
 import com.android.ddmlib.DdmPreferences;
 import com.android.ddmlib.IDevice;
+import com.android.ddmlib.IShellOutputReceiver;
 import com.android.ddmlib.Log;
 import com.musala.atmosphere.agent.util.AgentPropertiesLoader;
+import com.musala.atmosphere.agent.util.FakeDeviceShellAnswer;
 import com.musala.atmosphere.agent.util.FakeOnDeviceComponentAnswer;
 import com.musala.atmosphere.commons.DeviceInformation;
 import com.musala.atmosphere.commons.RoutingAction;
@@ -43,8 +46,13 @@ public class AgentManagerTest {
         DdmPreferences.setLogLevel("warn");
         Log.setLogOutput(new DdmLibLogListener(Level.ALL, false /* do no log to a file */));
 
-        deviceManager = new DeviceManager(RMI_PORT);
+        String pathToAdb = AgentPropertiesLoader.getADBPath();
+        AndroidDebugBridgeManager androidDebugBridgeManager = new AndroidDebugBridgeManager();
+        androidDebugBridgeManager.setAndroidDebugBridgePath(pathToAdb);
+        androidDebugBridgeManager.startAndroidDebugBridge();
+
         agentManager = new AgentManager(RMI_PORT);
+        deviceManager = new DeviceManager(RMI_PORT);
     }
 
     @AfterClass
@@ -83,7 +91,14 @@ public class AgentManagerTest {
         when(mockDevice.getProperties()).thenReturn(mockPropMap);
 
         FakeOnDeviceComponentAnswer onDeviceAnswer = new FakeOnDeviceComponentAnswer();
+        FakeDeviceShellAnswer shellAnswer = new FakeDeviceShellAnswer();
         Mockito.doAnswer(onDeviceAnswer).when(mockDevice).createForward(anyInt(), anyInt());
+        Mockito.doAnswer(shellAnswer)
+               .when(mockDevice)
+               .executeShellCommand(Matchers.anyString(), Matchers.any(IShellOutputReceiver.class));
+        Mockito.doAnswer(shellAnswer)
+               .when(mockDevice)
+               .executeShellCommand(Matchers.anyString(), Matchers.any(IShellOutputReceiver.class), anyInt());
 
         deviceManager.registerDevice(mockDevice);
 
