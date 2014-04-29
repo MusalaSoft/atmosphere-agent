@@ -175,6 +175,9 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
             case GET_MOBILE_DATA_STATE:
                 returnValue = getMobileDataState();
                 break;
+            case GET_AWAKE_STATUS:
+                returnValue = serviceCommunicator.getAwakeStatus();
+                break;
 
             // Setters
             case SET_POWER_PROPERTIES:

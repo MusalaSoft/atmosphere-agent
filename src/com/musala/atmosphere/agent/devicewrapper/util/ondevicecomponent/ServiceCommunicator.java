@@ -244,12 +244,30 @@ public class ServiceCommunicator {
     public boolean startApplication(Object[] args) throws CommandFailedException {
         Request<ServiceRequest> startAppRequest = new Request<ServiceRequest>(ServiceRequest.START_APP);
         startAppRequest.setArguments(args);
-        
+
         try {
             boolean response = (boolean) serviceRequestHandler.request(startAppRequest);
             return response;
         } catch (ClassNotFoundException | IOException e) {
             throw new CommandFailedException("Starting application faliled.", e);
+        }
+    }
+
+    /**
+     * Checks if the device is awake.
+     * 
+     * @return - <code>true</code> if the device is awake and <code>false</code> otherwise
+     * @throws CommandFailedException
+     */
+    public boolean getAwakeStatus() throws CommandFailedException {
+        Request<ServiceRequest> getAwakeStatusRequest = new Request<ServiceRequest>(ServiceRequest.GET_AWAKE_STATUS);
+        boolean response;
+
+        try {
+            response = (boolean) serviceRequestHandler.request(getAwakeStatusRequest);
+            return response;
+        } catch (ClassNotFoundException | IOException e) {
+            throw new CommandFailedException("Getting device awake status failed.", e);
         }
     }
 }
