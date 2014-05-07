@@ -22,7 +22,6 @@ import com.musala.atmosphere.agent.devicewrapper.util.ApkInstaller;
 import com.musala.atmosphere.agent.devicewrapper.util.DeviceProfiler;
 import com.musala.atmosphere.agent.devicewrapper.util.FileTransferService;
 import com.musala.atmosphere.agent.devicewrapper.util.PortForwardingService;
-import com.musala.atmosphere.agent.devicewrapper.util.PreconditionsManager;
 import com.musala.atmosphere.agent.devicewrapper.util.ShellCommandExecutor;
 import com.musala.atmosphere.agent.devicewrapper.util.ondevicecomponent.ServiceCommunicator;
 import com.musala.atmosphere.agent.devicewrapper.util.ondevicecomponent.UIAutomatorCommunicator;
@@ -82,8 +81,6 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 
     protected final IDevice wrappedDevice;
 
-    private final PreconditionsManager preconditionsManager;
-
     private final ApkInstaller apkInstaller;
 
     public AbstractWrapDevice(IDevice deviceToWrap) throws RemoteException {
@@ -92,9 +89,6 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
         transferService = new FileTransferService(wrappedDevice);
         shellCommandExecutor = new ShellCommandExecutor(wrappedDevice);
         apkInstaller = new ApkInstaller(wrappedDevice);
-
-        preconditionsManager = new PreconditionsManager(wrappedDevice);
-        preconditionsManager.manageOnDeviceComponents();
 
         uiAutomatorBridgeCommunicator = new UIAutomatorCommunicator(shellCommandExecutor, transferService);
 

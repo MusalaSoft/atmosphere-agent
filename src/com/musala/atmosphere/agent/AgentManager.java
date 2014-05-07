@@ -24,8 +24,10 @@ import com.musala.atmosphere.commons.sa.IConnectionRequestReceiver;
 import com.musala.atmosphere.commons.sa.RmiStringConstants;
 import com.musala.atmosphere.commons.sa.SystemSpecification;
 import com.musala.atmosphere.commons.sa.exceptions.ADBridgeFailException;
+import com.musala.atmosphere.commons.sa.exceptions.DeviceBootTimeoutReachedException;
 import com.musala.atmosphere.commons.sa.exceptions.DeviceNotFoundException;
 import com.musala.atmosphere.commons.sa.exceptions.NotPossibleForDeviceException;
+import com.musala.atmosphere.commons.sa.exceptions.TimeoutReachedException;
 
 /**
  * Used for managing all devices on the current Agent.
@@ -42,6 +44,8 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager {
     private final static Logger LOGGER = Logger.getLogger(AgentManager.class.getCanonicalName());
 
     private AndroidDebugBridgeManager androidDebugBridgeManager;
+
+    private EmulatorManager emulatorManager;
 
     private Registry rmiRegistry;
 
@@ -69,6 +73,7 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager {
         systemSpecificationLoader = new SystemSpecificationLoader();
         systemSpecificationLoader.getSpecification();
         androidDebugBridgeManager = new AndroidDebugBridgeManager();
+        emulatorManager = EmulatorManager.getInstance();
 
         // Calculate the current Agent ID.
         AgentIdCalculator agentIdCalculator = new AgentIdCalculator();
@@ -131,13 +136,14 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager {
     }
 
     @Override
-    public void createAndStartEmulator(DeviceParameters parameters) throws RemoteException, IOException {
-        EmulatorManager emulatorManager = EmulatorManager.getInstance();
+    public String createAndStartEmulator(DeviceParameters parameters) throws RemoteException, IOException {
+        String emulatorName = null;
         try {
-            emulatorManager.createAndStartEmulator(parameters);
+            emulatorName = emulatorManager.createAndStartEmulator(parameters);
         } catch (CommandFailedException e) {
             LOGGER.fatal("Creating emulator device failed.", e);
         }
+        return emulatorName;
     }
 
     @Override
@@ -145,7 +151,6 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager {
         throws DeviceNotFoundException,
             NotPossibleForDeviceException,
             IOException {
-        EmulatorManager emulatorManager = EmulatorManager.getInstance();
         emulatorManager.closeAndEraseEmulator(serialNumber);
     }
 
@@ -240,5 +245,31 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager {
         }
 
         return score;
+    }
+
+    @Override
+    public String getSerialNumberOfEmulator(String emulatorName) throws DeviceNotFoundException {
+        return emulatorManager.getSerialNumberOfEmulator(emulatorName);
+    }
+
+    @Override
+    public void waitForEmulatorExists(String emulatorName, long timeout)
+        throws RemoteException,
+            TimeoutReachedException {
+        emulatorManager.waitForEmulatorExists(emulatorName, timeout);
+    }
+
+    @Override
+    public boolean isAnyEmulatorPresent() throws RemoteException {
+        return emulatorManager.isAnyEmulatorPresent();
+    }
+
+    @Override
+    public void waitForEmulatorToBoot(String emulatorName, long timeout)
+        throws RemoteException,
+            CommandFailedException,
+            DeviceBootTimeoutReachedException,
+            DeviceNotFoundException {
+        emulatorManager.waitForEmulatorToBoot(emulatorName, timeout);
     }
 }

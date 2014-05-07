@@ -6,23 +6,31 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import org.apache.log4j.Logger;
 
 import com.android.ddmlib.IDevice;
 import com.musala.atmosphere.agent.devicewrapper.EmulatorWrapDevice;
 import com.musala.atmosphere.agent.devicewrapper.RealWrapDevice;
+import com.musala.atmosphere.agent.devicewrapper.util.PreconditionsManager;
 import com.musala.atmosphere.agent.exception.OnDeviceComponentCommunicationException;
 import com.musala.atmosphere.agent.util.AgentIdCalculator;
+import com.musala.atmosphere.commons.exceptions.CommandFailedException;
 import com.musala.atmosphere.commons.sa.IDeviceManager;
 import com.musala.atmosphere.commons.sa.IWrapDevice;
 import com.musala.atmosphere.commons.sa.RmiStringConstants;
 import com.musala.atmosphere.commons.sa.exceptions.ADBridgeFailException;
+import com.musala.atmosphere.commons.sa.exceptions.DeviceBootTimeoutReachedException;
 import com.musala.atmosphere.commons.sa.exceptions.DeviceNotFoundException;
 import com.musala.atmosphere.commons.sa.exceptions.NotPossibleForDeviceException;
+import com.musala.atmosphere.commons.sa.exceptions.TimeoutReachedException;
 
 /**
  * Manages wrapping, unwrapping, register and unregister devices. Keeps track of all connected devices.
@@ -35,6 +43,10 @@ public class DeviceManager extends UnicastRemoteObject implements IDeviceManager
 
     private final static Logger LOGGER = Logger.getLogger(DeviceManager.class.getCanonicalName());
 
+    private static final int BOOT_VALIDATION_TIMEOUT = 120000;
+
+    private final static int DEVICE_EXISTANCE_CHECK_TIMEOUT = 1000;
+
     private static String agentID;
 
     private static AndroidDebugBridgeManager androidDebugBridgeManager;
@@ -43,7 +55,7 @@ public class DeviceManager extends UnicastRemoteObject implements IDeviceManager
 
     private static int rmiRegistryPort;
 
-    private static volatile List<IDevice> devicesList = Collections.synchronizedList(new LinkedList<IDevice>());
+    private static volatile Map<String, IDevice> connectedDevicesList = Collections.synchronizedMap(new HashMap<String, IDevice>());
 
     public DeviceManager() throws RemoteException {
     }
@@ -87,7 +99,10 @@ public class DeviceManager extends UnicastRemoteObject implements IDeviceManager
     }
 
     public List<IDevice> getDevicesList() {
-        return devicesList;
+        Collection<IDevice> connectedDevices = connectedDevicesList.values();
+        List<IDevice> deviceList = new LinkedList<IDevice>();
+        deviceList.addAll(connectedDevices);
+        return deviceList;
     }
 
     @Override
@@ -99,9 +114,10 @@ public class DeviceManager extends UnicastRemoteObject implements IDeviceManager
     public List<String> getAllDeviceWrappers() throws RemoteException {
         List<String> wrappersList = new LinkedList<>();
 
-        synchronized (devicesList) {
-            for (IDevice device : devicesList) {
-                String rmiWrapperBindingId = getRmiWrapperBindingIdentifier(device);
+        synchronized (connectedDevicesList) {
+            for (Entry<String, IDevice> deviceEntry : connectedDevicesList.entrySet()) {
+                IDevice currentDevice = deviceEntry.getValue();
+                String rmiWrapperBindingId = getRmiWrapperBindingIdentifier(currentDevice);
                 wrappersList.add(rmiWrapperBindingId);
             }
         }
@@ -118,21 +134,22 @@ public class DeviceManager extends UnicastRemoteObject implements IDeviceManager
      * @return the RMI binding ID of the newly bound wrapper.
      */
     String registerDevice(IDevice connectedDevice) {
-        if (devicesList.contains(connectedDevice)) {
+        String connectedDeviceSerialNumber = connectedDevice.getSerialNumber();
+        if (connectedDevicesList.containsKey(connectedDeviceSerialNumber)) {
             // The device is already registered, nothing to do here.
             // This should not normally happen!
             LOGGER.warn("Trying to register a device that is already registered.");
-            return "";
+            return null;
         }
 
         try {
             String publishId = createWrapperForDevice(connectedDevice);
-            devicesList.add(connectedDevice);
+            connectedDevicesList.put(connectedDeviceSerialNumber, connectedDevice);
             return publishId;
         } catch (RemoteException | OnDeviceComponentCommunicationException e) {
             LOGGER.fatal("Could not publish a wrapper for a device in the RMI registry.", e);
         }
-        return "";
+        return null;
     }
 
     /**
@@ -144,22 +161,23 @@ public class DeviceManager extends UnicastRemoteObject implements IDeviceManager
      * @return The RMI binding ID of the unbound device.
      */
     String unregisterDevice(IDevice disconnectedDevice) {
-        if (!devicesList.contains(disconnectedDevice)) {
+        String disconnectedDeviceSerialNumber = disconnectedDevice.getSerialNumber();
+        if (!connectedDevicesList.containsKey(disconnectedDeviceSerialNumber)) {
             // The device was never registered, so nothing to do here.
             // This should not normally happen!
-            LOGGER.warn("Trying to unregister a device [" + disconnectedDevice.getSerialNumber()
+            LOGGER.warn("Trying to unregister a device [" + disconnectedDeviceSerialNumber
                     + "] that was not present in the devices list.");
-            return "";
+            return null;
         }
 
         try {
             String publishId = unbindWrapperForDevice(disconnectedDevice);
-            devicesList.remove(disconnectedDevice);
+            connectedDevicesList.remove(disconnectedDeviceSerialNumber);
             return publishId;
         } catch (RemoteException e) {
             LOGGER.error("Device wrapper unbinding failed.", e);
         }
-        return "";
+        return null;
     }
 
     /**
@@ -173,6 +191,14 @@ public class DeviceManager extends UnicastRemoteObject implements IDeviceManager
     private String createWrapperForDevice(IDevice device) throws RemoteException {
         IWrapDevice deviceWrapper = null;
         String rmiWrapperBindingId = getRmiWrapperBindingIdentifier(device);
+
+        PreconditionsManager preconditionsManager = new PreconditionsManager(device);
+        try {
+            preconditionsManager.waitForDeviceToBoot(BOOT_VALIDATION_TIMEOUT);
+        } catch (CommandFailedException | DeviceBootTimeoutReachedException e) {
+            LOGGER.warn("Could not ensure device " + device.getSerialNumber() + " has fully booted.", e);
+        }
+        preconditionsManager.manageOnDeviceComponents();
 
         // Create a device wrapper depending on the device type (emulator/real)
         try {
@@ -223,7 +249,7 @@ public class DeviceManager extends UnicastRemoteObject implements IDeviceManager
             // Wrapper for the device was never published, so we have nothing to unbind.
             // Nothing to do here.
             LOGGER.error("Unbinding device wrapper [" + rmiWrapperBindingId + "] failed.", e);
-            return "";
+            return null;
         } catch (AccessException e) {
             throw new RemoteException("Unbinding device wrapper [" + rmiWrapperBindingId + "] failed.", e);
         }
@@ -243,14 +269,30 @@ public class DeviceManager extends UnicastRemoteObject implements IDeviceManager
      *         If no device with serial number serialNumber is found.
      */
     IDevice getDeviceBySerialNumber(String serialNumber) throws DeviceNotFoundException {
-        synchronized (devicesList) {
-            for (IDevice device : devicesList) {
-                if (device.getSerialNumber().equals(serialNumber)) {
-                    return device;
-                }
-            }
+        IDevice desiredDevice = connectedDevicesList.get(serialNumber);
+        if (desiredDevice != null) {
+            return desiredDevice;
         }
         throw new DeviceNotFoundException("Device with serial number " + serialNumber + " not found on this agent.");
     }
 
+    @Override
+    public void waitForDeviceExists(String serialNumber, long timeout) throws TimeoutReachedException {
+        while (timeout > 0) {
+            try {
+                getDeviceBySerialNumber(serialNumber);
+                return;
+            } catch (DeviceNotFoundException e) {
+                try {
+                    Thread.sleep(DEVICE_EXISTANCE_CHECK_TIMEOUT);
+                    timeout -= DEVICE_EXISTANCE_CHECK_TIMEOUT;
+                } catch (InterruptedException e1) {
+                    // Nothing to do here.
+                }
+            }
+        }
+
+        throw new TimeoutReachedException("Timeout was reached and a device with serial number " + serialNumber
+                + " is still not present.");
+    }
 }

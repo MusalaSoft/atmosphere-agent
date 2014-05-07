@@ -5,9 +5,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.apache.log4j.Logger;
 
@@ -15,12 +15,16 @@ import com.android.ddmlib.AndroidDebugBridge;
 import com.android.ddmlib.AndroidDebugBridge.IDeviceChangeListener;
 import com.android.ddmlib.EmulatorConsole;
 import com.android.ddmlib.IDevice;
+import com.musala.atmosphere.agent.devicewrapper.util.PreconditionsManager;
 import com.musala.atmosphere.agent.util.AndroidToolCommandBuilder;
 import com.musala.atmosphere.agent.util.EmulatorToolCommandBuilder;
 import com.musala.atmosphere.agent.util.SdkToolCommandSender;
 import com.musala.atmosphere.commons.exceptions.CommandFailedException;
 import com.musala.atmosphere.commons.sa.DeviceParameters;
+import com.musala.atmosphere.commons.sa.exceptions.DeviceBootTimeoutReachedException;
+import com.musala.atmosphere.commons.sa.exceptions.DeviceNotFoundException;
 import com.musala.atmosphere.commons.sa.exceptions.NotPossibleForDeviceException;
+import com.musala.atmosphere.commons.sa.exceptions.TimeoutReachedException;
 
 /**
  * Manages creating, closing and erasing emulators.
@@ -33,13 +37,15 @@ public class EmulatorManager implements IDeviceChangeListener {
 
     private static final String EMULATOR_NAME_FORMAT = "AtmosphereTemporatyEmulator_%s";
 
+    private static final int EMULATOR_WAIT_REVALIDATION_SLEEP_TIME = 1000;
+
     private static EmulatorManager emulatorManagerInstance = null;
 
     private AndroidDebugBridge androidDebugBridge;
 
     private SdkToolCommandSender sdkToolCommandSender;
 
-    private List<IDevice> emulatorList = Collections.synchronizedList(new LinkedList<IDevice>());
+    private Map<String, IDevice> connectedEmulatorsList = Collections.synchronizedMap(new HashMap<String, IDevice>());
 
     private Map<String, Process> startedEmulatorsProcess = Collections.synchronizedMap(new HashMap<String, Process>());
 
@@ -89,8 +95,9 @@ public class EmulatorManager implements IDeviceChangeListener {
      * @return an emulator device with the given serial number.
      */
     private IDevice getEmulatorBySerialNumber(String serialNumber) {
-        synchronized (emulatorList) {
-            for (IDevice currentEmulator : emulatorList) {
+        synchronized (connectedEmulatorsList) {
+            for (Entry<String, IDevice> currentEmulatorEntry : connectedEmulatorsList.entrySet()) {
+                IDevice currentEmulator = currentEmulatorEntry.getValue();
                 String currentEmulatorSerialNumber = currentEmulator.getSerialNumber();
                 if (serialNumber.equals(currentEmulatorSerialNumber)) {
                     return currentEmulator;
@@ -108,18 +115,21 @@ public class EmulatorManager implements IDeviceChangeListener {
     @Override
     public void deviceConnected(IDevice connectedDevice) {
         if (connectedDevice.isEmulator()) {
-            emulatorList.add(connectedDevice);
-            LOGGER.info("Emulator " + connectedDevice.getAvdName() + " connected.");
+            EmulatorConsole emulatorConsole = EmulatorConsole.getConsole(connectedDevice);
+            String emulatorName = emulatorConsole.getAvdName();
+            connectedEmulatorsList.put(emulatorName, connectedDevice);
+            LOGGER.info("Emulator " + emulatorName + " connected.");
         }
     }
 
     @Override
     public void deviceDisconnected(IDevice disconnectedDevice) {
         if (disconnectedDevice.isEmulator()) {
-            emulatorList.remove(disconnectedDevice);
-            String removedEmulatorAvdName = disconnectedDevice.getAvdName();
-            startedEmulatorsProcess.remove(removedEmulatorAvdName);
-            LOGGER.info("Emulator " + removedEmulatorAvdName + " disconnected.");
+            EmulatorConsole emulatorConsole = EmulatorConsole.getConsole(disconnectedDevice);
+            String disconnectedEmulatorAvdName = emulatorConsole.getAvdName();
+            connectedEmulatorsList.remove(disconnectedEmulatorAvdName);
+            startedEmulatorsProcess.remove(disconnectedEmulatorAvdName);
+            LOGGER.info("Emulator " + disconnectedEmulatorAvdName + " disconnected.");
         }
     }
 
@@ -255,5 +265,81 @@ public class EmulatorManager implements IDeviceChangeListener {
 
         closeEmulator(emulatorDevice);
         eraseEmulator(emulatorDevice);
+    }
+
+    /**
+     * Checks whether any emulator device is present on the agent.
+     * 
+     * @return true if an emulator device is found on the agent, false if not.
+     */
+    public boolean isAnyEmulatorPresent() {
+        return connectedEmulatorsList.size() > 0;
+    }
+
+    /**
+     * Waits until an emulator device with given AVD name is present on the agent or the timeout is reached.
+     * 
+     * @param emulatorName
+     *        - the AVD name of the emulator.
+     * @param timeout
+     *        - the timeout in milliseconds.
+     * @throws TimeoutReachedException
+     */
+    public void waitForEmulatorExists(String emulatorName, long timeout) throws TimeoutReachedException {
+        while (timeout > 0) {
+            IDevice emulatorDevice = connectedEmulatorsList.get(emulatorName);
+            if (emulatorDevice != null) {
+                return;
+            }
+            try {
+                Thread.sleep(EMULATOR_WAIT_REVALIDATION_SLEEP_TIME);
+                timeout -= EMULATOR_WAIT_REVALIDATION_SLEEP_TIME;
+            } catch (InterruptedException e) {
+                // Nothing to do here.
+            }
+        }
+
+        throw new TimeoutReachedException("Timeout was reached and an emulator with name " + emulatorName
+                + " is still not present.");
+    }
+
+    /**
+     * Gets the serial number of an emulator with given AVD name.
+     * 
+     * @param emulatorName
+     *        - the AVD name of the emulator.
+     * @return the serial number of the emulator.
+     * @throws DeviceNotFoundException
+     */
+    public String getSerialNumberOfEmulator(String emulatorName) throws DeviceNotFoundException {
+        IDevice desiredDevice = connectedEmulatorsList.get(emulatorName);
+        if (desiredDevice == null) {
+            throw new DeviceNotFoundException("Emulator with name" + emulatorName + " is not present on the agent.");
+        }
+        return desiredDevice.getSerialNumber();
+    }
+
+    /**
+     * Waits until an emulator device with given AVD name boots or the timeout is reached. Make sure you have called
+     * {@link #waitForEmulatorExists(String, long)} first.
+     * 
+     * @param emulatorName
+     *        - the AVD name of the emulator.
+     * @param timeout
+     *        - the timeout in milliseconds.
+     * @throws CommandFailedException
+     * @throws DeviceBootTimeoutReachedException
+     * @throws DeviceNotFoundException
+     */
+    public void waitForEmulatorToBoot(String emulatorName, long timeout)
+        throws CommandFailedException,
+            DeviceBootTimeoutReachedException,
+            DeviceNotFoundException {
+        IDevice desiredEmulator = connectedEmulatorsList.get(emulatorName);
+        if (desiredEmulator == null) {
+            throw new DeviceNotFoundException("Emulator with name " + emulatorName + " is not present on the agent.");
+        }
+        PreconditionsManager preconditionsManager = new PreconditionsManager(desiredEmulator);
+        preconditionsManager.waitForDeviceToBoot(timeout);
     }
 }
