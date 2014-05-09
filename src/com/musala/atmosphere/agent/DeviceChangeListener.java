@@ -100,7 +100,7 @@ class DeviceChangeListener implements IDeviceChangeListener {
 
         // Register the newly connected device on the AgentManager
         String publishId = deviceManager.registerDevice(connectedDevice);
-        if (publishId.isEmpty() == false) {
+        if (publishId != null && !publishId.isEmpty()) {
             onDeviceListChanged(publishId, true /* device connected */);
         }
     }
@@ -112,7 +112,7 @@ class DeviceChangeListener implements IDeviceChangeListener {
     public void deviceDisconnected(IDevice disconnectedDevice) {
         // Unregister the device from the AgentManager
         String publishId = deviceManager.unregisterDevice(disconnectedDevice);
-        if (publishId.isEmpty() == false) {
+        if (publishId != null && !publishId.isEmpty()) {
             onDeviceListChanged(publishId, false /* device disconnected */);
         }
     }

@@ -3,6 +3,7 @@ package com.musala.atmosphere.agent;
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.Date;
+import java.util.LinkedList;
 import java.util.List;
 
 import org.apache.log4j.Logger;
@@ -168,6 +169,32 @@ public class Agent {
      */
     public boolean isRunning() {
         return isRunning;
+    }
+
+    /**
+     * Connects this Agent to a Server.
+     * 
+     * @param ipAddress
+     *        server's IP address.
+     * @param port
+     *        server's RMI port.
+     */
+    public void connectToServer(String ip, int port) {
+        List<String> params = new LinkedList<String>();
+        params.add(ip);
+        params.add(String.valueOf(port));
+        AgentCommand connectCommand = new AgentCommand(AgentConsoleCommands.AGENT_CONNECT, params);
+        currentAgentState.executeConnectCommand(connectCommand);
+    }
+
+    /**
+     * Gets the unique identifier of the current Agent.
+     * 
+     * @return Unique identifier for the current Agent.
+     * @throws RemoteException
+     */
+    public String getId() throws RemoteException {
+        return agentManager.getAgentId();
     }
 
     /**

@@ -17,11 +17,13 @@ import java.util.Map.Entry;
 import org.apache.log4j.Logger;
 
 import com.android.ddmlib.IDevice;
+import com.musala.atmosphere.agent.devicewrapper.AbstractWrapDevice;
 import com.musala.atmosphere.agent.devicewrapper.EmulatorWrapDevice;
 import com.musala.atmosphere.agent.devicewrapper.RealWrapDevice;
 import com.musala.atmosphere.agent.devicewrapper.util.PreconditionsManager;
 import com.musala.atmosphere.agent.exception.OnDeviceComponentCommunicationException;
 import com.musala.atmosphere.agent.util.AgentIdCalculator;
+import com.musala.atmosphere.commons.DeviceInformation;
 import com.musala.atmosphere.commons.exceptions.CommandFailedException;
 import com.musala.atmosphere.commons.sa.IDeviceManager;
 import com.musala.atmosphere.commons.sa.IWrapDevice;
@@ -294,5 +296,43 @@ public class DeviceManager extends UnicastRemoteObject implements IDeviceManager
 
         throw new TimeoutReachedException("Timeout was reached and a device with serial number " + serialNumber
                 + " is still not present.");
+    }
+
+    @Override
+    public boolean isAnyDevicePresent() {
+        return !connectedDevicesList.isEmpty();
+    }
+
+    @Override
+    public IWrapDevice getFirstAvailableDeviceWrapper()
+        throws RemoteException,
+            NotBoundException,
+            DeviceNotFoundException {
+        List<String> wrapperIdentifiers = getAllDeviceWrappers();
+
+        if (wrapperIdentifiers.isEmpty()) {
+            throw new DeviceNotFoundException("No devices are present on the current agent. Consider creating and starting an emulator.");
+        }
+        IWrapDevice deviceWrapper = (IWrapDevice) rmiRegistry.lookup(wrapperIdentifiers.get(0));
+        return deviceWrapper;
+    }
+
+    @Override
+    public IWrapDevice getFirstAvailableEmulatorDeviceWrapper()
+        throws RemoteException,
+            NotBoundException,
+            DeviceNotFoundException {
+        // TODO: Move to EmulatorManager.
+        List<String> wrapperIdentifiers = getAllDeviceWrappers();
+
+        for (String wrapperId : wrapperIdentifiers) {
+            AbstractWrapDevice deviceWrapper = (AbstractWrapDevice) rmiRegistry.lookup(wrapperId);
+            DeviceInformation deviceInformation = deviceWrapper.getDeviceInformation();
+
+            if (deviceInformation.isEmulator()) {
+                return deviceWrapper;
+            }
+        }
+        throw new DeviceNotFoundException("No emulator devices are present on the agent (current machine).");
     }
 }
