@@ -64,7 +64,7 @@ public class AgentManagerTest {
 
     @Test
     public void testGetAllDeviceWrappers() throws RemoteException {
-        List<String> list = deviceManager.getAllDeviceWrappers();
+        List<String> list = deviceManager.getAllDeviceRmiIdentifiers();
         assertNotNull("The devices information list should never be 'null'.", list);
     }
 

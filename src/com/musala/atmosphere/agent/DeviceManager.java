@@ -5,7 +5,6 @@ import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
-import java.rmi.server.UnicastRemoteObject;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -25,12 +24,11 @@ import com.musala.atmosphere.agent.exception.OnDeviceComponentCommunicationExcep
 import com.musala.atmosphere.agent.util.AgentIdCalculator;
 import com.musala.atmosphere.commons.DeviceInformation;
 import com.musala.atmosphere.commons.exceptions.CommandFailedException;
-import com.musala.atmosphere.commons.sa.IDeviceManager;
 import com.musala.atmosphere.commons.sa.IWrapDevice;
-import com.musala.atmosphere.commons.sa.RmiStringConstants;
 import com.musala.atmosphere.commons.sa.exceptions.ADBridgeFailException;
 import com.musala.atmosphere.commons.sa.exceptions.DeviceBootTimeoutReachedException;
 import com.musala.atmosphere.commons.sa.exceptions.DeviceNotFoundException;
+import com.musala.atmosphere.commons.sa.exceptions.NoAvailableDeviceFoundException;
 import com.musala.atmosphere.commons.sa.exceptions.NotPossibleForDeviceException;
 import com.musala.atmosphere.commons.sa.exceptions.TimeoutReachedException;
 
@@ -40,9 +38,7 @@ import com.musala.atmosphere.commons.sa.exceptions.TimeoutReachedException;
  * @author yordan.petrov
  * 
  */
-public class DeviceManager extends UnicastRemoteObject implements IDeviceManager {
-    private static final long serialVersionUID = 8664090887381892035L;
-
+public class DeviceManager {
     private final static Logger LOGGER = Logger.getLogger(DeviceManager.class.getCanonicalName());
 
     private static final int BOOT_VALIDATION_TIMEOUT = 120000;
@@ -73,7 +69,6 @@ public class DeviceManager extends UnicastRemoteObject implements IDeviceManager
             // Publish this AgentManager in the RMI registry
             try {
                 rmiRegistry = LocateRegistry.getRegistry(rmiPort);
-                rmiRegistry.rebind(RmiStringConstants.DEVICE_MANAGER.toString(), this);
             } catch (RemoteException e) {
                 throw e;
             }
@@ -100,6 +95,11 @@ public class DeviceManager extends UnicastRemoteObject implements IDeviceManager
         }
     }
 
+    /**
+     * Gets list of all connected {@link IDevice}.
+     * 
+     * @return list of all connected {@link IDevice}.
+     */
     public List<IDevice> getDevicesList() {
         Collection<IDevice> connectedDevices = connectedDevicesList.values();
         List<IDevice> deviceList = new LinkedList<IDevice>();
@@ -107,13 +107,22 @@ public class DeviceManager extends UnicastRemoteObject implements IDeviceManager
         return deviceList;
     }
 
-    @Override
+    /**
+     * Gets the unique identifier of the current Agent.
+     * 
+     * @return Unique identifier for the current Agent.
+     */
     public String getAgentId() {
         return agentID;
     }
 
-    @Override
-    public List<String> getAllDeviceWrappers() throws RemoteException {
+    /**
+     * Gets a list of all published and available device wrapper RMI string identifiers on the current Agent.
+     * 
+     * @return List of the DeviceInformation objects, one for every available device on the current Agent.
+     * @throws RemoteException
+     */
+    public List<String> getAllDeviceRmiIdentifiers() throws RemoteException {
         List<String> wrappersList = new LinkedList<>();
 
         synchronized (connectedDevicesList) {
@@ -278,7 +287,15 @@ public class DeviceManager extends UnicastRemoteObject implements IDeviceManager
         throw new DeviceNotFoundException("Device with serial number " + serialNumber + " not found on this agent.");
     }
 
-    @Override
+    /**
+     * Waits until a device with given serial number is present on the agent or the timeout is reached.
+     * 
+     * @param serialNumber
+     *        - the serial number of the device.
+     * @param timeout
+     *        - the timeout in milliseconds.
+     * @throws TimeoutReachedException
+     */
     public void waitForDeviceExists(String serialNumber, long timeout) throws TimeoutReachedException {
         while (timeout > 0) {
             try {
@@ -298,32 +315,50 @@ public class DeviceManager extends UnicastRemoteObject implements IDeviceManager
                 + " is still not present.");
     }
 
-    @Override
+    /**
+     * Checks if any device is present on the agent (current machine).
+     * 
+     * @return true if a device is present, false otherwise.
+     */
     public boolean isAnyDevicePresent() {
         return !connectedDevicesList.isEmpty();
     }
 
-    @Override
+    /**
+     * Gets the first available device that is present on the agent (current machine).
+     * 
+     * @return the first available device wrapper ({@link IWrapDevice} interface).
+     * @throws RemoteException
+     * @throws NotBoundException
+     * @throws NoAvailableDeviceFoundException
+     */
     public IWrapDevice getFirstAvailableDeviceWrapper()
         throws RemoteException,
             NotBoundException,
-            DeviceNotFoundException {
-        List<String> wrapperIdentifiers = getAllDeviceWrappers();
+            NoAvailableDeviceFoundException {
+        List<String> wrapperIdentifiers = getAllDeviceRmiIdentifiers();
 
         if (wrapperIdentifiers.isEmpty()) {
-            throw new DeviceNotFoundException("No devices are present on the current agent. Consider creating and starting an emulator.");
+            throw new NoAvailableDeviceFoundException("No devices are present on the current agent. Consider creating and starting an emulator.");
         }
         IWrapDevice deviceWrapper = (IWrapDevice) rmiRegistry.lookup(wrapperIdentifiers.get(0));
         return deviceWrapper;
     }
 
-    @Override
+    /**
+     * Gets the first available emulator device that is present on the agent (current machine).
+     * 
+     * @return the first available emulator wrapper ({@link IWrapDevice} interface).
+     * @throws RemoteException
+     * @throws NotBoundException
+     * @throws NoAvailableDeviceFoundException
+     */
     public IWrapDevice getFirstAvailableEmulatorDeviceWrapper()
         throws RemoteException,
             NotBoundException,
-            DeviceNotFoundException {
+            NoAvailableDeviceFoundException {
         // TODO: Move to EmulatorManager.
-        List<String> wrapperIdentifiers = getAllDeviceWrappers();
+        List<String> wrapperIdentifiers = getAllDeviceRmiIdentifiers();
 
         for (String wrapperId : wrapperIdentifiers) {
             AbstractWrapDevice deviceWrapper = (AbstractWrapDevice) rmiRegistry.lookup(wrapperId);
@@ -333,6 +368,6 @@ public class DeviceManager extends UnicastRemoteObject implements IDeviceManager
                 return deviceWrapper;
             }
         }
-        throw new DeviceNotFoundException("No emulator devices are present on the agent (current machine).");
+        throw new NoAvailableDeviceFoundException("No emulator devices are present on the agent (current machine).");
     }
 }

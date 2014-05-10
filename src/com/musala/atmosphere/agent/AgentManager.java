@@ -11,6 +11,7 @@ import java.rmi.registry.Registry;
 import java.rmi.server.RemoteServer;
 import java.rmi.server.ServerNotActiveException;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.List;
 
 import org.apache.log4j.Logger;
 
@@ -21,11 +22,13 @@ import com.musala.atmosphere.commons.exceptions.CommandFailedException;
 import com.musala.atmosphere.commons.sa.DeviceParameters;
 import com.musala.atmosphere.commons.sa.IAgentManager;
 import com.musala.atmosphere.commons.sa.IConnectionRequestReceiver;
+import com.musala.atmosphere.commons.sa.IWrapDevice;
 import com.musala.atmosphere.commons.sa.RmiStringConstants;
 import com.musala.atmosphere.commons.sa.SystemSpecification;
 import com.musala.atmosphere.commons.sa.exceptions.ADBridgeFailException;
 import com.musala.atmosphere.commons.sa.exceptions.DeviceBootTimeoutReachedException;
 import com.musala.atmosphere.commons.sa.exceptions.DeviceNotFoundException;
+import com.musala.atmosphere.commons.sa.exceptions.NoAvailableDeviceFoundException;
 import com.musala.atmosphere.commons.sa.exceptions.NotPossibleForDeviceException;
 import com.musala.atmosphere.commons.sa.exceptions.TimeoutReachedException;
 
@@ -46,6 +49,8 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager {
     private AndroidDebugBridgeManager androidDebugBridgeManager;
 
     private EmulatorManager emulatorManager;
+
+    private DeviceManager deviceManager;
 
     private Registry rmiRegistry;
 
@@ -88,6 +93,7 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager {
             throw e;
         }
         rmiRegistryPort = rmiPort;
+        deviceManager = new DeviceManager();
 
         LOGGER.info("AgentManager created successfully.");
     }
@@ -271,5 +277,36 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager {
             DeviceBootTimeoutReachedException,
             DeviceNotFoundException {
         emulatorManager.waitForEmulatorToBoot(emulatorName, timeout);
+    }
+
+    @Override
+    public List<String> getAllDeviceRmiIdentifiers() throws RemoteException {
+        return deviceManager.getAllDeviceRmiIdentifiers();
+    }
+
+    @Override
+    public void waitForDeviceExists(String serialNumber, long timeout) throws RemoteException, TimeoutReachedException {
+        deviceManager.waitForDeviceExists(serialNumber, timeout);
+    }
+
+    @Override
+    public boolean isAnyDevicePresent() throws RemoteException {
+        return deviceManager.isAnyDevicePresent();
+    }
+
+    @Override
+    public IWrapDevice getFirstAvailableDeviceWrapper()
+        throws RemoteException,
+            NotBoundException,
+            NoAvailableDeviceFoundException {
+        return deviceManager.getFirstAvailableDeviceWrapper();
+    }
+
+    @Override
+    public IWrapDevice getFirstAvailableEmulatorDeviceWrapper()
+        throws RemoteException,
+            NotBoundException,
+            NoAvailableDeviceFoundException {
+        return deviceManager.getFirstAvailableEmulatorDeviceWrapper();
     }
 }
