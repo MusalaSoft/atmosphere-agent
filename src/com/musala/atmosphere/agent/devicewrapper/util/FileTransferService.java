@@ -7,6 +7,7 @@ import com.android.ddmlib.AdbCommandRejectedException;
 import com.android.ddmlib.IDevice;
 import com.android.ddmlib.SyncException;
 import com.android.ddmlib.TimeoutException;
+import com.musala.atmosphere.commons.ad.FileObjectTransferManagerConstants;
 import com.musala.atmosphere.commons.exceptions.CommandFailedException;
 
 /**
@@ -17,7 +18,6 @@ import com.musala.atmosphere.commons.exceptions.CommandFailedException;
  */
 public class FileTransferService {
     // WARNING : do not change the remote folder unless you really know what you are doing.
-    private static final String REMOTE_FILE_PATH = "/data/local/tmp/";
 
     private IDevice device;
 
@@ -35,12 +35,31 @@ public class FileTransferService {
      */
     public String pushFile(String localFileName) throws CommandFailedException {
         String isolatedFileName = new File(localFileName).getName();
-        String remoteFileName = REMOTE_FILE_PATH + isolatedFileName;
+        String remoteFileName = FileObjectTransferManagerConstants.DEVICE_TMP_PATH + isolatedFileName;
         try {
             device.pushFile(localFileName, remoteFileName);
         } catch (SyncException | IOException | AdbCommandRejectedException | TimeoutException e) {
             throw new CommandFailedException("Pushing file failed.", e);
         }
         return remoteFileName;
+    }
+
+    /**
+     * Download a file from the device.
+     * 
+     * @param remoteFileName
+     *        - the file to download.
+     * @param localFileName
+     *        - the path to the folder where the file will be saved.
+     */
+    public void pullFile(String remoteFileName, String localFileName) throws CommandFailedException {
+        String remoteFileNameWithPath = FileObjectTransferManagerConstants.DEVICE_TMP_PATH + remoteFileName;
+
+        try {
+            device.pullFile(remoteFileNameWithPath, localFileName);
+        } catch (SyncException | IOException | AdbCommandRejectedException | TimeoutException e) {
+            String message = String.format("Pulling remote file %s failed.", remoteFileNameWithPath);
+            throw new CommandFailedException(message, e);
+        }
     }
 }
