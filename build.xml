@@ -1,8 +1,32 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <project basedir="." default="build" name="AtmosphereAgentManagerCode">
+	<!--
+		Project dependency properties used by the common build
+	-->
+    <property name="dependency.projects" value="AtmosphereCommons,AtmosphereSACommons,AtmosphereADCommons"/>
+	<property name="dependency.projects.ondevice" value="AtmosphereService,AtmosphereIME"/>
+
     <import file="../common-build.xml"/>
 
-    <property name="dependency.projects" value="AtmosphereCommons,AtmosphereSACommons,AtmosphereADCommons"/>
+	<!--
+		UI autormator bridge project properties
+	-->
+	<property name="uiautomator.bridge.project.name" value="AtmosphereGesturePlayer"/>
+	<property name="uiautomator.bridge.project.dir" value="../${uiautomator.bridge.project.name}"/>
+	<property name="uiautomator.bridge.dir.build" value="${uiautomator.bridge.project.dir}/bin"/>
+
+	<!--
+		Overriding the pre-build target so that the UI automator bridge
+		component is updated upon build of this component.
+	-->
+	<target name="pre-build">
+		<ant antfile="${uiautomator.bridge.project.dir}/build.xml" target="build" dir="${uiautomator.bridge.project.dir}" inheritAll="false"/>
+		<copy todir="${ondevice.components.dir}">
+			<fileset dir="${uiautomator.bridge.dir.build}">
+				<include name="**/*.jar"/>
+			</fileset>
+		</copy>
+	</target>
 
     <target name="init-tests">
         <mkdir dir="${testclasses.dir}"/>
