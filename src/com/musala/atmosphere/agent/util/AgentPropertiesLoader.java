@@ -16,19 +16,17 @@ public class AgentPropertiesLoader {
 
     private static final char SEPARATOR_CHAR = File.separatorChar;
 
-    private static final String ADB_PATH_FORMAT = "%s%csdk%cplatform-tools%cadb";
+    private static final String ADB_PATH_FORMAT = "%s%cplatform-tools%cadb";
 
     private static final String ADB_PATH = String.format(ADB_PATH_FORMAT,
                                                          ADB_ENVIRONMENT_PATH,
                                                          SEPARATOR_CHAR,
-                                                         SEPARATOR_CHAR,
                                                          SEPARATOR_CHAR);
 
-    private static final String ADB_SDK_TOOLS_FORMAT = "%s%csdk%ctools";
+    private static final String ADB_SDK_TOOLS_FORMAT = "%s%ctools";
 
     private static final String ANDROID_SDK_TOOLS = String.format(ADB_SDK_TOOLS_FORMAT,
                                                                   ADB_ENVIRONMENT_PATH,
-                                                                  SEPARATOR_CHAR,
                                                                   SEPARATOR_CHAR);
 
     private static final String AGENT_PROPERTIES_FILE = "./agent.properties";
