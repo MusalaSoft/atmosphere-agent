@@ -1,5 +1,7 @@
 package com.musala.atmosphere.agent.util;
 
+import java.io.File;
+
 import com.musala.atmosphere.commons.util.PropertiesLoader;
 
 /**
@@ -10,6 +12,25 @@ import com.musala.atmosphere.commons.util.PropertiesLoader;
  */
 
 public class AgentPropertiesLoader {
+    private static final String ADB_ENVIRONMENT_PATH = System.getenv("ANDROID_HOME");
+
+    private static final char SEPARATOR_CHAR = File.separatorChar;
+
+    private static final String ADB_PATH_FORMAT = "%s%csdk%cplatform-tools%cadb";
+
+    private static final String ADB_PATH = String.format(ADB_PATH_FORMAT,
+                                                         ADB_ENVIRONMENT_PATH,
+                                                         SEPARATOR_CHAR,
+                                                         SEPARATOR_CHAR,
+                                                         SEPARATOR_CHAR);
+
+    private static final String ADB_SDK_TOOLS_FORMAT = "%s%csdk%ctools";
+
+    private static final String ANDROID_SDK_TOOLS = String.format(ADB_SDK_TOOLS_FORMAT,
+                                                                  ADB_ENVIRONMENT_PATH,
+                                                                  SEPARATOR_CHAR,
+                                                                  SEPARATOR_CHAR);
+
     private static final String AGENT_PROPERTIES_FILE = "./agent.properties";
 
     /**
@@ -33,8 +54,7 @@ public class AgentPropertiesLoader {
      * @return - the path to the Android Debug Bridge.
      */
     public static String getADBPath() {
-        String returnValueString = getPropertyString(AgentProperties.ADB_PATH);
-        return returnValueString;
+        return ADB_PATH;
     }
 
     /**
@@ -71,43 +91,12 @@ public class AgentPropertiesLoader {
     }
 
     /**
-     * Returns the path to Android tool directory from the config file.
-     * 
-     * @return the path to Android tool directory from the config file
-     */
-    public static String getAndroidToolPath() {
-        String returnValueString = getPropertyString(AgentProperties.ANDROID_TOOL_PATH);
-        return returnValueString;
-    }
-
-    /**
      * Returns the path to the Android SDK tools directory from the config file.
      * 
      * @return
      */
     public static String getAndroidSdkToolsDirPath() {
-        String returnValueString = getPropertyString(AgentProperties.ANDROID_SDK_TOOLS_PATH);
-        return returnValueString;
-    }
-
-    /**
-     * Returns the path to the Android Tool working directory from the config file.
-     * 
-     * @return the path to the Android tool working directory.
-     */
-    public static String getAndroidToolWorkDirPath() {
-        String returnValueString = getPropertyString(AgentProperties.ANDROID_TOOL_WORKDIR_PATH);
-        return returnValueString;
-    }
-
-    /**
-     * Returns the name of the Android tools class from the config file.
-     * 
-     * @return - the name of the class.
-     */
-    public static String getAndroidToolClass() {
-        String returnValueString = getPropertyString(AgentProperties.ANDROID_TOOL_CLASS);
-        return returnValueString;
+        return ANDROID_SDK_TOOLS;
     }
 
     /**

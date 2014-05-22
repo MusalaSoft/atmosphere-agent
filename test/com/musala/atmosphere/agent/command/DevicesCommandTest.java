@@ -1,6 +1,6 @@
 package com.musala.atmosphere.agent.command;
 
-import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 
@@ -37,7 +37,7 @@ public class DevicesCommandTest extends AgentCommandTestBase {
         AgentCommand command = new AgentCommand(AgentConsoleCommands.AGENT_DEVICES, new ArrayList<String>());
         agentState.executeCommand(command);
 
-        verify(mockedConsole, times(1)).writeLine(Matchers.anyString());
+        verify(mockedConsole, atLeast(1)).writeLine(Matchers.anyString());
     }
 
     @Test
