@@ -35,6 +35,7 @@ import com.musala.atmosphere.agent.util.MemoryUnitConverter;
 import com.musala.atmosphere.commons.DeviceInformation;
 import com.musala.atmosphere.commons.PowerProperties;
 import com.musala.atmosphere.commons.RoutingAction;
+import com.musala.atmosphere.commons.ScrollDirection;
 import com.musala.atmosphere.commons.SmsMessage;
 import com.musala.atmosphere.commons.beans.DeviceAcceleration;
 import com.musala.atmosphere.commons.beans.DeviceMagneticField;
@@ -56,7 +57,8 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 
     private static final Logger LOGGER = Logger.getLogger(AbstractWrapDevice.class.getCanonicalName());
 
-    // WARNING : do not change the remote folder unless you really know what you are doing.
+    // WARNING : do not change the remote folder unless you really know what you
+    // are doing.
     private static final String XMLDUMP_REMOTE_FILE_NAME = "/data/local/tmp/uidump.xml";
 
     private static final String XMLDUMP_COMMAND = "uiautomator dump " + XMLDUMP_REMOTE_FILE_NAME;
@@ -97,7 +99,8 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
             serviceCommunicator = new ServiceCommunicator(forwardingService, this);
         } catch (ForwardingPortFailedException | OnDeviceComponentStartingException
                 | OnDeviceComponentInitializationException e) {
-            // TODO throw a new exception here when the preconditions are implemented.
+            // TODO throw a new exception here when the preconditions are
+            // implemented.
 
             String errorMessage = String.format("Could not initialize communication to a on-device component for %s.",
                                                 wrappedDevice.getSerialNumber());
@@ -233,6 +236,22 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
             case SMS_RECEIVE:
                 receiveSms((SmsMessage) args[0]);
                 break;
+
+            // Scrollable View related
+            case SCROLL_TO_DIRECTION:
+                returnValue = uiAutomatorBridgeCommunicator.scrollToDirection((ScrollDirection) args[0],
+                                                                              (UiElementDescriptor) args[1],
+                                                                              (Integer) args[2],
+                                                                              (Integer) args[3],
+                                                                              (Boolean) args[4],
+                                                                              wrappedDevice.getSerialNumber());
+                break;
+
+            case SCROLL_INTO_VIEW:
+                returnValue = uiAutomatorBridgeCommunicator.scrollIntoView((UiElementDescriptor) args[0],
+                                                                           (UiElementDescriptor) args[1],
+                                                                           (Boolean) args[2],
+                                                                           wrappedDevice.getSerialNumber());
         }
 
         return returnValue;
@@ -271,7 +290,8 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
         // isEmulator
         deviceInformation.setEmulator(wrappedDevice.isEmulator());
 
-        // If the device will not give us it's valid properties, return the structure with the fallback values set.
+        // If the device will not give us it's valid properties, return the
+        // structure with the fallback values set.
         if (wrappedDevice.isOffline() || !wrappedDevice.arePropertiesSet()) {
             return deviceInformation;
         }

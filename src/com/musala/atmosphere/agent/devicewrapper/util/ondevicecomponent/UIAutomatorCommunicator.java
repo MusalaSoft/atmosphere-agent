@@ -7,6 +7,7 @@ import org.apache.log4j.Logger;
 
 import com.musala.atmosphere.agent.devicewrapper.util.FileTransferService;
 import com.musala.atmosphere.agent.devicewrapper.util.ShellCommandExecutor;
+import com.musala.atmosphere.commons.ScrollDirection;
 import com.musala.atmosphere.commons.ad.FileObjectTransferManagerConstants;
 import com.musala.atmosphere.commons.ad.Request;
 import com.musala.atmosphere.commons.ad.uiautomator.UIAutomatorConstants;
@@ -78,6 +79,83 @@ public class UIAutomatorCommunicator {
     }
 
     /**
+     * Starts a process on the UIAutomatorBridge that executes scrolling in a direction determined by the
+     * scrollDirection parameter.
+     * 
+     * @param scrollDirection
+     *        determine scrolling direction
+     * @param viewDescriptor
+     *        descriptor of the scrollable view
+     * @param maxSwipes
+     *        maximum swipes to perform a scroll action
+     * @param maxSteps
+     *        steps to be executed when scrolling, steps controls the speed
+     * @param isVertical
+     *        true if the view has vertical orientation, false otherwise
+     * @param deviceSerialNumber
+     *        serial number of the current device
+     * @return true if scrolled is performed else false
+     * @throws CommandFailedException
+     */
+    public boolean scrollToDirection(ScrollDirection scrollDirection,
+                                     UiElementDescriptor viewDescriptor,
+                                     Integer maxSwipes,
+                                     Integer maxSteps,
+                                     Boolean isVertical,
+                                     String deviceSerialNumber) throws CommandFailedException {
+        Object[] arguments = new Object[] {scrollDirection, viewDescriptor, maxSwipes, maxSteps, isVertical};
+        Request<UIAutomatorRequest> uiAutomatorRequest = new Request<UIAutomatorRequest>(UIAutomatorRequest.SCROLL_TO_DIRECTION);
+        return processRequest(deviceSerialNumber, arguments, uiAutomatorRequest);
+    }
+
+    /**
+     * Starts a process on the UIAutomatorBridge that executes scrolling into a view or a contained text.
+     * 
+     * @param viewDescriptor
+     *        descriptor of the scrollable view
+     * @param innerViewDescriptor
+     *        descriptor of the view into which will be scrolled
+     * @param isVertical
+     *        true if the view has vertical orientation, false otherwise
+     * @param deviceSerialNumber
+     *        serial number of the current device
+     * @return true if scrolled is performed else false
+     * @throws CommandFailedException
+     */
+    public boolean scrollIntoView(UiElementDescriptor viewDescriptor,
+                                  UiElementDescriptor innerViewDescriptor,
+                                  Boolean isVertical,
+                                  String deviceSerialNumber) throws CommandFailedException {
+        Object[] arguments = new Object[] {viewDescriptor, innerViewDescriptor, isVertical};
+        Request<UIAutomatorRequest> uiAutomatorRequest = new Request<UIAutomatorRequest>(UIAutomatorRequest.SCROLL_INTO_VIEW);
+        return processRequest(deviceSerialNumber, arguments, uiAutomatorRequest);
+    }
+
+    /**
+     * Starts the request to the UIAutomatorBridge and gets the response from the transferred file.
+     * 
+     * @param deviceSerialNumber
+     *        - the serial number of the used device.
+     * @param arguments
+     *        - arguments, that will be send in the request.
+     * @param uiAutomatorRequest
+     *        - request, that will be send to the UIAutomatorBridge
+     * @return response from the transfered file after the requested action is executed.
+     * @throws CommandFailedException
+     */
+    private boolean processRequest(String deviceSerialNumber,
+                                   Object[] arguments,
+                                   Request<UIAutomatorRequest> uiAutomatorRequest) throws CommandFailedException {
+        uiAutomatorRequest.setArguments(arguments);
+
+        UIAutomatorProcessStarter starter = new UIAutomatorProcessStarter();
+        starter.attachObject(UIAutomatorConstants.PARAM_REQUEST, uiAutomatorRequest);
+        String executionResponse = starter.run(executor, transferService);
+
+        return getResponseFromTransferredFile(deviceSerialNumber);
+    }
+
+    /**
      * Starts a process on the UIAutomatorBridge that waits for a UI element to appear on the screen with a given
      * timeout.
      * 
@@ -96,11 +174,20 @@ public class UIAutomatorCommunicator {
         throws CommandFailedException {
         Object[] arguments = new Object[] {descriptor, timeout};
         Request<UIAutomatorRequest> uiAutomatorRequest = new Request<UIAutomatorRequest>(UIAutomatorRequest.WAIT_FOR_EXISTS);
-        uiAutomatorRequest.setArguments(arguments);
+        return processRequest(deviceSerialNumber, arguments, uiAutomatorRequest);
 
-        UIAutomatorProcessStarter starter = new UIAutomatorProcessStarter();
-        starter.attachObject(UIAutomatorConstants.PARAM_REQUEST, uiAutomatorRequest);
-        String executionResponse = starter.run(executor, transferService);
+    }
+
+    /**
+     * Used for reading the response from the pulled file.
+     * 
+     * @param deviceSerialNumber
+     *        - the serial number of the used device.
+     * @return
+     * @throws CommandFailedException
+     */
+    // Currently all responses are boolean, returned type should be changed to Object if needed
+    private boolean getResponseFromTransferredFile(String deviceSerialNumber) throws CommandFailedException {
         String localFileName = FileObjectTransferManagerConstants.RESPONSE_FILE_NAME + deviceSerialNumber;
         Boolean response = false;
 
@@ -113,7 +200,8 @@ public class UIAutomatorCommunicator {
             LOGGER.error(message, e);
             throw new CommandFailedException(message, e);
         }
-        return response;
 
+        return response;
     }
+
 }
