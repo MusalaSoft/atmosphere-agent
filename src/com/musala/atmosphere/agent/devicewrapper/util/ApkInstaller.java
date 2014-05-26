@@ -107,7 +107,7 @@ public class ApkInstaller {
      * 
      * @throws CommandFailedException
      */
-    public void buildAndInstallAPK() throws CommandFailedException {
+    public void buildAndInstallAPK(boolean shouldForceInstall) throws CommandFailedException {
         if (tempApkFile == null || tempApkFileOutputStream == null) {
             throw new IllegalStateException("Temp .apk file should be created (by calling initAPKInstall()) before any calls to appendToAPK() and buildAndInstallAPK().");
         }
@@ -118,7 +118,7 @@ public class ApkInstaller {
             tempApkFileOutputStream = null;
             String absolutePathToApk = tempApkFile.getAbsolutePath();
 
-            String installResult = device.installPackage(absolutePathToApk, true /* force reinstall */);
+            String installResult = device.installPackage(absolutePathToApk, shouldForceInstall);
             discardAPK();
 
             if (installResult != null) {

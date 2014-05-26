@@ -135,7 +135,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
                 apkInstaller.appendToAPK((byte[]) args[0], (int) args[1]);
                 break;
             case APK_BUILD_AND_INSTALL:
-                apkInstaller.buildAndInstallAPK();
+                apkInstaller.buildAndInstallAPK((boolean) args[0]);
                 break;
             case APK_DISCARD:
                 apkInstaller.discardAPK();
