@@ -156,6 +156,34 @@ public class UIAutomatorCommunicator {
     }
 
     /**
+     * Starts the request to the UIAutomatorBridge and gets the response from the transferred file.
+     * 
+     * @param deviceSerialNumber
+     *        - the serial number of the used device.
+     * @param arguments
+     *        - arguments, that will be send in the request.
+     * @param uiAutomatorRequest
+     *        - request, that will be send to the UIAutomatorBridge.
+     * @param commandExecutionTimeout
+     *        - timeout, that will be used when executing shell commands on the device.
+     * @return response from the transfered file after the requested action is executed.
+     * @throws CommandFailedException
+     */
+    private boolean processRequestWithCommandExecutionTimeout(String deviceSerialNumber,
+                                                              Object[] arguments,
+                                                              Request<UIAutomatorRequest> uiAutomatorRequest,
+                                                              int commandExecutionTimeout)
+        throws CommandFailedException {
+        uiAutomatorRequest.setArguments(arguments);
+
+        UIAutomatorProcessStarter starter = new UIAutomatorProcessStarter();
+        starter.attachObject(UIAutomatorConstants.PARAM_REQUEST, uiAutomatorRequest);
+        String executionResponse = starter.run(executor, transferService, commandExecutionTimeout);
+
+        return getResponseFromTransferredFile(deviceSerialNumber);
+    }
+
+    /**
      * Starts a process on the UIAutomatorBridge that waits for a UI element to appear on the screen with a given
      * timeout.
      * 
@@ -170,11 +198,11 @@ public class UIAutomatorCommunicator {
      * 
      * @throws CommandFailedException
      */
-    public boolean waitForExists(UiElementDescriptor descriptor, Long timeout, String deviceSerialNumber)
+    public boolean waitForExists(UiElementDescriptor descriptor, Integer timeout, String deviceSerialNumber)
         throws CommandFailedException {
         Object[] arguments = new Object[] {descriptor, timeout};
         Request<UIAutomatorRequest> uiAutomatorRequest = new Request<UIAutomatorRequest>(UIAutomatorRequest.WAIT_FOR_EXISTS);
-        return processRequest(deviceSerialNumber, arguments, uiAutomatorRequest);
+        return processRequestWithCommandExecutionTimeout(deviceSerialNumber, arguments, uiAutomatorRequest, timeout);
 
     }
 

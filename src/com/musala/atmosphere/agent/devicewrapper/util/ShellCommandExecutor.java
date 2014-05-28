@@ -40,6 +40,34 @@ public class ShellCommandExecutor {
     }
 
     /**
+     * Executes a command with a specified timeout on the device's shell and returns the result of the execution. If the
+     * default timeout is grater than the requested one, default will be used.
+     * 
+     * @param command
+     *        - Shell command to be executed.
+     * @param timeout
+     *        - timeout to be used in the adb connection, when executing a command on the device.
+     * @return Shell response from the command execution.
+     * @throws CommandFailedException
+     */
+    public String execute(String command, int timeout) throws CommandFailedException {
+        String response = "";
+
+        int commandExecutionTimeout = Math.max(timeout, COMMAND_EXECUTION_TIMEOUT);
+
+        try {
+            CollectingOutputReceiver outputReceiver = new CollectingOutputReceiver();
+            device.executeShellCommand(command, outputReceiver, commandExecutionTimeout);
+
+            response = outputReceiver.getOutput();
+        } catch (TimeoutException | AdbCommandRejectedException | ShellCommandUnresponsiveException | IOException e) {
+            throw new CommandFailedException("Shell command execution failed.", e);
+        }
+
+        return response;
+    }
+
+    /**
      * Executes a command on the device's shell and returns the result of the execution.
      * 
      * @param command
@@ -48,19 +76,7 @@ public class ShellCommandExecutor {
      * @throws CommandFailedException
      */
     public String execute(String command) throws CommandFailedException {
-        String response = "";
-
-        try {
-            CollectingOutputReceiver outputReceiver = new CollectingOutputReceiver();
-            device.executeShellCommand(command, outputReceiver, COMMAND_EXECUTION_TIMEOUT);
-
-            response = outputReceiver.getOutput();
-        } catch (TimeoutException | AdbCommandRejectedException | ShellCommandUnresponsiveException | IOException e) {
-            throw new CommandFailedException("Shell command execution failed. See the enclosed exception for more information.",
-                                             e);
-        }
-
-        return response;
+        return execute(command, COMMAND_EXECUTION_TIMEOUT);
     }
 
     /**

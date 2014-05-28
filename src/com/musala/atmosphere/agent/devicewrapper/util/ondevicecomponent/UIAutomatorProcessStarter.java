@@ -81,6 +81,25 @@ public class UIAutomatorProcessStarter {
      *        - the device {@link ShellCommandExecutor} instance to be used for UIAutomator starting.
      * @param service
      *        - the device {@link FileTransferService} instance to be used for file uploading.
+     * @param commandExecutorTimeout
+     *        - timeout, that will be used when executing shell commands on the device.
+     * @return the execution console response.
+     * @throws CommandFailedException
+     */
+    public String run(ShellCommandExecutor executor, FileTransferService service, int commandExecutorTimeout)
+        throws CommandFailedException {
+        uploadRequiredFiles(service);
+        String cmdLine = buildCommand();
+        return executor.execute(cmdLine, commandExecutorTimeout);
+    }
+
+    /**
+     * Starts a UIAutomator process with the previously specified parameters.
+     * 
+     * @param executor
+     *        - the device {@link ShellCommandExecutor} instance to be used for UIAutomator starting.
+     * @param service
+     *        - the device {@link FileTransferService} instance to be used for file uploading.
      * @return the execution console response.
      * @throws CommandFailedException
      */

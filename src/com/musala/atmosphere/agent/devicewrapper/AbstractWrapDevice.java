@@ -202,7 +202,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
             // Misc functionalities
             case WAIT_FOR_EXISTS:
                 returnValue = uiAutomatorBridgeCommunicator.waitForExists((UiElementDescriptor) args[0],
-                                                                          (Long) args[1],
+                                                                          (Integer) args[1],
                                                                           wrappedDevice.getSerialNumber());
                 break;
             case PLAY_GESTURE:
