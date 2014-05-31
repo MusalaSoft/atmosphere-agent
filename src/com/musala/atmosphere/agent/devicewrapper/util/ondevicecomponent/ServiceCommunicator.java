@@ -2,14 +2,13 @@ package com.musala.atmosphere.agent.devicewrapper.util.ondevicecomponent;
 
 import java.io.IOException;
 
-import com.musala.atmosphere.agent.devicewrapper.AbstractWrapDevice;
 import com.musala.atmosphere.agent.devicewrapper.util.PortForwardingService;
+import com.musala.atmosphere.agent.devicewrapper.util.ShellCommandExecutor;
 import com.musala.atmosphere.agent.exception.OnDeviceComponentInitializationException;
 import com.musala.atmosphere.agent.exception.OnDeviceComponentStartingException;
 import com.musala.atmosphere.agent.exception.OnDeviceComponentValidationException;
 import com.musala.atmosphere.agent.exception.OnDeviceServiceTerminationException;
 import com.musala.atmosphere.commons.ConnectionType;
-import com.musala.atmosphere.commons.DeviceInformation;
 import com.musala.atmosphere.commons.PowerProperties;
 import com.musala.atmosphere.commons.TelephonyInformation;
 import com.musala.atmosphere.commons.ad.Request;
@@ -30,21 +29,22 @@ import com.musala.atmosphere.commons.util.IntentBuilder.IntentAction;
 public class ServiceCommunicator {
     private static final String ATMOSPHERE_SERVICE_COMPONENT = "com.musala.atmosphere.service/com.musala.atmosphere.service.AtmosphereService";
 
-    private final AbstractWrapDevice wrappedDevice;
-
     private ServiceRequestHandler serviceRequestHandler;
 
     private PortForwardingService portForwardingService;
 
     private String deviceSerialNumber;
 
-    public ServiceCommunicator(PortForwardingService portForwarder, AbstractWrapDevice wrappedDevice) {
+    private ShellCommandExecutor shellCommandExecutor;
+
+    public ServiceCommunicator(PortForwardingService portForwarder,
+            ShellCommandExecutor commandExecutor,
+            String serialNumber) {
         portForwardingService = portForwarder;
         int localPort = portForwardingService.getLocalForwardedPort();
 
-        this.wrappedDevice = wrappedDevice;
-        DeviceInformation deviceInformation = wrappedDevice.getDeviceInformation();
-        deviceSerialNumber = deviceInformation.getSerialNumber();
+        deviceSerialNumber = serialNumber;
+        shellCommandExecutor = commandExecutor;
 
         startAtmosphereService();
         try {
@@ -67,7 +67,7 @@ public class ServiceCommunicator {
         String startServiceIntentCommand = startSeviceIntentBuilder.buildIntentCommand();
 
         try {
-            wrappedDevice.getShellCommandExecutor().execute(startServiceIntentCommand);
+            shellCommandExecutor.execute(startServiceIntentCommand);
         } catch (CommandFailedException e) {
             String errorMessage = String.format("Starting ATMOSPHERE service failed for %s.", deviceSerialNumber);
             throw new OnDeviceComponentStartingException(errorMessage, e);
@@ -90,7 +90,7 @@ public class ServiceCommunicator {
         String stopServiceIntentCommand = stopServiceIntentBuilder.buildIntentCommand();
 
         try {
-            wrappedDevice.getShellCommandExecutor().execute(stopServiceIntentCommand);
+            shellCommandExecutor.execute(stopServiceIntentCommand);
         } catch (CommandFailedException e) {
             String errorMessage = String.format("Stopping ATMOSPHERE service failed for %s.", deviceSerialNumber);
             throw new OnDeviceServiceTerminationException(errorMessage, e);
@@ -268,6 +268,22 @@ public class ServiceCommunicator {
             return response;
         } catch (ClassNotFoundException | IOException e) {
             throw new CommandFailedException("Getting device awake status failed.", e);
+        }
+    }
+
+    /**
+     * Checks if the device has an available camera.
+     * 
+     * @return true if the device has a camera, else false
+     * @throws CommandFailedException
+     */
+    public boolean getCameraAvailability() throws CommandFailedException {
+        Request<ServiceRequest> getCameraAvailabilityRequest = new Request<ServiceRequest>(ServiceRequest.GET_CAMERA_AVAILABILITY);
+
+        try {
+            return (boolean) serviceRequestHandler.request(getCameraAvailabilityRequest);
+        } catch (ClassNotFoundException | IOException e) {
+            throw new CommandFailedException("Getting device camera availability failed.", e);
         }
     }
 }

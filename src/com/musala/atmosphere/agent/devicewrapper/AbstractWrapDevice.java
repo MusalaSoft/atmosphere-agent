@@ -87,7 +87,6 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 
     public AbstractWrapDevice(IDevice deviceToWrap) throws RemoteException {
         wrappedDevice = deviceToWrap;
-
         transferService = new FileTransferService(wrappedDevice);
         shellCommandExecutor = new ShellCommandExecutor(wrappedDevice);
         apkInstaller = new ApkInstaller(wrappedDevice);
@@ -96,7 +95,9 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 
         PortForwardingService forwardingService = new PortForwardingService(wrappedDevice);
         try {
-            serviceCommunicator = new ServiceCommunicator(forwardingService, this);
+            serviceCommunicator = new ServiceCommunicator(forwardingService,
+                                                          shellCommandExecutor,
+                                                          deviceToWrap.getSerialNumber());
         } catch (ForwardingPortFailedException | OnDeviceComponentStartingException
                 | OnDeviceComponentInitializationException e) {
             // TODO throw a new exception here when the preconditions are
@@ -357,6 +358,14 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 
         deviceInformation.setRam(MemoryUnitConverter.convertMemoryToMB(extractedRamMemoryString));
 
+        // Camera
+        try {
+            boolean hasCamera = serviceCommunicator.getCameraAvailability();
+            deviceInformation.setCamera(hasCamera);
+        } catch (CommandFailedException e) {
+            LOGGER.error("Checking device camera availability failed.", e);
+        }
+
         // Resolution
         try {
             CollectingOutputReceiver outputReceiver = new CollectingOutputReceiver();
@@ -412,9 +421,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
      * @throws CommandFailedException
      */
     private String getUiXml() throws CommandFailedException {
-
         shellCommandExecutor.execute(XMLDUMP_COMMAND);
-
         try {
             wrappedDevice.pullFile(XMLDUMP_REMOTE_FILE_NAME, XMLDUMP_LOCAL_FILE_NAME);
 

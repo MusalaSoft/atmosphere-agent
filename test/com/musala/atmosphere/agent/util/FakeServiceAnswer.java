@@ -37,6 +37,8 @@ public class FakeServiceAnswer implements FakeOnDeviceComponentRequestHandler {
                 return acceleration;
             case GET_ORIENTATION_READINGS:
                 return new float[] {6.0f, 1.0f, 9.0f};
+            case GET_CAMERA_AVAILABILITY:
+                return true;
             default:
                 return null;
         }
