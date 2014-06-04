@@ -244,6 +244,21 @@ public class DeviceManager {
     }
 
     /**
+     * Returns a unique identifier for this device, which will be used as a publishing string for the wrapper of the
+     * device in RMI.
+     * 
+     * @param deviceSerialNumber
+     *        serial numver of the device we want to get unique identifier for.
+     * @return unique identifier for the device.
+     * @throws DeviceNotFoundException
+     */
+    public String getRmiWrapperBindingIdentifier(String deviceSerialNumber) throws DeviceNotFoundException {
+        IDevice device = getDeviceBySerialNumber(deviceSerialNumber);
+        String wrapperId = device.getSerialNumber();
+        return wrapperId;
+    }
+
+    /**
      * Unbinds a device wrapper from the RMI registry.
      * 
      * @param device

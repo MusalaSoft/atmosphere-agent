@@ -30,7 +30,7 @@ import com.musala.atmosphere.agent.util.FakeDeviceShellAnswer;
 import com.musala.atmosphere.agent.util.FakeOnDeviceComponentAnswer;
 import com.musala.atmosphere.commons.DeviceInformation;
 import com.musala.atmosphere.commons.RoutingAction;
-import com.musala.atmosphere.commons.sa.DeviceParameters;
+import com.musala.atmosphere.commons.sa.EmulatorParameters;
 import com.musala.atmosphere.commons.sa.IWrapDevice;
 import com.musala.atmosphere.commons.sa.SystemSpecification;
 
@@ -146,8 +146,8 @@ public class AgentManagerTest {
 
     @Test
     public void testGetPerformanceScore() throws RemoteException {
-        DeviceParameters requiredDeviceParameters = new DeviceParameters();
-        requiredDeviceParameters.setRam(0);
+        EmulatorParameters requiredDeviceParameters = new EmulatorParameters();
+        requiredDeviceParameters.setRam(0l);
 
         double performanceScore = agentManager.getPerformanceScore(requiredDeviceParameters);
         boolean isScorePositive = performanceScore > 0d;

@@ -20,7 +20,7 @@ import com.musala.atmosphere.agent.util.AndroidToolCommandBuilder;
 import com.musala.atmosphere.agent.util.EmulatorToolCommandBuilder;
 import com.musala.atmosphere.agent.util.SdkToolCommandSender;
 import com.musala.atmosphere.commons.exceptions.CommandFailedException;
-import com.musala.atmosphere.commons.sa.DeviceParameters;
+import com.musala.atmosphere.commons.sa.EmulatorParameters;
 import com.musala.atmosphere.commons.sa.exceptions.DeviceBootTimeoutReachedException;
 import com.musala.atmosphere.commons.sa.exceptions.DeviceNotFoundException;
 import com.musala.atmosphere.commons.sa.exceptions.NotPossibleForDeviceException;
@@ -153,7 +153,7 @@ public class EmulatorManager implements IDeviceChangeListener {
      * @throws IOException
      * @throws CommandFailedException
      */
-    public String createAndStartEmulator(DeviceParameters desiredDeviceParameters)
+    public String createAndStartEmulator(EmulatorParameters desiredDeviceParameters)
         throws IOException,
             CommandFailedException {
         String emulatorName = getNewEmulatorName();
@@ -175,7 +175,7 @@ public class EmulatorManager implements IDeviceChangeListener {
      * @throws IOException
      * @throws CommandFailedException
      */
-    private void createEmulator(String emulatorName, DeviceParameters desiredDeviceParameters)
+    private void createEmulator(String emulatorName, EmulatorParameters desiredDeviceParameters)
         throws IOException,
             CommandFailedException {
         AndroidToolCommandBuilder androidToolCommandBuilder = new AndroidToolCommandBuilder(emulatorName,
@@ -195,7 +195,7 @@ public class EmulatorManager implements IDeviceChangeListener {
      * @return the emulator tool process.
      * @throws IOException
      */
-    private Process startEmulator(String emulatorName, DeviceParameters desiredDeviceParameters) throws IOException {
+    private Process startEmulator(String emulatorName, EmulatorParameters desiredDeviceParameters) throws IOException {
         EmulatorToolCommandBuilder emulatorToolCommandBuilder = new EmulatorToolCommandBuilder(emulatorName,
                                                                                                desiredDeviceParameters);
         List<String> emulatorToolCommand = emulatorToolCommandBuilder.getStartCommand();

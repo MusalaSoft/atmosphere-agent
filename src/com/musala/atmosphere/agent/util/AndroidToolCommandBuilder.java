@@ -7,7 +7,7 @@ import java.util.regex.Pattern;
 import org.apache.log4j.Logger;
 
 import com.musala.atmosphere.commons.exceptions.CommandFailedException;
-import com.musala.atmosphere.commons.sa.DeviceParameters;
+import com.musala.atmosphere.commons.sa.EmulatorParameters;
 import com.musala.atmosphere.commons.util.Pair;
 
 /**
@@ -74,11 +74,11 @@ public class AndroidToolCommandBuilder {
 
     private String avdName;
 
-    private DeviceParameters deviceParameters;
+    private EmulatorParameters deviceParameters;
 
     private SdkToolCommandSender sdkToolCommandSender;
 
-    public AndroidToolCommandBuilder(String avdName, DeviceParameters deviceParameters) {
+    public AndroidToolCommandBuilder(String avdName, EmulatorParameters deviceParameters) {
         this.avdName = avdName;
         this.deviceParameters = deviceParameters;
         this.sdkToolCommandSender = new SdkToolCommandSender();

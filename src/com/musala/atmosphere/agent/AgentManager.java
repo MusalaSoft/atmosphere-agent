@@ -19,7 +19,7 @@ import com.android.ddmlib.AndroidDebugBridge;
 import com.musala.atmosphere.agent.util.AgentIdCalculator;
 import com.musala.atmosphere.agent.util.SystemSpecificationLoader;
 import com.musala.atmosphere.commons.exceptions.CommandFailedException;
-import com.musala.atmosphere.commons.sa.DeviceParameters;
+import com.musala.atmosphere.commons.sa.EmulatorParameters;
 import com.musala.atmosphere.commons.sa.IAgentManager;
 import com.musala.atmosphere.commons.sa.IConnectionRequestReceiver;
 import com.musala.atmosphere.commons.sa.IWrapDevice;
@@ -142,7 +142,7 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager {
     }
 
     @Override
-    public String createAndStartEmulator(DeviceParameters parameters) throws RemoteException, IOException {
+    public String createAndStartEmulator(EmulatorParameters parameters) throws RemoteException, IOException {
         String emulatorName = null;
         try {
             emulatorName = emulatorManager.createAndStartEmulator(parameters);
@@ -226,7 +226,7 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager {
     }
 
     @Override
-    public double getPerformanceScore(DeviceParameters requiredDeviceParameters) throws RemoteException {
+    public double getPerformanceScore(EmulatorParameters requiredDeviceParameters) throws RemoteException {
         double score = 0d;
 
         SystemSpecification systemSpecification = getSpecification();
@@ -308,5 +308,12 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager {
             NotBoundException,
             NoAvailableDeviceFoundException {
         return deviceManager.getFirstAvailableEmulatorDeviceWrapper();
+    }
+
+    @Override
+    public String getRmiWrapperBindingIdentifier(String deviceSerialNumber)
+        throws RemoteException,
+            DeviceNotFoundException {
+        return deviceManager.getRmiWrapperBindingIdentifier(deviceSerialNumber);
     }
 }

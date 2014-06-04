@@ -3,7 +3,7 @@ package com.musala.atmosphere.agent.util;
 import java.util.LinkedList;
 import java.util.List;
 
-import com.musala.atmosphere.commons.sa.DeviceParameters;
+import com.musala.atmosphere.commons.sa.EmulatorParameters;
 
 /**
  * A builder of commands for the emulator tool.
@@ -39,9 +39,9 @@ public class EmulatorToolCommandBuilder {
 
     private String emulatorName;
 
-    private DeviceParameters deviceParameters;
+    private EmulatorParameters deviceParameters;
 
-    public EmulatorToolCommandBuilder(String emulatorName, DeviceParameters deviceParameters) {
+    public EmulatorToolCommandBuilder(String emulatorName, EmulatorParameters deviceParameters) {
         this.emulatorName = emulatorName;
         this.deviceParameters = deviceParameters;
     }
