@@ -246,8 +246,7 @@ public class ServiceCommunicator {
         startAppRequest.setArguments(args);
 
         try {
-            boolean response = (boolean) serviceRequestHandler.request(startAppRequest);
-            return response;
+            return (boolean) serviceRequestHandler.request(startAppRequest);
         } catch (ClassNotFoundException | IOException e) {
             throw new CommandFailedException("Starting application faliled.", e);
         }
@@ -261,11 +260,9 @@ public class ServiceCommunicator {
      */
     public boolean getAwakeStatus() throws CommandFailedException {
         Request<ServiceRequest> getAwakeStatusRequest = new Request<ServiceRequest>(ServiceRequest.GET_AWAKE_STATUS);
-        boolean response;
 
         try {
-            response = (boolean) serviceRequestHandler.request(getAwakeStatusRequest);
-            return response;
+            return (boolean) serviceRequestHandler.request(getAwakeStatusRequest);
         } catch (ClassNotFoundException | IOException e) {
             throw new CommandFailedException("Getting device awake status failed.", e);
         }

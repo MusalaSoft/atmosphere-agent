@@ -7,7 +7,7 @@ import com.android.ddmlib.AdbCommandRejectedException;
 import com.android.ddmlib.IDevice;
 import com.android.ddmlib.SyncException;
 import com.android.ddmlib.TimeoutException;
-import com.musala.atmosphere.commons.ad.FileObjectTransferManagerConstants;
+import com.musala.atmosphere.commons.ad.FileTransferConstants;
 import com.musala.atmosphere.commons.exceptions.CommandFailedException;
 
 /**
@@ -35,7 +35,7 @@ public class FileTransferService {
      */
     public String pushFile(String localFileName) throws CommandFailedException {
         String isolatedFileName = new File(localFileName).getName();
-        String remoteFileName = FileObjectTransferManagerConstants.DEVICE_TMP_PATH + isolatedFileName;
+        String remoteFileName = FileTransferConstants.DEVICE_TMP_PATH + isolatedFileName;
         try {
             device.pushFile(localFileName, remoteFileName);
         } catch (SyncException | IOException | AdbCommandRejectedException | TimeoutException e) {
@@ -45,15 +45,15 @@ public class FileTransferService {
     }
 
     /**
-     * Download a file from the device.
+     * Download a file from the temporary files of the device.
      * 
      * @param remoteFileName
-     *        - the file to download.
+     *        - the name of the file to download
      * @param localFileName
-     *        - the path to the folder where the file will be saved.
+     *        - the local path to the destination file
      */
     public void pullFile(String remoteFileName, String localFileName) throws CommandFailedException {
-        String remoteFileNameWithPath = FileObjectTransferManagerConstants.DEVICE_TMP_PATH + remoteFileName;
+        String remoteFileNameWithPath = FileTransferConstants.DEVICE_TMP_PATH + remoteFileName;
 
         try {
             device.pullFile(remoteFileNameWithPath, localFileName);
