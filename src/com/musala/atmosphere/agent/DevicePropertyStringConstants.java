@@ -34,7 +34,12 @@ public enum DevicePropertyStringConstants {
     /**
      * Property key for the manufacturer string of a device.
      */
-    PROPERTY_MANUFACTURER_NAME("ro.product.manufacturer");
+    PROPERTY_MANUFACTURER_NAME("ro.product.manufacturer"),
+
+    /**
+     * Property key for the characteristics string of a device.
+     */
+    PROPERTY_CHARACTERISTICS("ro.build.characteristics");
 
     private String value;
 

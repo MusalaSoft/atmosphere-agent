@@ -71,6 +71,10 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 
     private static final String SCREENSHOT_LOCAL_FILE_NAME = "local_screen.png";
 
+    private static final String RAM_MEMORY_PATTERN = "(\\w+):(\\s+)(\\d+\\w+)";
+
+    private static final String DEVICE_TYPE = "tablet";
+
     protected final ServiceCommunicator serviceCommunicator;
 
     protected final UIAutomatorCommunicator uiAutomatorBridgeCommunicator;
@@ -351,7 +355,6 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 
         // RAM
         String ramMemoryString = DeviceInformation.FALLBACK_RAM_AMOUNT.toString();
-        String ramMemoryPattern = "(\\w+):(\\s+)(\\d+\\w+)";
 
         try {
             ramMemoryString = shellCommandExecutor.execute(GET_RAM_MEMORY_COMMAND);
@@ -359,9 +362,16 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
             LOGGER.warn("Getting device RAM failed.", e);
         }
 
-        String extractedRamMemoryString = ramMemoryString.replaceAll(ramMemoryPattern, "$3");
+        String extractedRamMemoryString = ramMemoryString.replaceAll(RAM_MEMORY_PATTERN, "$3");
 
         deviceInformation.setRam(MemoryUnitConverter.convertMemoryToMB(extractedRamMemoryString));
+
+        // isTablet
+        if (devicePropertiesMap.containsKey(DevicePropertyStringConstants.PROPERTY_CHARACTERISTICS.toString())) {
+            String deviceCharacteristics = devicePropertiesMap.get(DevicePropertyStringConstants.PROPERTY_CHARACTERISTICS.toString());
+            boolean isTablet = deviceCharacteristics.contains(DEVICE_TYPE);
+            deviceInformation.setTablet(isTablet);
+        }
 
         // Camera
         try {
