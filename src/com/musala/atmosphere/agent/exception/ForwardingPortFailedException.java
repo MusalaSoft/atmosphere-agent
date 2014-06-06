@@ -1,12 +1,14 @@
 package com.musala.atmosphere.agent.exception;
 
+import com.musala.atmosphere.commons.exceptions.AtmosphereRuntimeException;
+
 /**
  * Thrown when the forwarding of port to an ATMOSPHERE on-device application fails.
  * 
  * @author yordan.petrov
  * 
  */
-public class ForwardingPortFailedException extends RuntimeException {
+public class ForwardingPortFailedException extends AtmosphereRuntimeException {
     /**
      * auto-generated serialization id
      */

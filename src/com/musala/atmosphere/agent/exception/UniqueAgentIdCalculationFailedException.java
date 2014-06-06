@@ -1,6 +1,8 @@
 package com.musala.atmosphere.agent.exception;
 
-public class UniqueAgentIdCalculationFailedException extends RuntimeException {
+import com.musala.atmosphere.commons.exceptions.AtmosphereRuntimeException;
+
+public class UniqueAgentIdCalculationFailedException extends AtmosphereRuntimeException {
 
     private static final long serialVersionUID = -9086891181302017743L;
 
