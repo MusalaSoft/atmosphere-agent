@@ -11,6 +11,7 @@ import org.apache.log4j.Logger;
 import com.musala.atmosphere.agent.command.AgentCommand;
 import com.musala.atmosphere.agent.command.AgentCommandFactory;
 import com.musala.atmosphere.agent.command.AgentConsoleCommands;
+import com.musala.atmosphere.agent.exception.IllegalPortException;
 import com.musala.atmosphere.agent.state.AgentState;
 import com.musala.atmosphere.agent.state.DisconnectedAgent;
 import com.musala.atmosphere.agent.util.AgentPropertiesLoader;
