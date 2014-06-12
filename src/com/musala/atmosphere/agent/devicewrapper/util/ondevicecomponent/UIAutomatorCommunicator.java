@@ -142,6 +142,29 @@ public class UIAutomatorCommunicator {
     }
 
     /**
+     * Starts a process on the UIAutomatorBridge that waits for a UI element to disappear on the screen with a given
+     * timeout.
+     * 
+     * @param descriptor
+     *        - the descriptor of the UI element.
+     * @param timeout
+     *        - the given timeout.
+     * @param deviceSerialNumber
+     *        - the serial number of the used device.
+     * @return <code>true</code> if the element disappears.<br>
+     *         <code>false</code> if there is such element on the screen after the timeout. <br>
+     * 
+     * @throws CommandFailedException
+     */
+    public boolean waitUntilGone(UiElementDescriptor descriptor, Integer timeout, String deviceSerialNumber)
+        throws CommandFailedException {
+        Object[] arguments = new Object[] {descriptor, timeout};
+        startUIAutomatorProcess(UIAutomatorRequest.WAIT_UNTIL_GONE, arguments, timeout);
+
+        return (boolean) getResponse(deviceSerialNumber);
+    }
+
+    /**
      * Starts a process on the UI automator bridge that Waits for a window content update event to occur. If a package
      * name for the window is specified, but the current window does not have the same package name, the function
      * returns immediately.
