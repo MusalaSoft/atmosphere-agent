@@ -283,4 +283,24 @@ public class ServiceCommunicator {
             throw new CommandFailedException("Getting device camera availability failed.", e);
         }
     }
+
+    /**
+     * Checks of there are running Processes on the device with the given package
+     * 
+     * @param args
+     *        -contains the packageName
+     * @return true if there are such processes and false otherwise
+     * @throws CommandFailedException
+     */
+
+    public boolean getProcessRunning(Object args[]) throws CommandFailedException {
+        Request<ServiceRequest> getProcessRunningRequest = new Request<ServiceRequest>(ServiceRequest.GET_PROCESS_RUNNING);
+        getProcessRunningRequest.setArguments(args);
+
+        try {
+            return (boolean) serviceRequestHandler.request(getProcessRunningRequest);
+        } catch (ClassNotFoundException | IOException e) {
+            throw new CommandFailedException("Checking for running process faliled.", e);
+        }
+    }
 }

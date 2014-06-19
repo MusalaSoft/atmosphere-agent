@@ -180,7 +180,9 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
             case GET_AWAKE_STATUS:
                 returnValue = serviceCommunicator.getAwakeStatus();
                 break;
-
+            case GET_PROCESS_RUNNING:
+                returnValue = serviceCommunicator.getProcessRunning(args);
+                break;
             // Setters
             case SET_POWER_PROPERTIES:
                 setPowerProperties((PowerProperties) args[0]);
