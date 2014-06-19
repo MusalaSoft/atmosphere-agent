@@ -59,7 +59,7 @@ public class FileTransferService {
             device.pullFile(remoteFileNameWithPath, localFileName);
         } catch (SyncException | IOException | AdbCommandRejectedException | TimeoutException e) {
             String message = String.format("Pulling remote file %s failed.", remoteFileNameWithPath);
-            throw new CommandFailedException(message, e);
+            throw new CommandFailedException(message);
         }
     }
 }
