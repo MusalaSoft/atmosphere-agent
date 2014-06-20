@@ -69,6 +69,8 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 
     private static final String SCREENSHOT_COMMAND = "screencap -p " + SCREENSHOT_REMOTE_FILE_NAME;
 
+    private static final String FORCE_STOP_PROCESS_COMMAND = "am force-stop ";
+
     private static final String SCREENSHOT_LOCAL_FILE_NAME = "local_screen.png";
 
     private static final String RAM_MEMORY_PATTERN = "(\\w+):(\\s+)(\\d+\\w+)";
@@ -233,6 +235,9 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
                 break;
             case START_APP:
                 returnValue = serviceCommunicator.startApplication(args);
+                break;
+            case FORCE_STOP_PROCESS:
+                forceStopProcess((String) args[0]);
                 break;
 
             // Call related
@@ -457,6 +462,17 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
             LOGGER.error("UI dump failed.", e);
             throw new CommandFailedException("UI dump failed. See the enclosed exception for more information.", e);
         }
+    }
+
+    /**
+     * Executes a force-stop process command
+     * 
+     * @param args
+     *        - containing the package of the force-stopped process
+     * @throws CommandFailedException
+     */
+    private void forceStopProcess(String args) throws CommandFailedException {
+        shellCommandExecutor.execute(FORCE_STOP_PROCESS_COMMAND + args);
     }
 
     @Override
