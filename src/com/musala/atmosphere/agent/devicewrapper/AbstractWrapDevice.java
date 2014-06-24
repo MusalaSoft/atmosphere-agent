@@ -71,6 +71,8 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 
     private static final String FORCE_STOP_PROCESS_COMMAND = "am force-stop ";
 
+    private static final String STOP_BACKGROUND_PROCESS_COMMAND = "am kill ";
+
     private static final String SCREENSHOT_LOCAL_FILE_NAME = "local_screen.png";
 
     private static final String RAM_MEMORY_PATTERN = "(\\w+):(\\s+)(\\d+\\w+)";
@@ -238,6 +240,9 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
                 break;
             case FORCE_STOP_PROCESS:
                 forceStopProcess((String) args[0]);
+                break;
+            case STOP_BACKGROUND_PROCESS:
+                stopBackgroundProcess((String) args[0]);
                 break;
 
             // Call related
@@ -473,6 +478,17 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
      */
     private void forceStopProcess(String args) throws CommandFailedException {
         shellCommandExecutor.execute(FORCE_STOP_PROCESS_COMMAND + args);
+    }
+
+    /**
+     * Stops a background process by a given package name.
+     * 
+     * @param args
+     *        - containing the package of the process.
+     * @throws CommandFailedException
+     */
+    private void stopBackgroundProcess(String args) throws CommandFailedException {
+        shellCommandExecutor.execute(STOP_BACKGROUND_PROCESS_COMMAND + args);
     }
 
     @Override
