@@ -6,6 +6,12 @@
     <property name="dependency.projects" value="AtmosphereCommons,AtmosphereSACommons,AtmosphereADCommons"/>
 	<property name="dependency.projects.ondevice" value="AtmosphereService,AtmosphereIME"/>
 
+	<!--
+		Properties needed for the packing of an executable jar
+		file of the project
+	-->
+	<property name="project.main.class" value="com.musala.atmosphere.agent.Agent"/>
+
     <import file="../common-build.xml"/>
 
 	<!--
@@ -27,6 +33,9 @@
 			</fileset>
 		</copy>
 	</target>
+
+	<!-- Overriding the default jar target to create an executable jar -->
+	<target name="jar" depends="create-executable-jar"/>
 
     <target name="init-tests">
         <mkdir dir="${testclasses.dir}"/>
