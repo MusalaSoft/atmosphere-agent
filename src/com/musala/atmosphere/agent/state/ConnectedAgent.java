@@ -38,8 +38,7 @@ public class ConnectedAgent extends AgentState {
 
             String consoleMessage = String.format("Server address - \"%s:%d\"", serverIp, serverPort);
             agentConsole.writeLine(consoleMessage);
-        }
-        catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException e) {
             LOGGER.error("Could not execute command.", e);
             agentConsole.writeLine(ILLEGAL_COMMAND_MESSAGE);
         }
@@ -54,8 +53,7 @@ public class ConnectedAgent extends AgentState {
             agentConsole.writeLine("Agent already connected to " + serverAdress);
 
             LOGGER.info("Error connecting agent to server: agent is already connected to " + serverAdress);
-        }
-        catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException e) {
             LOGGER.error("Could not execute command.", e);
             agentConsole.writeLine(ILLEGAL_COMMAND_MESSAGE);
         }

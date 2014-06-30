@@ -8,24 +8,20 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-public class AgentPropertiesLoaderTest
-{
-	@Before
-	public void setUp()
-	{
+public class AgentPropertiesLoaderTest {
+    @Before
+    public void setUp() {
 
-	}
+    }
 
-	@After
-	public void tearDown()
-	{
+    @After
+    public void tearDown() {
 
-	}
+    }
 
-	@Test
-	public void testGetProperty() throws IOException
-	{
-		String pathToADB = AgentPropertiesLoader.getADBPath();
-		assertNotNull("Returns property.", pathToADB);
-	}
+    @Test
+    public void testGetProperty() throws IOException {
+        String pathToADB = AgentPropertiesLoader.getADBPath();
+        assertNotNull("Returns property.", pathToADB);
+    }
 }

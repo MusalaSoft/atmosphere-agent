@@ -15,94 +15,84 @@ import com.android.ddmlib.Log.LogLevel;
  * @author georgi.gaydarov
  * 
  */
-public class DdmLibLogListener implements ILogOutput
-{
-	private static boolean fileLogging = false;
+public class DdmLibLogListener implements ILogOutput {
+    private static boolean fileLogging = false;
 
-	private final static Logger LOGGER = Logger.getLogger(AgentManager.class.getName());
+    private final static Logger LOGGER = Logger.getLogger(AgentManager.class.getName());
 
-	public DdmLibLogListener(Level logLevel, boolean logToFile)
-	{
-		LOGGER.setLevel(logLevel);
-		if (logToFile && fileLogging == false)
-		{
-			try
-			{
-				Handler fileHandler = new FileHandler("DdmLibLogListener.log");
-				LOGGER.addHandler(fileHandler);
-				fileLogging = true;
-			}
-			catch (SecurityException | IOException e)
-			{
-				// Could not create the log file.
-				// Well, we can't log this...
-				e.printStackTrace();
-			}
-		}
-	}
+    public DdmLibLogListener(Level logLevel, boolean logToFile) {
+        LOGGER.setLevel(logLevel);
+        if (logToFile && fileLogging == false) {
+            try {
+                Handler fileHandler = new FileHandler("DdmLibLogListener.log");
+                LOGGER.addHandler(fileHandler);
+                fileLogging = true;
+            } catch (SecurityException | IOException e) {
+                // Could not create the log file.
+                // Well, we can't log this...
+                e.printStackTrace();
+            }
+        }
+    }
 
-	@Override
-	public void printAndPromptLog(LogLevel logLevel, String arg1, String arg2)
-	{
-		Level loggerInputLevel;
-		switch (logLevel.getStringValue())
-		{
-			case "VERBOSE":
-				loggerInputLevel = Level.FINE;
-				break;
-			case "DEBUG":
-				loggerInputLevel = Level.CONFIG;
-				break;
-			case "INFO":
-				loggerInputLevel = Level.INFO;
-				break;
-			case "WARN":
-				loggerInputLevel = Level.WARNING;
-				break;
-			case "ERROR":
-				loggerInputLevel = Level.WARNING;
-				break;
-			case "ASSERT":
-				loggerInputLevel = Level.SEVERE;
-				break;
-			default:
-				loggerInputLevel = Level.INFO;
-				break;
-		}
-		LOGGER.log(loggerInputLevel, arg1 + " " + arg2);
-		// System.out.println(arg0.toString() + " " + arg1 + " " + arg2);
-	}
+    @Override
+    public void printAndPromptLog(LogLevel logLevel, String arg1, String arg2) {
+        Level loggerInputLevel;
+        switch (logLevel.getStringValue()) {
+            case "VERBOSE":
+                loggerInputLevel = Level.FINE;
+                break;
+            case "DEBUG":
+                loggerInputLevel = Level.CONFIG;
+                break;
+            case "INFO":
+                loggerInputLevel = Level.INFO;
+                break;
+            case "WARN":
+                loggerInputLevel = Level.WARNING;
+                break;
+            case "ERROR":
+                loggerInputLevel = Level.WARNING;
+                break;
+            case "ASSERT":
+                loggerInputLevel = Level.SEVERE;
+                break;
+            default:
+                loggerInputLevel = Level.INFO;
+                break;
+        }
+        LOGGER.log(loggerInputLevel, arg1 + " " + arg2);
+        // System.out.println(arg0.toString() + " " + arg1 + " " + arg2);
+    }
 
-	@Override
-	public void printLog(LogLevel logLevel, String arg1, String arg2)
-	{
-		Level loggerInputLevel;
-		switch (logLevel.getStringValue())
-		{
-			case "VERBOSE":
-				loggerInputLevel = Level.FINE;
-				break;
-			case "DEBUG":
-				loggerInputLevel = Level.CONFIG;
-				break;
-			case "INFO":
-				loggerInputLevel = Level.INFO;
-				break;
-			case "WARN":
-				loggerInputLevel = Level.WARNING;
-				break;
-			case "ERROR":
-				loggerInputLevel = Level.WARNING;
-				break;
-			case "ASSERT":
-				loggerInputLevel = Level.SEVERE;
-				break;
-			default:
-				loggerInputLevel = Level.INFO;
-				break;
-		}
-		LOGGER.log(loggerInputLevel, arg1 + " " + arg2);
-		// System.out.println(arg0.toString() + " " + arg1 + " " + arg2);
-	}
+    @Override
+    public void printLog(LogLevel logLevel, String arg1, String arg2) {
+        Level loggerInputLevel;
+        switch (logLevel.getStringValue()) {
+            case "VERBOSE":
+                loggerInputLevel = Level.FINE;
+                break;
+            case "DEBUG":
+                loggerInputLevel = Level.CONFIG;
+                break;
+            case "INFO":
+                loggerInputLevel = Level.INFO;
+                break;
+            case "WARN":
+                loggerInputLevel = Level.WARNING;
+                break;
+            case "ERROR":
+                loggerInputLevel = Level.WARNING;
+                break;
+            case "ASSERT":
+                loggerInputLevel = Level.SEVERE;
+                break;
+            default:
+                loggerInputLevel = Level.INFO;
+                break;
+        }
+        LOGGER.log(loggerInputLevel, arg1 + " " + arg2);
+        // System.out.println(arg0.toString() + " " + arg1 + " " + arg2);
+    }
 
 }
