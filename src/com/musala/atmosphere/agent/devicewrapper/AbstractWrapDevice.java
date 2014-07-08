@@ -226,6 +226,9 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
                                                                                 (int) args[1],
                                                                                 wrappedDevice.getSerialNumber());
                 break;
+            case OPEN_NOTIFICATION_BAR:
+                returnValue = uiAutomatorBridgeCommunicator.openNotificationBar(wrappedDevice.getSerialNumber());
+                break;
             case PLAY_GESTURE:
                 uiAutomatorBridgeCommunicator.playGesture((Gesture) args[0]);
                 break;

@@ -165,6 +165,20 @@ public class UIAutomatorCommunicator {
     }
 
     /**
+     * Starts a process on the UIAutomatorBridge that opens the notification bar on the device.
+     * 
+     * @param deviceSerialNumber
+     *        - the serial number of the used device
+     * @return true if the notification bar has been successfully opened, false otherwise
+     * @throws CommandFailedException
+     */
+    public boolean openNotificationBar(String deviceSerialNumber) throws CommandFailedException {
+        startUIAutomatorProcess(UIAutomatorRequest.OPEN_NOTIFICATION_BAR, null);
+
+        return (boolean) getResponse(deviceSerialNumber);
+    }
+
+    /**
      * Starts a process on the UI automator bridge that Waits for a window content update event to occur. If a package
      * name for the window is specified, but the current window does not have the same package name, the function
      * returns immediately.
