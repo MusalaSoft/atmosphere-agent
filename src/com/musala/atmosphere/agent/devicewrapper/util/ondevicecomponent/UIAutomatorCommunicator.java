@@ -7,6 +7,7 @@ import org.apache.log4j.Logger;
 
 import com.musala.atmosphere.agent.devicewrapper.util.FileTransferService;
 import com.musala.atmosphere.agent.devicewrapper.util.ShellCommandExecutor;
+import com.musala.atmosphere.commons.PickerAction;
 import com.musala.atmosphere.commons.ScrollDirection;
 import com.musala.atmosphere.commons.ad.FileTransferConstants;
 import com.musala.atmosphere.commons.ad.Request;
@@ -90,30 +91,6 @@ public class UIAutomatorCommunicator {
                                      String deviceSerialNumber) throws CommandFailedException {
         Object[] arguments = new Object[] {scrollDirection, viewDescriptor, maxSwipes, maxSteps, isVertical};
         startUIAutomatorProcess(UIAutomatorRequest.SCROLL_TO_DIRECTION, arguments);
-
-        return (boolean) getResponse(deviceSerialNumber);
-    }
-
-    /**
-     * Starts a process on the UIAutomatorBridge that executes scrolling into a view or a contained text.
-     * 
-     * @param viewDescriptor
-     *        descriptor of the scrollable view
-     * @param innerViewDescriptor
-     *        descriptor of the view into which will be scrolled
-     * @param isVertical
-     *        true if the view has vertical orientation, false otherwise
-     * @param deviceSerialNumber
-     *        serial number of the current device
-     * @return true if scrolled is performed else false
-     * @throws CommandFailedException
-     */
-    public boolean scrollIntoView(UiElementDescriptor viewDescriptor,
-                                  UiElementDescriptor innerViewDescriptor,
-                                  Boolean isVertical,
-                                  String deviceSerialNumber) throws CommandFailedException {
-        Object[] arguments = new Object[] {viewDescriptor, innerViewDescriptor, isVertical};
-        startUIAutomatorProcess(UIAutomatorRequest.SCROLL_INTO_VIEW, arguments);
 
         return (boolean) getResponse(deviceSerialNumber);
     }
@@ -217,6 +194,23 @@ public class UIAutomatorCommunicator {
     }
 
     /**
+     * Sends a time picker interaction which does not require additional parameters.
+     * 
+     * @param action
+     *        - the action type
+     * @param deviceSerialNumber
+     *        - serial number of the device on which the interaction is performed
+     * @return true, if the interaction is successful, false otherwise
+     * @throws CommandFailedException
+     */
+    public Object sendTimePickerAction(PickerAction action, String deviceSerialNumber) throws CommandFailedException {
+        Object[] arguments = new Object[] {action};
+        startUIAutomatorProcess(UIAutomatorRequest.TIME_PICKER_INTERACTION, arguments);
+
+        return getResponse(deviceSerialNumber);
+    }
+
+    /**
      * Used for reading a response from the pulled file.
      * 
      * @param deviceSerialNumber
@@ -278,4 +272,5 @@ public class UIAutomatorCommunicator {
             starter.run(executor, transferService);
         }
     }
+
 }

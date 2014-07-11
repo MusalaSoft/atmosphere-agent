@@ -33,6 +33,7 @@ import com.musala.atmosphere.agent.exception.OnDeviceServiceTerminationException
 import com.musala.atmosphere.agent.util.DeviceScreenResolutionParser;
 import com.musala.atmosphere.agent.util.MemoryUnitConverter;
 import com.musala.atmosphere.commons.DeviceInformation;
+import com.musala.atmosphere.commons.PickerAction;
 import com.musala.atmosphere.commons.PowerProperties;
 import com.musala.atmosphere.commons.RoutingAction;
 import com.musala.atmosphere.commons.ScrollDirection;
@@ -187,6 +188,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
             case GET_PROCESS_RUNNING:
                 returnValue = serviceCommunicator.getProcessRunning(args);
                 break;
+
             // Setters
             case SET_POWER_PROPERTIES:
                 setPowerProperties((PowerProperties) args[0]);
@@ -280,11 +282,11 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
                                                                               wrappedDevice.getSerialNumber());
                 break;
 
-            case SCROLL_INTO_VIEW:
-                returnValue = uiAutomatorBridgeCommunicator.scrollIntoView((UiElementDescriptor) args[0],
-                                                                           (UiElementDescriptor) args[1],
-                                                                           (Boolean) args[2],
-                                                                           wrappedDevice.getSerialNumber());
+            // Picker related
+            case TIME_PICKER_INTERACTION:
+                returnValue = uiAutomatorBridgeCommunicator.sendTimePickerAction((PickerAction) args[0],
+                                                                                 wrappedDevice.getSerialNumber());
+
         }
 
         return returnValue;
