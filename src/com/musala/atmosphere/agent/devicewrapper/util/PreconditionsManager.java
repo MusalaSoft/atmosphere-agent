@@ -335,11 +335,12 @@ public class PreconditionsManager {
             installService();
             areAnyComponentsInstalled = true;
         }
+
         if (!currentComponentInstalledStatus.get(OnDeviceComponent.IME)) {
             installIme();
-            setAtmosphereIme();
             areAnyComponentsInstalled = true;
         }
+        setAtmosphereIme();
 
         if (!currentComponentInstalledStatus.get(OnDeviceComponent.UI_AUTOMATOR_BRIDGE)) {
             installUiAutomatorBridge();
