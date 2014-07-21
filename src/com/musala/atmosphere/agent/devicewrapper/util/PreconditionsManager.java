@@ -77,10 +77,13 @@ public class PreconditionsManager {
 
     private String deviceSerialNumber;
 
+    private ImeManager imeManager;
+
     public PreconditionsManager(IDevice wrappedDevice) {
 
         this.shellCommandExecutor = new ShellCommandExecutor(wrappedDevice);
         this.apkInstaller = new ApkInstaller(wrappedDevice);
+        this.imeManager = new ImeManager(shellCommandExecutor);
 
         this.wrappedDevice = wrappedDevice;
         this.deviceSerialNumber = wrappedDevice.getSerialNumber();
@@ -220,26 +223,19 @@ public class PreconditionsManager {
      * 
      * @return true if setting it was successful; false if not.
      */
-    private boolean setIme() {
+    private boolean setAtmosphereIme() {
         String statusMessage = String.format("Setting %s as default input method...",
                                              OnDeviceComponent.IME.getHumanReadableName());
         LOGGER.info(statusMessage);
 
-        String imeId = OnDeviceComponent.IME.getImeId();
-        String command = String.format(OnDeviceComponentCommand.SET_IME.getCommand(), imeId);
-        String expectedResponse = String.format(OnDeviceComponentCommand.SET_IME.getExpectedResponse(), imeId);
-        String actualResponse = null;
-
         try {
-            actualResponse = shellCommandExecutor.execute(command);
+            return imeManager.setAtmosphereImeAsDefault();
         } catch (CommandFailedException e) {
             String errorMessage = String.format("%s could not be set as the default input method.",
                                                 OnDeviceComponent.IME.getHumanReadableName());
             LOGGER.warn(errorMessage, e);
             return false;
         }
-
-        return actualResponse.equals(expectedResponse);
     }
 
     /**
@@ -341,9 +337,10 @@ public class PreconditionsManager {
         }
         if (!currentComponentInstalledStatus.get(OnDeviceComponent.IME)) {
             installIme();
-            setIme();
+            setAtmosphereIme();
             areAnyComponentsInstalled = true;
         }
+
         if (!currentComponentInstalledStatus.get(OnDeviceComponent.UI_AUTOMATOR_BRIDGE)) {
             installUiAutomatorBridge();
             areAnyComponentsInstalled = true;
@@ -371,7 +368,7 @@ public class PreconditionsManager {
         installService();
 
         installIme();
-        setIme();
+        setAtmosphereIme();
 
         installUiAutomatorBridge();
         installUiAutomatorBridgeLibs();

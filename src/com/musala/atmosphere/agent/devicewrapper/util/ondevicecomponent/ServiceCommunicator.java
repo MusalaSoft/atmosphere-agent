@@ -300,7 +300,7 @@ public class ServiceCommunicator {
         try {
             return (boolean) serviceRequestHandler.request(getProcessRunningRequest);
         } catch (ClassNotFoundException | IOException e) {
-            throw new CommandFailedException("Checking for running process faliled.", e);
+            throw new CommandFailedException("Checking for running process failed.", e);
         }
     }
 }

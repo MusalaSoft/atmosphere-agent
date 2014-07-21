@@ -21,6 +21,7 @@ import com.musala.atmosphere.agent.DevicePropertyStringConstants;
 import com.musala.atmosphere.agent.devicewrapper.util.ApkInstaller;
 import com.musala.atmosphere.agent.devicewrapper.util.DeviceProfiler;
 import com.musala.atmosphere.agent.devicewrapper.util.FileTransferService;
+import com.musala.atmosphere.agent.devicewrapper.util.ImeManager;
 import com.musala.atmosphere.agent.devicewrapper.util.PortForwardingService;
 import com.musala.atmosphere.agent.devicewrapper.util.ShellCommandExecutor;
 import com.musala.atmosphere.agent.devicewrapper.util.ondevicecomponent.ServiceCommunicator;
@@ -94,11 +95,14 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 
     private final ApkInstaller apkInstaller;
 
+    private final ImeManager imeManager;
+
     public AbstractWrapDevice(IDevice deviceToWrap) throws RemoteException {
         wrappedDevice = deviceToWrap;
         transferService = new FileTransferService(wrappedDevice);
         shellCommandExecutor = new ShellCommandExecutor(wrappedDevice);
         apkInstaller = new ApkInstaller(wrappedDevice);
+        imeManager = new ImeManager(shellCommandExecutor);
 
         uiAutomatorBridgeCommunicator = new UIAutomatorCommunicator(shellCommandExecutor, transferService);
 
@@ -251,6 +255,12 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
                 break;
             case STOP_BACKGROUND_PROCESS:
                 stopBackgroundProcess((String) args[0]);
+                break;
+            case SET_DEFAULT_INPUT_METHOD:
+                returnValue = imeManager.setDefaultKeyboard((String) args[0]);
+                break;
+            case SET_ATMOSPHERE_IME_AS_DEFAULT:
+                returnValue = imeManager.setAtmosphereImeAsDefault();
                 break;
 
             // Call related
