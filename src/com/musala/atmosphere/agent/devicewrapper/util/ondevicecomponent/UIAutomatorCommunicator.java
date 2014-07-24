@@ -7,7 +7,6 @@ import org.apache.log4j.Logger;
 
 import com.musala.atmosphere.agent.devicewrapper.util.FileTransferService;
 import com.musala.atmosphere.agent.devicewrapper.util.ShellCommandExecutor;
-import com.musala.atmosphere.commons.PickerAction;
 import com.musala.atmosphere.commons.ScrollDirection;
 import com.musala.atmosphere.commons.ad.FileTransferConstants;
 import com.musala.atmosphere.commons.ad.Request;
@@ -194,23 +193,6 @@ public class UIAutomatorCommunicator {
     }
 
     /**
-     * Sends a time picker interaction which does not require additional parameters.
-     * 
-     * @param action
-     *        - the action type
-     * @param deviceSerialNumber
-     *        - serial number of the device on which the interaction is performed
-     * @return true, if the interaction is successful, false otherwise
-     * @throws CommandFailedException
-     */
-    public Object sendTimePickerAction(PickerAction action, String deviceSerialNumber) throws CommandFailedException {
-        Object[] arguments = new Object[] {action};
-        startUIAutomatorProcess(UIAutomatorRequest.TIME_PICKER_INTERACTION, arguments);
-
-        return getResponse(deviceSerialNumber);
-    }
-
-    /**
      * Used for reading a response from the pulled file.
      * 
      * @param deviceSerialNumber
@@ -272,5 +254,4 @@ public class UIAutomatorCommunicator {
             starter.run(executor, transferService);
         }
     }
-
 }

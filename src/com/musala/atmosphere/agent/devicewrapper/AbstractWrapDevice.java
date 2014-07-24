@@ -34,7 +34,6 @@ import com.musala.atmosphere.agent.exception.OnDeviceServiceTerminationException
 import com.musala.atmosphere.agent.util.DeviceScreenResolutionParser;
 import com.musala.atmosphere.agent.util.MemoryUnitConverter;
 import com.musala.atmosphere.commons.DeviceInformation;
-import com.musala.atmosphere.commons.PickerAction;
 import com.musala.atmosphere.commons.PowerProperties;
 import com.musala.atmosphere.commons.RoutingAction;
 import com.musala.atmosphere.commons.ScrollDirection;
@@ -291,12 +290,6 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
                                                                               (Boolean) args[4],
                                                                               wrappedDevice.getSerialNumber());
                 break;
-
-            // Picker related
-            case TIME_PICKER_INTERACTION:
-                returnValue = uiAutomatorBridgeCommunicator.sendTimePickerAction((PickerAction) args[0],
-                                                                                 wrappedDevice.getSerialNumber());
-
         }
 
         return returnValue;
