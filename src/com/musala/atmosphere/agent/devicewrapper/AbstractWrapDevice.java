@@ -72,6 +72,9 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 
     private static final String FORCE_STOP_PROCESS_COMMAND = "am force-stop ";
 
+    // TODO the command should be moved to a different enumeration
+    private static final String UNINSTALL_APP_COMMAND = "pm uninstall ";
+
     private static final String STOP_BACKGROUND_PROCESS_COMMAND = "am kill ";
 
     private static final String SCREENSHOT_LOCAL_FILE_NAME = "local_screen.png";
@@ -248,6 +251,9 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
                 break;
             case START_APP:
                 returnValue = serviceCommunicator.startApplication(args);
+                break;
+            case UNINSTALL_APP:
+                uninstallApplication((String) args[0]);
                 break;
             case FORCE_STOP_PROCESS:
                 forceStopProcess((String) args[0]);
@@ -500,6 +506,17 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
      */
     private void stopBackgroundProcess(String args) throws CommandFailedException {
         shellCommandExecutor.execute(STOP_BACKGROUND_PROCESS_COMMAND + args);
+    }
+
+    /**
+     * Uninstalls an application by a given package name.
+     * 
+     * @param args
+     *        - containing the package of the process.
+     * @throws CommandFailedException
+     */
+    private void uninstallApplication(String args) throws CommandFailedException {
+        shellCommandExecutor.execute(UNINSTALL_APP_COMMAND + args);
     }
 
     @Override
