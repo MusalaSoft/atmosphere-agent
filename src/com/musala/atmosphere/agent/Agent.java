@@ -1,6 +1,7 @@
 package com.musala.atmosphere.agent;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.rmi.RemoteException;
 import java.util.Date;
 import java.util.LinkedList;
@@ -11,10 +12,13 @@ import org.apache.log4j.Logger;
 import com.musala.atmosphere.agent.command.AgentCommand;
 import com.musala.atmosphere.agent.command.AgentCommandFactory;
 import com.musala.atmosphere.agent.command.AgentConsoleCommands;
-import com.musala.atmosphere.agent.exception.IllegalPortException;
+import com.musala.atmosphere.agent.commandline.AgentCommandLine;
 import com.musala.atmosphere.agent.state.AgentState;
 import com.musala.atmosphere.agent.state.DisconnectedAgent;
 import com.musala.atmosphere.agent.util.AgentPropertiesLoader;
+import com.musala.atmosphere.commons.exceptions.ArgumentParseException;
+import com.musala.atmosphere.commons.exceptions.CommandLineParseException;
+import com.musala.atmosphere.commons.exceptions.OptionNotPresentException;
 import com.musala.atmosphere.commons.sa.ConsoleControl;
 import com.musala.atmosphere.commons.sa.exceptions.ADBridgeFailException;
 import com.musala.atmosphere.commons.util.Pair;
@@ -27,6 +31,8 @@ import com.musala.atmosphere.commons.util.Pair;
  */
 public class Agent {
     private static final Logger LOGGER = Logger.getLogger(Agent.class.getCanonicalName());
+
+    private static final int SYSTEM_EXIT_CODE_ERROR = -1;
 
     private AndroidDebugBridgeManager androidDebugBridgeManager;
 
@@ -207,22 +213,41 @@ public class Agent {
      * @throws IOException
      */
     public static void main(String[] args) throws IOException {
-        // Check if an argument which specifies a port for the Agent was passed.
-        int portToCreateAgentOn = 0;
+        AgentCommandLine commandLine = new AgentCommandLine();
         try {
-            if (args.length == 1) {
-                String passedRmiPort = args[0];
-                portToCreateAgentOn = Integer.parseInt(passedRmiPort);
-            } else {
-                portToCreateAgentOn = AgentPropertiesLoader.getAgentRmiPort();
-            }
-        } catch (NumberFormatException e) {
-            String exceptionMessage = "Parsing passed port resulted in an exception.";
-            LOGGER.fatal(exceptionMessage, e);
-            throw new IllegalPortException(exceptionMessage, e);
+            commandLine.parseArguments(args);
+        } catch (CommandLineParseException e) {
+            String errorMessage = "Parsing of the command line arguments failed.";
+            LOGGER.fatal(errorMessage, e);
+
+            commandLine.printHelp();
+            System.exit(SYSTEM_EXIT_CODE_ERROR);
         }
 
+        boolean hasServerAddress = commandLine.hasServerConnectionOptions();
+        InetAddress serverAddress = null;
+        Integer serverPortNumber = null;
+        if (hasServerAddress) {
+            try {
+                serverAddress = commandLine.getHostname();
+                serverPortNumber = commandLine.getPort();
+            } catch (OptionNotPresentException | ArgumentParseException e) {
+                String errorMessage = "Parsing hostname or port failed.";
+                LOGGER.fatal(errorMessage, e);
+
+                commandLine.printHelp();
+                System.exit(SYSTEM_EXIT_CODE_ERROR);
+            }
+        }
+
+        int portToCreateAgentOn = AgentPropertiesLoader.getAgentRmiPort();
+
         Agent localAgent = new Agent(portToCreateAgentOn);
+
+        if (hasServerAddress) {
+            localAgent.connectToServer(serverAddress.getHostAddress(), serverPortNumber);
+        }
+
         do {
             String passedShellCommand = localAgent.readCommand();
             localAgent.parseAndExecuteShellCommand(passedShellCommand);
