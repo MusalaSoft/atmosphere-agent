@@ -47,6 +47,8 @@ public class EmulatorManager implements IDeviceChangeListener {
 
     private Map<String, IDevice> connectedEmulatorsList = Collections.synchronizedMap(new HashMap<String, IDevice>());
 
+    private Map<IDevice, String> connectedEmulatorNames = Collections.synchronizedMap(new HashMap<IDevice, String>());
+
     private Map<String, Process> startedEmulatorsProcess = Collections.synchronizedMap(new HashMap<String, Process>());
 
     public static EmulatorManager getInstance() {
@@ -117,7 +119,12 @@ public class EmulatorManager implements IDeviceChangeListener {
         if (connectedDevice.isEmulator()) {
             EmulatorConsole emulatorConsole = EmulatorConsole.getConsole(connectedDevice);
             String emulatorName = emulatorConsole.getAvdName();
-            connectedEmulatorsList.put(emulatorName, connectedDevice);
+
+            synchronized (this) {
+                connectedEmulatorsList.put(emulatorName, connectedDevice);
+                connectedEmulatorNames.put(connectedDevice, emulatorName);
+            }
+
             LOGGER.info("Emulator " + emulatorName + " connected.");
         }
     }
@@ -125,11 +132,17 @@ public class EmulatorManager implements IDeviceChangeListener {
     @Override
     public void deviceDisconnected(IDevice disconnectedDevice) {
         if (disconnectedDevice.isEmulator()) {
-            EmulatorConsole emulatorConsole = EmulatorConsole.getConsole(disconnectedDevice);
-            String disconnectedEmulatorAvdName = emulatorConsole.getAvdName();
-            connectedEmulatorsList.remove(disconnectedEmulatorAvdName);
-            startedEmulatorsProcess.remove(disconnectedEmulatorAvdName);
-            LOGGER.info("Emulator " + disconnectedEmulatorAvdName + " disconnected.");
+            String disconnectedEmulatorAvdName = null;
+
+            synchronized (this) {
+                connectedEmulatorsList.remove(disconnectedEmulatorAvdName);
+                disconnectedEmulatorAvdName = connectedEmulatorNames.remove(disconnectedDevice);
+                startedEmulatorsProcess.remove(disconnectedEmulatorAvdName);
+            }
+
+            String messageFormat = "Emulator %s disconnected.";
+            String message = String.format(messageFormat, disconnectedEmulatorAvdName);
+            LOGGER.info(message);
         }
     }
 
