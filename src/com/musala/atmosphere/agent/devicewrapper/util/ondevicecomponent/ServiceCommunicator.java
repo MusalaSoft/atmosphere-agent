@@ -17,6 +17,7 @@ import com.musala.atmosphere.commons.beans.BatteryState;
 import com.musala.atmosphere.commons.beans.DeviceAcceleration;
 import com.musala.atmosphere.commons.beans.DeviceOrientation;
 import com.musala.atmosphere.commons.exceptions.CommandFailedException;
+import com.musala.atmosphere.commons.util.GeoLocation;
 import com.musala.atmosphere.commons.util.IntentBuilder;
 import com.musala.atmosphere.commons.util.IntentBuilder.IntentAction;
 
@@ -249,6 +250,26 @@ public class ServiceCommunicator {
             return (boolean) serviceRequestHandler.request(startAppRequest);
         } catch (ClassNotFoundException | IOException e) {
             throw new CommandFailedException("Starting application faliled.", e);
+        }
+    }
+
+    /**
+     * Sends a request to the ATMOSPHERE service to mock the current location of the device using the passed location.
+     * 
+     * @param args
+     *        - a {@link GeoLocation} object representing the mock location
+     * @return <code>true</code> if mocking the location is successful, <code>false</code> otherwise
+     * @throws CommandFailedException
+     *         thrown when the mock fails, e.g. when communication with the service fails
+     */
+    public boolean mockLocation(Object[] args) throws CommandFailedException {
+        Request<ServiceRequest> mockLocationRequest = new Request<ServiceRequest>(ServiceRequest.MOCK_LOCATION);
+        mockLocationRequest.setArguments(args);
+
+        try {
+            return (boolean) serviceRequestHandler.request(mockLocationRequest);
+        } catch (ClassNotFoundException | IOException e) {
+            throw new CommandFailedException("Mocking the location of the device failed.", e);
         }
     }
 

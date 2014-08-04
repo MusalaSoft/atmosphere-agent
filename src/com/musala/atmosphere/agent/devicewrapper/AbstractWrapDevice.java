@@ -267,6 +267,9 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
             case SET_ATMOSPHERE_IME_AS_DEFAULT:
                 returnValue = imeManager.setAtmosphereImeAsDefault();
                 break;
+            case MOCK_LOCATION:
+                returnValue = serviceCommunicator.mockLocation(args);
+                break;
 
             // Call related
             case CALL_CANCEL:
