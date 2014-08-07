@@ -187,4 +187,11 @@ public class RealWrapDevice extends AbstractWrapDevice {
         // We can't simulate that a real device has canceled a certain call.
         throw new CommandFailedException("Can not cancel certain call to real devices.");
     }
+
+    @Override
+    protected void setProximity(float proximity) throws CommandFailedException {
+        // We can't set the proximity on a real device.
+        throw new CommandFailedException("Can not set the proximity on a real device.");
+
+    }
 }

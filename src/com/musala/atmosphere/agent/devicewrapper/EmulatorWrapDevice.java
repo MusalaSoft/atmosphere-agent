@@ -120,6 +120,12 @@ public class EmulatorWrapDevice extends AbstractWrapDevice {
     }
 
     @Override
+    protected void setProximity(float proximity) throws CommandFailedException {
+        ExtendedEmulatorConsole emulatorConsole = prepareEmulatorConsole();
+        emulatorConsole.setProximity(proximity);
+    }
+
+    @Override
     protected void setMobileDataState(MobileDataState state) throws CommandFailedException {
         ExtendedEmulatorConsole emulatorConsole = prepareEmulatorConsole();
         emulatorConsole.setMobileDataState(state);

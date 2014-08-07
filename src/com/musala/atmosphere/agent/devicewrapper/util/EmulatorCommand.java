@@ -15,6 +15,7 @@ public enum EmulatorCommand {
     SET_ACCELERATION("sensor set acceleration %s\r\n", "Set acceleration"),
     SET_MOBILE_DATA_STATE("gsm data %s\r\n", "Set mobile data state"),
     SET_MAGNETIC_FIELD("sensor set magnetic-field %s\r\n", "Set magnetic field"),
+    SET_PROXIMITY("sensor set proximity %s\r\n", "Set proximity"),
     SEND_SMS("sms send %s %s\r\n", "Send sms"),
     RECEIVE_CALL("gsm call %s\r\n", "Receive call"),
     ACCEPT_CALL("gsm accept %s\r\n", "Accept call"),

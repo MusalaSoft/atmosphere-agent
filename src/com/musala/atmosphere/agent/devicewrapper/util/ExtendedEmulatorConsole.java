@@ -20,6 +20,7 @@ import com.musala.atmosphere.commons.beans.BatteryState;
 import com.musala.atmosphere.commons.beans.DeviceAcceleration;
 import com.musala.atmosphere.commons.beans.DeviceMagneticField;
 import com.musala.atmosphere.commons.beans.DeviceOrientation;
+import com.musala.atmosphere.commons.beans.DeviceProximity;
 import com.musala.atmosphere.commons.beans.MobileDataState;
 import com.musala.atmosphere.commons.beans.PhoneNumber;
 import com.musala.atmosphere.commons.beans.PowerSource;
@@ -287,6 +288,20 @@ public class ExtendedEmulatorConsole {
      */
     public synchronized void setMagneticField(DeviceMagneticField deviceMagneticField) throws CommandFailedException {
         adaptAndExecuteCommand(EmulatorCommand.SET_MAGNETIC_FIELD, deviceMagneticField);
+    }
+
+    /**
+     * Sets the proximity sensor of the testing device.
+     * 
+     * @param proximity
+     *        - the desired new proximity
+     * 
+     * @throws CommandFailedException
+     *         - in case of an error in the execution
+     */
+    public synchronized void setProximity(float proximity) throws CommandFailedException {
+        DeviceProximity deviceProximity = new DeviceProximity(proximity);
+        adaptAndExecuteCommand(EmulatorCommand.SET_PROXIMITY, deviceProximity);
     }
 
     /**

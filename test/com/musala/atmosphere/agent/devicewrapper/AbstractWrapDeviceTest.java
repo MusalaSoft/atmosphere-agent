@@ -90,6 +90,10 @@ public class AbstractWrapDeviceTest {
             @Override
             protected void setMagneticField(DeviceMagneticField deviceMagneticField) throws CommandFailedException {
             }
+
+            @Override
+            protected void setProximity(float proximity) throws CommandFailedException {
+            }
         };
 
     }

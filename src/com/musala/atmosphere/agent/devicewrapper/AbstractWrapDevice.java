@@ -217,6 +217,9 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
             case SET_MAGNETIC_FIELD:
                 setMagneticField((DeviceMagneticField) args[0]);
                 break;
+            case SET_PROXIMITY:
+                setProximity((float) args[0]);
+                break;
 
             // Misc functionalities
             case WAIT_FOR_EXISTS:
@@ -559,6 +562,8 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
     abstract protected void setAcceleration(DeviceAcceleration deviceAcceleration) throws CommandFailedException;
 
     abstract protected void setMagneticField(DeviceMagneticField deviceMagneticField) throws CommandFailedException;
+
+    abstract protected void setProximity(float proximity) throws CommandFailedException;
 
     abstract protected void setMobileDataState(MobileDataState state) throws CommandFailedException;
 
