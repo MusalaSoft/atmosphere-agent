@@ -6,12 +6,17 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.net.SocketException;
 import java.net.UnknownHostException;
+
+import org.apache.log4j.Logger;
 
 import com.musala.atmosphere.agent.devicewrapper.util.PortForwardingService;
 import com.musala.atmosphere.agent.util.AgentPropertiesLoader;
 import com.musala.atmosphere.commons.ad.Request;
+import com.musala.atmosphere.commons.ad.service.ServiceConstants;
 import com.musala.atmosphere.commons.ad.service.ServiceRequest;
+import com.musala.atmosphere.commons.exceptions.CommandFailedException;
 
 /**
  * Handles requests sent to an ATMOSPHERE on-device component.
@@ -20,6 +25,11 @@ import com.musala.atmosphere.commons.ad.service.ServiceRequest;
  * 
  */
 public abstract class OnDeviceComponentRequestHandler {
+
+    private static final Logger LOGGER = Logger.getLogger(OnDeviceComponentRequestHandler.class);
+
+    private static final int REQUEST_RETRY_TIMEOUT = 1000;
+
     private static final String HOST_NAME = "localhost";
 
     private static final int CONNECTION_RETRY_LIMIT = AgentPropertiesLoader.getOnDeviceComponentConnectionRetryLimit();
@@ -63,6 +73,7 @@ public abstract class OnDeviceComponentRequestHandler {
 
         while (true) {
             try {
+                closeClientConnection();
                 socketClient = new Socket(HOST_NAME, socketPort);
                 socketClientInputStream = socketClient.getInputStream();
                 socketClientOutputStream = socketClient.getOutputStream();
@@ -87,6 +98,18 @@ public abstract class OnDeviceComponentRequestHandler {
     }
 
     /**
+     * Closes the socket connection with client, if such is present.
+     * 
+     * @throws IOException
+     *         if an I/O error occurs when closing this socket.
+     */
+    private void closeClientConnection() throws IOException {
+        if (socketClient != null) {
+            socketClient.close();
+        }
+    }
+
+    /**
      * Sends a {@link ServiceRequest} request to an ATMOSPHERE on-device component and returns the response.
      * 
      * @param socketServerRequest
@@ -95,25 +118,61 @@ public abstract class OnDeviceComponentRequestHandler {
      * @throws ClassNotFoundException
      * @throws IOException
      * @throws UnknownHostException
+     * @throws CommandFailedException
      */
-    public Object request(Request socketServerRequest) throws ClassNotFoundException, UnknownHostException, IOException {
-        connect();
+    public Object request(Request socketServerRequest)
+        throws ClassNotFoundException,
+            UnknownHostException,
+            IOException,
+            CommandFailedException {
 
-        try {
-            ObjectOutputStream objectOutputStream = new ObjectOutputStream(socketClientOutputStream);
-            objectOutputStream.flush();
-            objectOutputStream.writeObject(socketServerRequest);
-            objectOutputStream.flush();
+        Object readRequest = ServiceConstants.UNRECOGNIZED_SERVICE_REQUEST;
 
-            ObjectInputStream objectInputStream = new ObjectInputStream(socketClientInputStream);
-            Object inputObject = objectInputStream.readObject();
+        for (int i = 0; i < CONNECTION_RETRY_LIMIT; i++) {
+            connect();
 
-            objectInputStream.close();
-            objectOutputStream.close();
+            try {
+                ObjectOutputStream objectOutputStream = new ObjectOutputStream(socketClientOutputStream);
+                objectOutputStream.flush();
+                objectOutputStream.writeObject(socketServerRequest);
+                objectOutputStream.flush();
 
-            return inputObject;
-        } finally {
+                ObjectInputStream objectInputStream = new ObjectInputStream(socketClientInputStream);
+                Object inputObject = objectInputStream.readObject();
+
+                objectInputStream.close();
+                objectOutputStream.close();
+
+                readRequest = inputObject;
+                break;
+            } catch (SocketException e) {
+                LOGGER.error(e);
+            }
+
             disconnect();
+            waitBeforeNextOperation(REQUEST_RETRY_TIMEOUT);
+        }
+
+        if (readRequest != ServiceConstants.UNRECOGNIZED_SERVICE_REQUEST) {
+            return readRequest;
+        }
+
+        final String fatalMessage = String.format("Could not establish stable connection with device after %d attempts.",
+                                                  CONNECTION_RETRY_LIMIT);
+        LOGGER.fatal(fatalMessage);
+        throw new CommandFailedException(fatalMessage);
+    }
+
+    /**
+     * Sleeps the invoker thread for the given time.
+     * 
+     * @param timeout
+     *        - time in ms for which the thread should stay inactive.
+     */
+    private void waitBeforeNextOperation(int timeout) {
+        try {
+            Thread.sleep(timeout);
+        } catch (InterruptedException e) {
         }
     }
 
