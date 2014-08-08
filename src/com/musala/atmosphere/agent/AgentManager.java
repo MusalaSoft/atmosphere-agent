@@ -93,6 +93,11 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager {
             close();
             throw e;
         }
+
+        // publish AgentEventReceiver class in the same RMI registry
+        AgentEventReceiver agentEventReceiver = new AgentEventReceiver();
+        rmiRegistry.rebind(RmiStringConstants.AGENT_EVENT_RECEIVER.toString(), agentEventReceiver);
+
         rmiRegistryPort = rmiPort;
         deviceManager = new DeviceManager();
 
