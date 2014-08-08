@@ -1,5 +1,6 @@
 package com.musala.atmosphere.agent.devicewrapper.util.ondevicecomponent;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
@@ -145,7 +146,7 @@ public abstract class OnDeviceComponentRequestHandler {
 
                 readRequest = inputObject;
                 break;
-            } catch (SocketException e) {
+            } catch (SocketException | EOFException e) {
                 LOGGER.error(e);
             }
 
