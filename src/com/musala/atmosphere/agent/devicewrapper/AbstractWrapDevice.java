@@ -182,6 +182,9 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
             case GET_DEVICE_ACCELERATION:
                 returnValue = serviceCommunicator.getAcceleration();
                 break;
+            case GET_DEVICE_PROXIMITY:
+                returnValue = serviceCommunicator.getProximity();
+                break;
             case GET_FREE_RAM:
                 returnValue = getFreeRAM();
                 break;

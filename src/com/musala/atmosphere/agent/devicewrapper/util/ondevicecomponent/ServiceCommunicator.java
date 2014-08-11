@@ -205,6 +205,7 @@ public class ServiceCommunicator {
      * 
      * @return a {@link DeviceAcceleration} instance.
      * @throws CommandFailedException
+     *         - if the execution of the command failed
      */
     public DeviceAcceleration getAcceleration() throws CommandFailedException {
         Request<ServiceRequest> serviceRequest = new Request<ServiceRequest>(ServiceRequest.GET_ACCELERATION_READINGS);
@@ -216,6 +217,24 @@ public class ServiceCommunicator {
             return deviceAcceleration;
         } catch (ClassNotFoundException | IOException e) {
             throw new CommandFailedException("Getting acceleration failed. See enclosed exception for more information.",
+                                             e);
+        }
+    }
+
+    /**
+     * Fetches the sensor proximity readings of the device.
+     * 
+     * @return a float representing the proximity of the device
+     * @throws CommandFailedException
+     */
+    public float getProximity() throws CommandFailedException {
+        Request<ServiceRequest> serviceRequest = new Request<ServiceRequest>(ServiceRequest.GET_PROXIMITY_READINGS);
+        try {
+            float proximity = (float) serviceRequestHandler.request(serviceRequest);
+
+            return proximity;
+        } catch (ClassNotFoundException | IOException e) {
+            throw new CommandFailedException("Getting the proximity failed. See enclosed exception for more information.",
                                              e);
         }
     }

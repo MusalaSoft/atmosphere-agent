@@ -109,6 +109,11 @@ public class AbstractWrapDeviceTest {
     }
 
     @Test
+    public void testGetDeviceProximity() throws RemoteException, CommandFailedException {
+        testWrapDevice.route(RoutingAction.GET_DEVICE_PROXIMITY);
+    }
+
+    @Test
     public void testGetPowerProperties() throws Throwable {
         testWrapDevice.route(RoutingAction.GET_POWER_PROPERTIES);
     }
