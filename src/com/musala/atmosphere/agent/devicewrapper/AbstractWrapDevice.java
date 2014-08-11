@@ -60,11 +60,11 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 
     // WARNING : do not change the remote folder unless you really know what you
     // are doing.
-    private static final String XMLDUMP_REMOTE_FILE_NAME = "/data/local/tmp/uidump.xml";
+    private static final String XMLDUMP_REMOTE_FILE_NAME = "/data/local/tmp/uidump-%s.xml";
 
-    private static final String XMLDUMP_COMMAND = "uiautomator dump " + XMLDUMP_REMOTE_FILE_NAME;
+    private static final String XMLDUMP_COMMAND = "uiautomator dump %s";
 
-    private static final String XMLDUMP_LOCAL_FILE_NAME = "uidump.xml";
+    private static final String XMLDUMP_LOCAL_FILE_NAME = "uidump-%s.xml";
 
     private static final String SCREENSHOT_REMOTE_FILE_NAME = "/data/local/tmp/remote_screen.png";
 
@@ -479,15 +479,23 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
      * @throws CommandFailedException
      */
     private String getUiXml() throws CommandFailedException {
-        shellCommandExecutor.execute(XMLDUMP_COMMAND);
-        try {
-            wrappedDevice.pullFile(XMLDUMP_REMOTE_FILE_NAME, XMLDUMP_LOCAL_FILE_NAME);
 
-            File xmlDumpFile = new File(XMLDUMP_LOCAL_FILE_NAME);
+        String remoteFileName = String.format(XMLDUMP_REMOTE_FILE_NAME, wrappedDevice.getSerialNumber());
+        String localFileName = String.format(XMLDUMP_LOCAL_FILE_NAME, wrappedDevice.getSerialNumber());
+        String xmlDumpCommand = String.format(XMLDUMP_COMMAND, remoteFileName);
+        shellCommandExecutor.execute(xmlDumpCommand);
+
+        try {
+            wrappedDevice.pullFile(remoteFileName, localFileName);
+
+            File xmlDumpFile = new File(localFileName);
             Scanner xmlDumpFileScanner = new Scanner(xmlDumpFile, "UTF-8");
             xmlDumpFileScanner.useDelimiter("\\Z");
             String uiDumpContents = xmlDumpFileScanner.next();
+
             xmlDumpFileScanner.close();
+            xmlDumpFile.delete();
+
             return uiDumpContents;
         } catch (SyncException | IOException | AdbCommandRejectedException | TimeoutException e) {
             LOGGER.error("UI dump failed.", e);
