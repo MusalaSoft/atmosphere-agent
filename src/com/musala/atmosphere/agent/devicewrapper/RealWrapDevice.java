@@ -123,7 +123,10 @@ public class RealWrapDevice extends AbstractWrapDevice {
             intentBuilder = new IntentBuilder(IntentAction.BATTERY_LOW);
         } else if (currentBatteryLevel <= BATTERY_LEVEL_THRESHOLD && newBatteryLevel > BATTERY_LEVEL_THRESHOLD) {
             intentBuilder = new IntentBuilder(IntentAction.BATTERY_OKAY);
+        } else {
+            return;
         }
+
         String command = intentBuilder.buildIntentCommand();
         shellCommandExecutor.execute(command);
     }
