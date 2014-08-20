@@ -197,6 +197,9 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
             case GET_PROCESS_RUNNING:
                 returnValue = serviceCommunicator.getProcessRunning(args);
                 break;
+            case GET_RUNNING_TASK_IDS:
+                returnValue = serviceCommunicator.getRunningTaskIds(args);
+                break;
 
             // Setters
             case SET_POWER_PROPERTIES:
@@ -222,6 +225,9 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
                 break;
             case SET_PROXIMITY:
                 setProximity((float) args[0]);
+                break;
+            case SET_KEYGUARD:
+                serviceCommunicator.setKeyguard(args);
                 break;
 
             // Misc functionalities
@@ -275,6 +281,12 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
                 break;
             case MOCK_LOCATION:
                 returnValue = serviceCommunicator.mockLocation(args);
+                break;
+            case BRING_TASK_TO_FRONT:
+                returnValue = serviceCommunicator.bringTaskToFront(args);
+                break;
+            case WAIT_FOR_TASKS_UPDATE:
+                returnValue = serviceCommunicator.waitForTasksUpdate(args);
                 break;
 
             // Call related

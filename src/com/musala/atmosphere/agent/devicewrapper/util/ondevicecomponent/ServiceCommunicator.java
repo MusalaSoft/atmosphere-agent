@@ -32,11 +32,11 @@ public class ServiceCommunicator {
 
     private ServiceRequestHandler serviceRequestHandler;
 
-    private PortForwardingService portForwardingService;
+    private final PortForwardingService portForwardingService;
 
-    private String deviceSerialNumber;
+    private final String deviceSerialNumber;
 
-    private ShellCommandExecutor shellCommandExecutor;
+    private final ShellCommandExecutor shellCommandExecutor;
 
     public ServiceCommunicator(PortForwardingService portForwarder,
             ShellCommandExecutor commandExecutor,
@@ -341,6 +341,87 @@ public class ServiceCommunicator {
             return (boolean) serviceRequestHandler.request(getProcessRunningRequest);
         } catch (ClassNotFoundException | IOException e) {
             throw new CommandFailedException("Checking for running process failed.", e);
+        }
+    }
+
+    /**
+     * Sets the Keyguard status on the Device.
+     * 
+     * @param args
+     *        - <code>false</code> for the keyguard to be dismissed and <code>true</code> to be re enabled
+     * @throws CommandFailedException
+     *         if setting the keyguard status failed
+     */
+    public void setKeyguard(Object args[]) throws CommandFailedException {
+        Request<ServiceRequest> setKeyguardRequest = new Request<ServiceRequest>(ServiceRequest.SET_KEYGUARD);
+        setKeyguardRequest.setArguments(args);
+
+        try {
+            serviceRequestHandler.request(setKeyguardRequest);
+        } catch (ClassNotFoundException | IOException e) {
+            throw new CommandFailedException("Setting keyguard status failed.", e);
+        }
+    }
+
+    /**
+     * Brings the task with the given id to the front.
+     * 
+     * @param args
+     *        - id of the task which is going to be brought to front and timeout to wait while the task is brought to
+     *        front.
+     * @return <code>true</code> if the task is on the front and <code>false</code> otherwise.
+     * @throws CommandFailedException
+     *         if bringing the task to the front fails.
+     */
+    public boolean bringTaskToFront(Object args[]) throws CommandFailedException {
+        Request<ServiceRequest> bringTaskToFrontRequest = new Request<ServiceRequest>(ServiceRequest.BRING_TASK_TO_FRONT);
+        bringTaskToFrontRequest.setArguments(args);
+
+        try {
+            return (boolean) serviceRequestHandler.request(bringTaskToFrontRequest);
+        } catch (ClassNotFoundException | IOException e) {
+            throw new CommandFailedException("Bringing the task to the front failed.", e);
+        }
+    }
+
+    /**
+     * Gets the ids of the running tasks.
+     * 
+     * @param args
+     *        - integer with maximum number of tasks to be returned.
+     * @return array of the task ids that are currently running.
+     * @throws CommandFailedException
+     *         if getting the running tasks id fails.
+     */
+    public int[] getRunningTaskIds(Object args[]) throws CommandFailedException {
+        Request<ServiceRequest> getRunningTasksRequest = new Request<ServiceRequest>(ServiceRequest.GET_RUNNING_TASK_IDS);
+        getRunningTasksRequest.setArguments(args);
+
+        try {
+            return (int[]) serviceRequestHandler.request(getRunningTasksRequest);
+        } catch (ClassNotFoundException | IOException e) {
+            throw new CommandFailedException("Getting the running tasks id failed.", e);
+        }
+    }
+
+    /**
+     * Wait for the given task to be moved to the given position.
+     * 
+     * @param args
+     *        - containing the id of the task, the position in which the task should be updated to and timeout to wait
+     *        for moving the task.
+     * @return <code>true</code> if the task is updated for the given timeout and <code>false</code> otherwise.
+     * @throws CommandFailedException
+     *         if waiting for the task update fails.
+     */
+    public boolean waitForTasksUpdate(Object args[]) throws CommandFailedException {
+        Request<ServiceRequest> waitForTasksUpdateRequest = new Request<ServiceRequest>(ServiceRequest.WAIT_FOR_TASKS_UPDATE);
+        waitForTasksUpdateRequest.setArguments(args);
+
+        try {
+            return (boolean) serviceRequestHandler.request(waitForTasksUpdateRequest);
+        } catch (ClassNotFoundException | IOException e) {
+            throw new CommandFailedException("Waiting for the task to be moved failed.", e);
         }
     }
 }
