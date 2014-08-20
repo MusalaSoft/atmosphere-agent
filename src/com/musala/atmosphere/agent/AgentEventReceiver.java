@@ -25,8 +25,8 @@ public class AgentEventReceiver extends UnicastRemoteObject implements IServerEv
 
     @Override
     public void pingAgent() throws RemoteException {
-        LOGGER.info("PING INVOKED!");
         // Tests if connection between Server and Agent still exists.
+        LOGGER.debug("Ping agent.");
     }
 
 }
