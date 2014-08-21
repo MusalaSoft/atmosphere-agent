@@ -293,6 +293,25 @@ public class ServiceCommunicator {
     }
 
     /**
+     * Sends a request to the ATMOSPHERE service to stop mocking the location of a given provider.
+     * 
+     * @param args
+     *        - a {@link String} representing the provider name
+     * @throws CommandFailedException
+     *         thrown when disabling the mock provider fails, e.g. communication with the service fails
+     */
+    public void disableMockLocation(Object[] args) throws CommandFailedException {
+        Request<ServiceRequest> disableMockLocationRequest = new Request<ServiceRequest>(ServiceRequest.DISABLE_MOCK_LOCATION);
+        disableMockLocationRequest.setArguments(args);
+
+        try {
+            serviceRequestHandler.request(disableMockLocationRequest);
+        } catch (ClassNotFoundException | IOException e) {
+            throw new CommandFailedException("Disabling mock lcoation provider on the device failed.", e);
+        }
+    }
+
+    /**
      * Checks if the device is awake.
      * 
      * @return - <code>true</code> if the device is awake and <code>false</code> otherwise

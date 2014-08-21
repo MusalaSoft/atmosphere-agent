@@ -282,6 +282,9 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
             case MOCK_LOCATION:
                 returnValue = serviceCommunicator.mockLocation(args);
                 break;
+            case DISABLE_MOCK_LOCATION:
+                serviceCommunicator.disableMockLocation(args);
+                break;
             case BRING_TASK_TO_FRONT:
                 returnValue = serviceCommunicator.bringTaskToFront(args);
                 break;

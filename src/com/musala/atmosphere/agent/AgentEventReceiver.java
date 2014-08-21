@@ -3,8 +3,6 @@ package com.musala.atmosphere.agent;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 
-import org.apache.log4j.Logger;
-
 import com.musala.atmosphere.commons.sa.IServerEventSender;
 
 /**
@@ -15,8 +13,6 @@ import com.musala.atmosphere.commons.sa.IServerEventSender;
  */
 
 public class AgentEventReceiver extends UnicastRemoteObject implements IServerEventSender {
-    private static Logger LOGGER = Logger.getLogger(AgentEventReceiver.class.getCanonicalName());
-
     private static final long serialVersionUID = 4016119363812433655L;
 
     public AgentEventReceiver() throws RemoteException {
@@ -26,7 +22,6 @@ public class AgentEventReceiver extends UnicastRemoteObject implements IServerEv
     @Override
     public void pingAgent() throws RemoteException {
         // Tests if connection between Server and Agent still exists.
-        LOGGER.debug("Ping agent.");
     }
 
 }
