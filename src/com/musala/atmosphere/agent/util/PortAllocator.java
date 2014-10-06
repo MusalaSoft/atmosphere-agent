@@ -1,104 +1,106 @@
 package com.musala.atmosphere.agent.util;
 
-import java.io.IOException;
-import java.net.ServerSocket;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.Stack;
 
 import com.musala.atmosphere.agent.exception.NoFreePortAvailableException;
 
 /**
- * Allocates free ports.
+ * Controls port allocation and keeps track of the currently allocated ports.
  * 
  * @author yordan.petrov
  * 
  */
 
 public class PortAllocator {
-    private final static int MIN_FORWARD_PORT = AgentPropertiesLoader.getADBMinForwardPort();
+    /**
+     * TODO: This constants should be passed to the constructor of the object when a dependency injection mechanism is
+     * introduced.
+     */
+    private static final int MIN_FORWARD_PORT = AgentPropertiesLoader.getADBMinForwardPort();
 
-    private final static int MAX_FORWARD_PORT = AgentPropertiesLoader.getADBMaxForwardPort();
+    private static final int MAX_FORWARD_PORT = AgentPropertiesLoader.getADBMaxForwardPort();
 
-    private static final Stack<Integer> freePorts = new Stack<Integer>();
+    private static final int MIN_TCP_PORT = 0;
+
+    private static final int MAX_TCP_PORT = 65535;
+
+    private static Stack<Integer> freePorts = new Stack<Integer>();
+
+    private static Set<Integer> allocatedPorts = Collections.synchronizedSet(new HashSet<Integer>());
+
+    static {
+        for (int currentPort = MAX_FORWARD_PORT; currentPort >= MIN_FORWARD_PORT; currentPort--) {
+            freePorts.add(currentPort);
+        }
+    }
 
     /**
-     * Registers a port that has recently been freed by a testing device.
+     * Registers a port that has recently been freed by a testing device as released.
      * 
      * @param port
      *        - the free port identifier
+     * @return <code>true</code> if free port was registered successfully as released and <code>false</code> otherwise
      */
-    public static void registerFreePort(int port) {
-        freePorts.add(port);
-    }
-
-    /**
-     * Gets a free port from the list of freed ports by the released devices.
-     * 
-     * @return a free port identifier.
-     * @throws NoFreePortAvailableException
-     */
-    private static int getFreePortFromList() throws NoFreePortAvailableException {
-        while (!freePorts.isEmpty()) {
-            int currentPort = freePorts.pop();
-
-            if (isPortAvailable(currentPort)) {
-                return currentPort;
-            }
-        }
-
-        throw new NoFreePortAvailableException("Colud not find a free port in the list of freed ports.");
-    }
-
-    /**
-     * Gets a free port from the port range specified in the agent.properties file.
-     * 
-     * @return a free port identifier.
-     * @throws NoFreePortAvailableException
-     */
-    private static int getFreePortFromRange() throws NoFreePortAvailableException {
-        for (int currentPort = MIN_FORWARD_PORT; currentPort <= MAX_FORWARD_PORT; currentPort++) {
-            if (isPortAvailable(currentPort)) {
-                return currentPort;
-            }
-        }
-
-        throw new NoFreePortAvailableException("Colud not find a free port in the port range.");
-    }
-
-    /**
-     * Returns a free port identifier.
-     * 
-     * @return a free port identifier.
-     * @throws NoFreePortAvailableException
-     */
-    public static int getFreePort() throws NoFreePortAvailableException {
-        try {
-            return getFreePortFromList();
-        } catch (NoFreePortAvailableException e) {
-        }
-
-        try {
-            return getFreePortFromRange();
-        } catch (NoFreePortAvailableException e) {
-        }
-
-        throw new NoFreePortAvailableException("Colud not find a free port.");
-    }
-
-    /**
-     * Checks whether a given port is available.
-     * 
-     * @param port
-     *        - port identifier.
-     * @return - true if the port is available; false otherwise.
-     */
-    private static boolean isPortAvailable(int port) {
-        try {
-            ServerSocket serverSocket = new ServerSocket(port);
-            serverSocket.close();
-        } catch (IOException e) {
-            return false;
+    public boolean releasePort(int port) {
+        if (allocatedPorts.remove(port)) {
+            freePorts.add(port);
         }
 
         return true;
+    }
+
+    /**
+     * Registers a port that has recently been freed by a testing device as released.
+     * 
+     * @param port
+     *        - the free port identifier
+     * @return <code>true</code> if free port was registered successfully and <code>false</code> otherwise
+     */
+    public synchronized boolean registerPort(int port) {
+        if (!isPortValid(port)) {
+            return false;
+        }
+
+        if (allocatedPorts.contains(port)) {
+            return false;
+        }
+
+        if (!freePorts.contains(port)) {
+            freePorts.add(port);
+        }
+
+        return true;
+    }
+
+    /**
+     * Gets a free port identifier.
+     * 
+     * @return a free port identifier
+     * @throws NoFreePortAvailableException
+     *         if there isn't any port available for allocation
+     */
+    public synchronized int getPort() throws NoFreePortAvailableException {
+        if (freePorts.isEmpty()) {
+            throw new NoFreePortAvailableException("Colud not find a free port for allocation.");
+        }
+
+        int freePort = freePorts.pop();
+        allocatedPorts.add(freePort);
+
+        return freePort;
+    }
+
+    /**
+     * Validate whether a given port number is valid TCP port number
+     * 
+     * @param portNumber
+     *        - the port number that is being validated
+     * @return <code>true</code> if the port number is valid TCP port and <code>false</code> otherwise
+     */
+    private boolean isPortValid(int portNumber) {
+        return portNumber >= MIN_TCP_PORT && portNumber <= MAX_TCP_PORT;
     }
 }

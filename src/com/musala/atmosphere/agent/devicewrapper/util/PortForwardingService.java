@@ -34,8 +34,10 @@ public class PortForwardingService {
      *        - device for which to create a port forwarding service.
      */
     public PortForwardingService(IDevice device) {
+        PortAllocator portAllocator = new PortAllocator();
+
         this.device = device;
-        localForwardedPort = PortAllocator.getFreePort();
+        this.localForwardedPort = portAllocator.getPort();
     }
 
     /**
