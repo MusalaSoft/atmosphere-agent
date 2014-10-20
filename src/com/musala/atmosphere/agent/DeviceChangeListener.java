@@ -8,6 +8,7 @@ import java.rmi.registry.Registry;
 import com.android.ddmlib.AndroidDebugBridge.IDeviceChangeListener;
 import com.android.ddmlib.IDevice;
 import com.musala.atmosphere.agent.util.AgentIdCalculator;
+import com.musala.atmosphere.commons.exceptions.CommandFailedException;
 import com.musala.atmosphere.commons.sa.IAgentEventSender;
 import com.musala.atmosphere.commons.sa.RmiStringConstants;
 import com.musala.atmosphere.commons.sa.exceptions.ADBridgeFailException;
@@ -101,7 +102,11 @@ class DeviceChangeListener implements IDeviceChangeListener {
         // Register the newly connected device on the AgentManager
         String publishId = deviceManager.registerDevice(connectedDevice);
         if (publishId != null && !publishId.isEmpty()) {
-            onDeviceListChanged(publishId, true /* device connected */);
+            try {
+                onDeviceListChanged(publishId, true /* device connected */);
+            } catch (CommandFailedException | NotBoundException e) {
+
+            }
         }
     }
 
@@ -113,7 +118,11 @@ class DeviceChangeListener implements IDeviceChangeListener {
         // Unregister the device from the AgentManager
         String publishId = deviceManager.unregisterDevice(disconnectedDevice);
         if (publishId != null && !publishId.isEmpty()) {
-            onDeviceListChanged(publishId, false /* device disconnected */);
+            try {
+                onDeviceListChanged(publishId, false /* device disconnected */);
+            } catch (CommandFailedException | NotBoundException e) {
+
+            }
         }
     }
 
@@ -124,8 +133,13 @@ class DeviceChangeListener implements IDeviceChangeListener {
      *        - RMI binding ID of the changed device's wrapper.
      * @param connected
      *        - true if the device is now available, false if it became unavailable.
+     * @throws NotBoundException
+     *         - if an attempt is made to operate with non-existing device
+     * @throws CommandFailedException
      */
-    private void onDeviceListChanged(String deviceRmiBindingId, boolean connected) {
+    private void onDeviceListChanged(String deviceRmiBindingId, boolean connected)
+        throws CommandFailedException,
+            NotBoundException {
         // If the server is not set return, as we have no one to notify
         if (isServerSet == false) {
             return;
