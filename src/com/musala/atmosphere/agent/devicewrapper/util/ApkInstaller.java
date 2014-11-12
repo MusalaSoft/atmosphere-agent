@@ -137,6 +137,7 @@ public class ApkInstaller {
         LOGGER.info(statusMessage);
 
         String componentPath = ON_DEVICE_COMPONENT_FILES_PATH.concat(onDeviceComponent.getFileName());
+        System.out.println("COMPONENT PATH: " + componentPath);
         try {
             device.installPackage(componentPath, true);
         } catch (InstallException e) {
