@@ -443,4 +443,22 @@ public class ServiceCommunicator {
             throw new CommandFailedException("Waiting for the task to be moved failed.", e);
         }
     }
+
+    /**
+     * Broadcast the given intent to all interested BroadcastReceivers.
+     * 
+     * @param args
+     *        - args[0] should contain the AtmosphereIntent object for the broadcast
+     * 
+     */
+    public void sendBroadcast(Object args[]) throws CommandFailedException {
+        Request<ServiceRequest> sendBroadcastRequest = new Request<ServiceRequest>(ServiceRequest.SEND_BROADCAST);
+        sendBroadcastRequest.setArguments(args);
+
+        try {
+            serviceRequestHandler.request(sendBroadcastRequest);
+        } catch (ClassNotFoundException | IOException e) {
+            throw new CommandFailedException("Sending broadcast failed.", e);
+        }
+    }
 }

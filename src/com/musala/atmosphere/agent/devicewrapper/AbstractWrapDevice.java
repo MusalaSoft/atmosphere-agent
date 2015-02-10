@@ -291,6 +291,9 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
             case WAIT_FOR_TASKS_UPDATE:
                 returnValue = serviceCommunicator.waitForTasksUpdate(args);
                 break;
+            case SEND_BROADCAST:
+                serviceCommunicator.sendBroadcast(args);
+                break;
 
             // Call related
             case CALL_CANCEL:
