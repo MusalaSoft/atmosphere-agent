@@ -142,6 +142,12 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
             case EXECUTE_SHELL_COMMAND_SEQUENCE:
                 returnValue = shellCommandExecutor.executeSequence((List<String>) args[0]);
                 break;
+            case EXECUTE_SHELL_COMMAND_IN_BACKGROUND:
+                shellCommandExecutor.executeInBackground((String) args[0]);
+                break;
+            case TERMINATE_BACKGROUND_SHELL_COMMAND:
+                shellCommandExecutor.terminateBackgroundCommand((String) args[0]);
+                break;
 
             // APK file installation related
             case APK_INIT_INSTALL:
@@ -293,6 +299,9 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
                 break;
             case SEND_BROADCAST:
                 serviceCommunicator.sendBroadcast(args);
+                break;
+            case PULL_FILE:
+                pullFile((String) args[0], (String) args[1]);
                 break;
 
             // Call related
@@ -552,6 +561,26 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
      */
     private void uninstallApplication(String args) throws CommandFailedException {
         shellCommandExecutor.execute(UNINSTALL_APP_COMMAND + args);
+    }
+
+    /**
+     * Pulls a single file from the device and save it locally.
+     * 
+     * @param remoteFilePath
+     *        - full path to the file which should be pulled
+     * @param localFilePath
+     *        - full local path to the destination file
+     * @throws CommandFailedException
+     *         - in case of failing to pull the selected file
+     */
+    private void pullFile(String remoteFilePath, String localFilePath) throws CommandFailedException {
+
+        try {
+            wrappedDevice.pullFile(remoteFilePath, localFilePath);
+        } catch (IOException | AdbCommandRejectedException | TimeoutException | SyncException e) {
+            LOGGER.error("Failed to pull file: " + remoteFilePath, e);
+            throw new CommandFailedException("Failed to pull file.", e);
+        }
     }
 
     @Override
