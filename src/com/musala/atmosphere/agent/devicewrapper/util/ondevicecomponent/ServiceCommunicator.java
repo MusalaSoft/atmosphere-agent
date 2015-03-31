@@ -383,6 +383,22 @@ public class ServiceCommunicator {
     }
 
     /**
+     * Used to check the lock state of the device.
+     * 
+     * @throws CommandFailedException
+     *         if checking for the lock state fails.
+     */
+    public boolean isLocked() throws CommandFailedException {
+        Request<ServiceRequest> isLocked = new Request<ServiceRequest>(ServiceRequest.IS_LOCKED);
+
+        try {
+            return (boolean) serviceRequestHandler.request(isLocked);
+        } catch (ClassNotFoundException | IOException e) {
+            throw new CommandFailedException("Getting the lock state of the device failed.", e);
+        }
+    }
+
+    /**
      * Brings the task with the given id to the front.
      * 
      * @param args

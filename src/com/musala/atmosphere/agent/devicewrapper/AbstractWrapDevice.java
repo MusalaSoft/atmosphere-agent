@@ -303,6 +303,9 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
             case PULL_FILE:
                 pullFile((String) args[0], (String) args[1]);
                 break;
+            case IS_LOCKED:
+                returnValue = serviceCommunicator.isLocked();
+                break;
 
             // Call related
             case CALL_CANCEL:
