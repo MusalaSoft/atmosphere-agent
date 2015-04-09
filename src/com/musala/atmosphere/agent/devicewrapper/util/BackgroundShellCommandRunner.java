@@ -15,7 +15,7 @@ import com.musala.atmosphere.commons.exceptions.CommandFailedException;
  * @author georgi.gaydarov
  * 
  */
-class BackgroundShellCommandRunner implements Runnable {
+public class BackgroundShellCommandRunner implements Runnable {
     private final String command;
 
     private Exception onExecutionException;

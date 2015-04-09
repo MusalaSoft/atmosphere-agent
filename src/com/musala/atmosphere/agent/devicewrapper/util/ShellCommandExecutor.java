@@ -2,10 +2,7 @@ package com.musala.atmosphere.agent.devicewrapper.util;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.NoSuchElementException;
 
 import com.android.ddmlib.AdbCommandRejectedException;
 import com.android.ddmlib.CollectingOutputReceiver;
@@ -22,12 +19,9 @@ import com.musala.atmosphere.commons.exceptions.CommandFailedException;
  * 
  */
 public class ShellCommandExecutor {
-
     private static final int COMMAND_EXECUTION_TIMEOUT = AgentPropertiesLoader.getCommandExecutionTimeout();
 
     private final IDevice device;
-
-    private Map<String, BackgroundShellCommandRunner> backgroundRunnersMap = new HashMap<String, BackgroundShellCommandRunner>();
 
     /**
      * Creates a shell command executor instance for a specified {@link IDevice}.
@@ -96,71 +90,5 @@ public class ShellCommandExecutor {
         }
 
         return responses;
-    }
-
-    /**
-     * Executes a shell command in the background. Returns immediately. Usage should be limited to commands which do
-     * will not return for a long time (because of thread related performance issues).
-     * 
-     * @param command
-     *        - shell command that should be executed in the background.
-     */
-    public void executeInBackground(String command) {
-        if (backgroundRunnersMap.containsKey(command)) {
-            terminateBackgroundCommand(command);
-        }
-
-        BackgroundShellCommandRunner commandExecutor = new BackgroundShellCommandRunner(command, device);
-        Thread executorThread = new Thread(commandExecutor);
-        executorThread.start();
-
-        backgroundRunnersMap.put(command, commandExecutor);
-    }
-
-    /**
-     * Returns the execution exception that was thrown when a background shell command was executed (null if no
-     * exception was thrown).
-     * 
-     * @param command
-     *        - the executed command for which we want the thrown exception.
-     * @return the exception itself.
-     */
-    public Throwable getBackgroundExecutionException(String command) {
-        if (!backgroundRunnersMap.containsKey(command)) {
-            throw new NoSuchElementException("No command '" + command + "' was found to be running or done executing.");
-        }
-        BackgroundShellCommandRunner executor = backgroundRunnersMap.get(command);
-        Throwable executionException = executor.getExecutionException();
-        return executionException;
-    }
-
-    /**
-     * Terminates a background executing command.
-     * 
-     * @param command
-     *        - the command to be terminated.
-     */
-    public void terminateBackgroundCommand(String command) {
-        if (!backgroundRunnersMap.containsKey(command)) {
-            throw new NoSuchElementException("No command '" + command + "' was found to be running or done executing.");
-        }
-        BackgroundShellCommandRunner executor = backgroundRunnersMap.get(command);
-        Thread executorThread = executor.getExecutorThread();
-        if (executorThread.isAlive()) {
-            executorThread.stop();
-        }
-        backgroundRunnersMap.remove(command);
-    }
-
-    /**
-     * Terminates all commands that are executing in the background.
-     */
-    public void terminateAllInBackground() {
-        for (BackgroundShellCommandRunner runner : backgroundRunnersMap.values()) {
-            // we cannot modify the map here!
-            Thread executorThread = runner.getExecutorThread();
-            executorThread.stop();
-        }
-        backgroundRunnersMap.clear();
     }
 }

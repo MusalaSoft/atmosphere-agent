@@ -8,6 +8,8 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.apache.log4j.Logger;
 
@@ -19,6 +21,8 @@ import com.android.ddmlib.SyncException;
 import com.android.ddmlib.TimeoutException;
 import com.musala.atmosphere.agent.DevicePropertyStringConstants;
 import com.musala.atmosphere.agent.devicewrapper.util.ApkInstaller;
+import com.musala.atmosphere.agent.devicewrapper.util.BackgroundPullFileRunner;
+import com.musala.atmosphere.agent.devicewrapper.util.BackgroundShellCommandRunner;
 import com.musala.atmosphere.agent.devicewrapper.util.DeviceProfiler;
 import com.musala.atmosphere.agent.devicewrapper.util.FileTransferService;
 import com.musala.atmosphere.agent.devicewrapper.util.ImeManager;
@@ -75,13 +79,21 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
     // TODO the command should be moved to a different enumeration
     private static final String UNINSTALL_APP_COMMAND = "pm uninstall ";
 
-    private static final String STOP_BACKGROUND_PROCESS_COMMAND = "am kill ";
+    private static final String INTERRUPT_BACKGROUND_PROCESS_FORMAT = "kill -SIGINT $(%s)";
+
+    private static final String GET_PID_FORMAT = "ps %s %s";
+
+    private static final String GET_PID_PATTERN = "| grep -Eo [0-9]+ | grep -m 1 -Eo [0-9]+";
 
     private static final String SCREENSHOT_LOCAL_FILE_NAME = "local_screen.png";
 
     private static final String RAM_MEMORY_PATTERN = "(\\w+):(\\s+)(\\d+\\w+)";
 
     private static final String DEVICE_TYPE = "tablet";
+
+    private static final int NUMBER_OF_THREADS = 20;
+
+    private static ExecutorService executor = Executors.newFixedThreadPool(NUMBER_OF_THREADS);
 
     protected final ServiceCommunicator serviceCommunicator;
 
@@ -143,10 +155,10 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
                 returnValue = shellCommandExecutor.executeSequence((List<String>) args[0]);
                 break;
             case EXECUTE_SHELL_COMMAND_IN_BACKGROUND:
-                shellCommandExecutor.executeInBackground((String) args[0]);
+                executeShellCommandInBackground((String) args[0]);
                 break;
-            case TERMINATE_BACKGROUND_SHELL_COMMAND:
-                shellCommandExecutor.terminateBackgroundCommand((String) args[0]);
+            case INTERRUPT_BACKGROUND_SHELL_PROCESS:
+                interruptBackgroundShellProcess((String) args[0]);
                 break;
 
             // APK file installation related
@@ -275,9 +287,6 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
                 break;
             case FORCE_STOP_PROCESS:
                 forceStopProcess((String) args[0]);
-                break;
-            case STOP_BACKGROUND_PROCESS:
-                stopBackgroundProcess((String) args[0]);
                 break;
             case SET_DEFAULT_INPUT_METHOD:
                 returnValue = imeManager.setDefaultKeyboard((String) args[0]);
@@ -545,17 +554,6 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
     }
 
     /**
-     * Stops a background process by a given package name.
-     * 
-     * @param args
-     *        - containing the package of the process.
-     * @throws CommandFailedException
-     */
-    private void stopBackgroundProcess(String args) throws CommandFailedException {
-        shellCommandExecutor.execute(STOP_BACKGROUND_PROCESS_COMMAND + args);
-    }
-
-    /**
      * Uninstalls an application by a given package name.
      * 
      * @param args
@@ -577,19 +575,42 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
      *         - in case of failing to pull the selected file
      */
     private void pullFile(String remoteFilePath, String localFilePath) throws CommandFailedException {
+        // FIXME: Implement sending the file to the client after pulling it locally.
+        BackgroundPullFileRunner commandExecutor = new BackgroundPullFileRunner(wrappedDevice,
+                                                                                remoteFilePath,
+                                                                                localFilePath);
+        executor.submit(commandExecutor);
+    }
 
-        try {
-            wrappedDevice.pullFile(remoteFilePath, localFilePath);
-        } catch (IOException | AdbCommandRejectedException | TimeoutException | SyncException e) {
-            LOGGER.error("Failed to pull file: " + remoteFilePath, e);
-            throw new CommandFailedException("Failed to pull file.", e);
-        }
+    /**
+     * Attempts to kill a process running in background with <code>SIGINT</code>.
+     * 
+     * @param processName
+     *        - the name of the process to be killed
+     * @throws CommandFailedException
+     *         - in case of failing to kill the process
+     */
+    private void interruptBackgroundShellProcess(String processName) throws CommandFailedException {
+        String getPidCommand = String.format(GET_PID_FORMAT, processName, GET_PID_PATTERN);
+        String killProcessCommand = String.format(INTERRUPT_BACKGROUND_PROCESS_FORMAT, getPidCommand);
+
+        shellCommandExecutor.execute(killProcessCommand);
+    }
+
+    /**
+     * Executes a command in background.
+     * 
+     * @param command
+     *        - shell command to be executed
+     */
+    private void executeShellCommandInBackground(String command) {
+        BackgroundShellCommandRunner commandExecutor = new BackgroundShellCommandRunner(command, wrappedDevice);
+
+        executor.submit(commandExecutor);
     }
 
     @Override
     protected void finalize() {
-        shellCommandExecutor.terminateAllInBackground();
-
         try {
             serviceCommunicator.stopAtmosphereService();
         } catch (OnDeviceServiceTerminationException e) {
