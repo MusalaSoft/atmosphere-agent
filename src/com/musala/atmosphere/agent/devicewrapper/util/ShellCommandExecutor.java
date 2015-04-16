@@ -21,7 +21,7 @@ import com.musala.atmosphere.commons.exceptions.CommandFailedException;
 public class ShellCommandExecutor {
     private static final int COMMAND_EXECUTION_TIMEOUT = AgentPropertiesLoader.getCommandExecutionTimeout();
 
-    private final IDevice device;
+    protected final IDevice device;
 
     /**
      * Creates a shell command executor instance for a specified {@link IDevice}.

@@ -15,7 +15,8 @@ import org.apache.log4j.Logger;
 import com.musala.atmosphere.agent.devicewrapper.util.PortForwardingService;
 import com.musala.atmosphere.agent.util.AgentPropertiesLoader;
 import com.musala.atmosphere.commons.ad.Request;
-import com.musala.atmosphere.commons.ad.service.ServiceConstants;
+import com.musala.atmosphere.commons.ad.RequestType;
+import com.musala.atmosphere.commons.ad.service.ConnectionConstants;
 import com.musala.atmosphere.commons.ad.service.ServiceRequest;
 import com.musala.atmosphere.commons.exceptions.CommandFailedException;
 
@@ -25,9 +26,9 @@ import com.musala.atmosphere.commons.exceptions.CommandFailedException;
  * @author yordan.petrov
  * 
  */
-public abstract class OnDeviceComponentRequestHandler {
+public abstract class DeviceRequestSender<T extends RequestType> {
 
-    private static final Logger LOGGER = Logger.getLogger(OnDeviceComponentRequestHandler.class);
+    private static final Logger LOGGER = Logger.getLogger(DeviceRequestSender.class);
 
     private static final int REQUEST_RETRY_TIMEOUT = 1000;
 
@@ -41,41 +42,36 @@ public abstract class OnDeviceComponentRequestHandler {
 
     private InputStream socketClientInputStream;
 
-    private final int socketPort;
-
     protected PortForwardingService portForwardingService;
 
-    public OnDeviceComponentRequestHandler(PortForwardingService portForwarder, int socketPort) {
+    /**
+     * Creates an {@link DeviceRequestSender on-device request sender} instance, that sends requests to an ATMOSPHERE
+     * on-device component and retrieves the response.
+     * 
+     * @param portForwarder
+     *        - a port forwarding service, that will be used to forward a local port to the remote port of the on-device
+     *        component
+     */
+    public DeviceRequestSender(PortForwardingService portForwarder) {
         portForwardingService = portForwarder;
-        this.socketPort = socketPort;
-
-        validateRemoteServer();
     }
-
-    /**
-     * Forwards a local port to the port used by the ATMOSPHERE on-device component socket server.
-     */
-    protected abstract void forwardComponentPort();
-
-    /**
-     * Validates that the remote server is an ATMOSPHERE on-device component socket server.
-     */
-    protected abstract void validateRemoteServer();
 
     /**
      * Establishes connection to an ATMOSPHERE on-device component.
      * 
      * @throws IOException
+     *         when an I/O error occurs when closing this socket.
      */
     private void connect() throws IOException {
-        forwardComponentPort();
+        portForwardingService.forwardPort();
 
         int retries = 0;
 
         while (true) {
             try {
                 closeClientConnection();
-                socketClient = new Socket(HOST_NAME, socketPort);
+                int localForwardedPort = portForwardingService.getLocalForwardedPort();
+                socketClient = new Socket(HOST_NAME, localForwardedPort);
                 socketClientInputStream = socketClient.getInputStream();
                 socketClientOutputStream = socketClient.getOutputStream();
                 break;
@@ -88,8 +84,7 @@ public abstract class OnDeviceComponentRequestHandler {
                     try {
                         Thread.sleep(100);
                     } catch (InterruptedException e1) {
-                        // Should not get here.
-                        e1.printStackTrace();
+                        // Nothing to do here.
                     }
                 } else {
                     throw e;
@@ -102,7 +97,7 @@ public abstract class OnDeviceComponentRequestHandler {
      * Closes the socket connection with client, if such is present.
      * 
      * @throws IOException
-     *         if an I/O error occurs when closing this socket.
+     *         when an I/O error occurs when closing this socket.
      */
     private void closeClientConnection() throws IOException {
         if (socketClient != null) {
@@ -114,20 +109,22 @@ public abstract class OnDeviceComponentRequestHandler {
      * Sends a {@link ServiceRequest} request to an ATMOSPHERE on-device component and returns the response.
      * 
      * @param socketServerRequest
-     *        - request that will be send to the ATMOSPHERE on-device component.
-     * @return the response from the ATMOSPHERE service.
+     *        - request that will be send to the ATMOSPHERE on-device component
+     * @return the response from the ATMOSPHERE service
      * @throws ClassNotFoundException
+     *         when the response is not of the correct class
      * @throws IOException
-     * @throws UnknownHostException
+     *         when connection or request execution results in an I/O exception
      * @throws CommandFailedException
+     *         when the response is invalid
      */
-    public Object request(Request socketServerRequest)
+    public Object request(Request<T> socketServerRequest)
         throws ClassNotFoundException,
             UnknownHostException,
             IOException,
             CommandFailedException {
 
-        Object readRequest = ServiceConstants.UNRECOGNIZED_SERVICE_REQUEST;
+        Object readRequest = ConnectionConstants.UNRECOGNIZED_SERVICE_REQUEST;
 
         for (int i = 0; i < CONNECTION_RETRY_LIMIT; i++) {
             connect();
@@ -151,10 +148,10 @@ public abstract class OnDeviceComponentRequestHandler {
             }
 
             disconnect();
-            waitBeforeNextOperation(REQUEST_RETRY_TIMEOUT);
+            wait(REQUEST_RETRY_TIMEOUT);
         }
 
-        if (readRequest != ServiceConstants.UNRECOGNIZED_SERVICE_REQUEST) {
+        if (readRequest != ConnectionConstants.UNRECOGNIZED_SERVICE_REQUEST) {
             return readRequest;
         }
 
@@ -168,12 +165,13 @@ public abstract class OnDeviceComponentRequestHandler {
      * Sleeps the invoker thread for the given time.
      * 
      * @param timeout
-     *        - time in ms for which the thread should stay inactive.
+     *        - time in milliseconds for which the thread should stay inactive.
      */
-    private void waitBeforeNextOperation(int timeout) {
+    private void wait(int timeout) {
         try {
             Thread.sleep(timeout);
         } catch (InterruptedException e) {
+            LOGGER.debug("Thread sleep interrupted.", e);
         }
     }
 

@@ -1,20 +1,17 @@
 package com.musala.atmosphere.agent.devicewrapper.util.ondevicecomponent;
 
 import java.io.IOException;
-import java.util.List;
 
 import org.apache.log4j.Logger;
 
-import com.musala.atmosphere.agent.devicewrapper.util.FileTransferService;
-import com.musala.atmosphere.agent.devicewrapper.util.ShellCommandExecutor;
+import com.musala.atmosphere.agent.devicewrapper.util.BackgroundShellCommandExecutor;
+import com.musala.atmosphere.agent.exception.OnDeviceComponentStartingException;
 import com.musala.atmosphere.commons.ScrollDirection;
-import com.musala.atmosphere.commons.ad.FileTransferConstants;
 import com.musala.atmosphere.commons.ad.Request;
-import com.musala.atmosphere.commons.ad.uiautomator.UIAutomatorConstants;
 import com.musala.atmosphere.commons.ad.uiautomator.UIAutomatorRequest;
-import com.musala.atmosphere.commons.ad.util.FileObjectTransferManager;
 import com.musala.atmosphere.commons.beans.SwipeDirection;
 import com.musala.atmosphere.commons.exceptions.CommandFailedException;
+import com.musala.atmosphere.commons.gesture.Gesture;
 import com.musala.atmosphere.commons.gesture.Timeline;
 import com.musala.atmosphere.commons.ui.UiElementDescriptor;
 
@@ -24,20 +21,13 @@ import com.musala.atmosphere.commons.ui.UiElementDescriptor;
  * @author yordan.petrov
  * 
  */
-public class UIAutomatorCommunicator {
+public class UIAutomatorCommunicator extends DeviceCommunicator<UIAutomatorRequest> {
     private static final Logger LOGGER = Logger.getLogger(UIAutomatorCommunicator.class);
 
-    private final ShellCommandExecutor executor;
-
-    private final FileTransferService transferService;
-
-    private FileObjectTransferManager fileObjectTransferManager = new FileObjectTransferManager();
-
-    // TODO Maybe add run validation in the future
-
-    public UIAutomatorCommunicator(ShellCommandExecutor executor, FileTransferService transferService) {
-        this.executor = executor;
-        this.transferService = transferService;
+    public UIAutomatorCommunicator(DeviceRequestSender<UIAutomatorRequest> requestSender,
+            BackgroundShellCommandExecutor commandExecutor,
+            String serialNumber) {
+        super(requestSender, commandExecutor, serialNumber);
     }
 
     /**
@@ -48,19 +38,20 @@ public class UIAutomatorCommunicator {
      * 
      * @throws CommandFailedException
      */
-    public void playGesture(List<Timeline> pointerTimelines) throws CommandFailedException {
-        Object[] arguments = new Object[] {pointerTimelines};
-        startUIAutomatorProcess(UIAutomatorRequest.PLAY_GESTURE, arguments);
+    public void playGesture(Gesture gesture) throws CommandFailedException {
+        Object[] arguments = new Object[] {gesture};
+
+        requestAction(UIAutomatorRequest.PLAY_GESTURE, arguments);
     }
 
     public void clearField(UiElementDescriptor descriptor) throws CommandFailedException {
         Object[] arguments = new Object[] {descriptor};
-        startUIAutomatorProcess(UIAutomatorRequest.CLEAR_FIELD, arguments);
+        requestAction(UIAutomatorRequest.CLEAR_FIELD, arguments);
     }
 
     public void swipeElement(UiElementDescriptor descriptor, SwipeDirection direction) throws CommandFailedException {
         Object[] arguments = new Object[] {descriptor, direction};
-        startUIAutomatorProcess(UIAutomatorRequest.ELEMENT_SWIPE, arguments);
+        requestAction(UIAutomatorRequest.ELEMENT_SWIPE, arguments);
     }
 
     /**
@@ -76,22 +67,18 @@ public class UIAutomatorCommunicator {
      * @param maxSteps
      *        steps to be executed when scrolling, steps controls the speed
      * @param isVertical
-     *        true if the view has vertical orientation, false otherwise
-     * @param deviceSerialNumber
-     *        serial number of the current device
-     * @return true if scrolled is performed else false
+     *        <code>true</code> if the view has vertical orientation, <code>false</code> otherwise
+     * @return <code>true</code> if scrolled is performed else <code>false</code>
      * @throws CommandFailedException
      */
     public boolean scrollToDirection(ScrollDirection scrollDirection,
                                      UiElementDescriptor viewDescriptor,
                                      Integer maxSwipes,
                                      Integer maxSteps,
-                                     Boolean isVertical,
-                                     String deviceSerialNumber) throws CommandFailedException {
+                                     Boolean isVertical) throws CommandFailedException {
         Object[] arguments = new Object[] {scrollDirection, viewDescriptor, maxSwipes, maxSteps, isVertical};
-        startUIAutomatorProcess(UIAutomatorRequest.SCROLL_TO_DIRECTION, arguments);
 
-        return (boolean) getResponse(deviceSerialNumber);
+        return (boolean) requestActionWithResponse(UIAutomatorRequest.SCROLL_TO_DIRECTION, arguments);
     }
 
     /**
@@ -99,22 +86,18 @@ public class UIAutomatorCommunicator {
      * timeout.
      * 
      * @param descriptor
-     *        - the descriptor of the UI element.
+     *        - the descriptor of the UI element
      * @param timeout
-     *        - the given timeout.
-     * @param deviceSerialNumber
-     *        - the serial number of the used device.
-     * @return - Returns <code>true</code> if the element exists.<br>
-     *         <code>false</code> if there isn't such element on the screen. <br>
+     *        - the given timeout
+     * @return - returns <code>true</code> if the element exists or <code>false</code> if there isn't such element on
+     *         the screen
      * 
      * @throws CommandFailedException
      */
-    public boolean waitForExists(UiElementDescriptor descriptor, Integer timeout, String deviceSerialNumber)
-        throws CommandFailedException {
+    public boolean waitForExists(UiElementDescriptor descriptor, Integer timeout) throws CommandFailedException {
         Object[] arguments = new Object[] {descriptor, timeout};
-        startUIAutomatorProcess(UIAutomatorRequest.WAIT_FOR_EXISTS, arguments, timeout);
 
-        return (boolean) getResponse(deviceSerialNumber);
+        return (boolean) requestActionWithResponse(UIAutomatorRequest.WAIT_FOR_EXISTS, arguments);
     }
 
     /**
@@ -122,50 +105,38 @@ public class UIAutomatorCommunicator {
      * timeout.
      * 
      * @param descriptor
-     *        - the descriptor of the UI element.
+     *        - the descriptor of the UI element
      * @param timeout
      *        - the given timeout.
-     * @param deviceSerialNumber
-     *        - the serial number of the used device.
-     * @return <code>true</code> if the element disappears.<br>
-     *         <code>false</code> if there is such element on the screen after the timeout. <br>
+     * @return <code>true</code> if the element disappears or <code>false</code> if there is such element on the screen
+     *         after the timeout
      * 
      * @throws CommandFailedException
      */
-    public boolean waitUntilGone(UiElementDescriptor descriptor, Integer timeout, String deviceSerialNumber)
-        throws CommandFailedException {
+    public boolean waitUntilGone(UiElementDescriptor descriptor, Integer timeout) throws CommandFailedException {
         Object[] arguments = new Object[] {descriptor, timeout};
-        startUIAutomatorProcess(UIAutomatorRequest.WAIT_UNTIL_GONE, arguments, timeout);
 
-        return (boolean) getResponse(deviceSerialNumber);
+        return (boolean) requestActionWithResponse(UIAutomatorRequest.WAIT_UNTIL_GONE, arguments);
     }
 
     /**
      * Starts a process on the UIAutomatorBridge that opens the notification bar on the device.
      * 
-     * @param deviceSerialNumber
-     *        - the serial number of the used device
-     * @return true if the notification bar has been successfully opened, false otherwise
+     * @return <code>true</code> if the notification bar has been successfully opened, <code>false</code> otherwise
      * @throws CommandFailedException
      */
-    public boolean openNotificationBar(String deviceSerialNumber) throws CommandFailedException {
-        startUIAutomatorProcess(UIAutomatorRequest.OPEN_NOTIFICATION_BAR, null);
-
-        return (boolean) getResponse(deviceSerialNumber);
+    public boolean openNotificationBar() throws CommandFailedException {
+        return (boolean) requestActionWithResponse(UIAutomatorRequest.OPEN_NOTIFICATION_BAR, null);
     }
 
     /**
      * Starts a process on the UIAutomatorBridge that opens the quick settings on the device.
      * 
-     * @param deviceSerialNumber
-     *        - the serial number of the used device
-     * @return true if the quick settings have been successfully opened, false otherwise
+     * @return <code>true</code> if the quick settings have been successfully opened, <code>false</code> otherwise
      * @throws CommandFailedException
      */
-    public boolean openQuickSettings(String deviceSerialNumber) throws CommandFailedException {
-        startUIAutomatorProcess(UIAutomatorRequest.OPEN_QUICK_SETTINGS, null);
-
-        return (boolean) getResponse(deviceSerialNumber);
+    public boolean openQuickSettings() throws CommandFailedException {
+        return (boolean) requestActionWithResponse(UIAutomatorRequest.OPEN_QUICK_SETTINGS, null);
     }
 
     /**
@@ -178,37 +149,43 @@ public class UIAutomatorCommunicator {
      *        end the wait
      * @param timeout
      *        - the timeout for the operation
-     * @param deviceSerialNumber
-     *        - the serial number of the device on which the operation will be executed
      * @return <code>true</code> if a window update occurred, <code>false</code> if timeout has elapsed or if the
      *         current window does not have the specified package name
      * @throws CommandFailedException
      */
-    public boolean waitForWindowUpdate(String packageName, int timeout, String deviceSerialNumber)
-        throws CommandFailedException {
+    public boolean waitForWindowUpdate(String packageName, int timeout) throws CommandFailedException {
         Object[] arguments = new Object[] {packageName, timeout};
-        startUIAutomatorProcess(UIAutomatorRequest.WAIT_FOR_WINDOW_UPDATE, arguments, timeout);
 
-        return (boolean) getResponse(deviceSerialNumber);
+        return (boolean) requestActionWithResponse(UIAutomatorRequest.WAIT_FOR_WINDOW_UPDATE, arguments);
+    }
+
+    public void getUiDumpXml(String remoteFile) throws CommandFailedException {
+        Object[] arguments = new Object[] {remoteFile};
+
+        requestAction(UIAutomatorRequest.GET_UI_DUMP_XML, arguments);
     }
 
     /**
-     * Used for reading a response from the pulled file.
+     * Requests the given {@link UIAutomatorRequest action} and returns the response.
      * 
-     * @param deviceSerialNumber
-     *        - the serial number of the used device.
-     * @return
+     * @param requestType
+     *        - the {@link UIAutomatorRequest requested action}
+     * @param arguments
+     *        - the arguments that are passed with the request
+     * @return the response from the request
      * @throws CommandFailedException
+     *         - if the request fails
      */
-    private Object getResponse(String deviceSerialNumber) throws CommandFailedException {
-        // TODO consider using UUID to create unique response file names instead of using the device serial number
-        String localFileName = FileTransferConstants.RESPONSE_FILE_NAME + deviceSerialNumber;
-        transferService.pullFile(FileTransferConstants.RESPONSE_FILE_NAME, localFileName);
+    private Object requestActionWithResponse(UIAutomatorRequest requestType, Object[] arguments)
+        throws CommandFailedException {
+        Request<UIAutomatorRequest> automatorRequest = new Request<UIAutomatorRequest>(requestType);
+        automatorRequest.setArguments(arguments);
 
         try {
-            return fileObjectTransferManager.readObjectFromFile(localFileName);
+            return requestSender.request(automatorRequest);
         } catch (ClassNotFoundException | IOException e) {
-            String message = "Failed to read the response from the file";
+            String messageFormat = "Failed request %.";
+            String message = String.format(messageFormat, requestType.toString());
             LOGGER.error(message, e);
             throw new CommandFailedException(message, e);
         }
@@ -223,35 +200,48 @@ public class UIAutomatorCommunicator {
      *        - arguments for the request
      * @throws CommandFailedException
      */
-    private void startUIAutomatorProcess(UIAutomatorRequest requestType, Object[] arguments)
-        throws CommandFailedException {
-        startUIAutomatorProcess(requestType, arguments, -1);
+    private void requestAction(UIAutomatorRequest requestType, Object[] arguments) throws CommandFailedException {
+        Request<UIAutomatorRequest> automatorRequest = new Request<UIAutomatorRequest>(requestType);
+        automatorRequest.setArguments(arguments);
+
+        try {
+            requestSender.request(automatorRequest);
+        } catch (ClassNotFoundException | IOException e) {
+            String messageFormat = "Failed request %.";
+            String message = String.format(messageFormat, requestType.toString());
+            LOGGER.error(message, e);
+            throw new CommandFailedException(message, e);
+        }
     }
 
-    /**
-     * Starts a process on the UI automator corresponding to the passed parameters.
-     * 
-     * @param requestType
-     *        - the type of the request to start
-     * @param arguments
-     *        - arguments for the request
-     * @param timeout
-     *        - a timeout for the request, if any non-positive value is passed, the request will be executed with the
-     *        default timeout
-     * @throws CommandFailedException
-     */
-    private void startUIAutomatorProcess(UIAutomatorRequest requestType, Object[] arguments, int timeout)
-        throws CommandFailedException {
-        Request<UIAutomatorRequest> request = new Request<UIAutomatorRequest>(requestType);
-        request.setArguments(arguments);
-
-        UIAutomatorProcessStarter starter = new UIAutomatorProcessStarter();
-        starter.attachObject(UIAutomatorConstants.PARAM_REQUEST, request);
-
-        if (timeout > 0) {
-            starter.run(executor, transferService, timeout);
-        } else {
-            starter.run(executor, transferService);
+    @Override
+    public void startComponent() {
+        UIAutomatorProcessStarter processStarter = new UIAutomatorProcessStarter();
+        try {
+            processStarter.runInBackground(shellCommandExecutor);
+        } catch (CommandFailedException e) {
+            String errorMessage = String.format("Starting ATMOSPHERE gesture player failed for %s.", deviceSerialNumber);
+            throw new OnDeviceComponentStartingException(errorMessage, e);
         }
+
+    }
+
+    @Override
+    public void stopComponent() {
+        Request<UIAutomatorRequest> automatorRequest = new Request<UIAutomatorRequest>(UIAutomatorRequest.STOP);
+
+        try {
+            requestSender.request(automatorRequest);
+        } catch (ClassNotFoundException | IOException | CommandFailedException e) {
+            // Redirect the exception to the server
+            LOGGER.warn("Stoopping ATMOSPHERE gesture player failed.", e);
+        }
+
+    }
+
+    @Override
+    public void validateRemoteServer() {
+        Request<UIAutomatorRequest> validationRequest = new Request<UIAutomatorRequest>(UIAutomatorRequest.VALIDATION);
+        validateRemoteServer(validationRequest);
     }
 }

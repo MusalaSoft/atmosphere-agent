@@ -13,7 +13,7 @@ public class FakeGesturePlayerAnswer implements FakeOnDeviceComponentRequestHand
                 return requestType;
 
             default:
-                return UIAutomatorRequest.ANY_RESPONSE;
+                return UIAutomatorRequest.VOID_RESPONSE;
         }
     }
 }

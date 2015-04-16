@@ -22,6 +22,7 @@ import com.android.ddmlib.TimeoutException;
 import com.musala.atmosphere.agent.DevicePropertyStringConstants;
 import com.musala.atmosphere.agent.devicewrapper.util.ApkInstaller;
 import com.musala.atmosphere.agent.devicewrapper.util.BackgroundPullFileRunner;
+import com.musala.atmosphere.agent.devicewrapper.util.BackgroundShellCommandExecutor;
 import com.musala.atmosphere.agent.devicewrapper.util.BackgroundShellCommandRunner;
 import com.musala.atmosphere.agent.devicewrapper.util.DeviceProfiler;
 import com.musala.atmosphere.agent.devicewrapper.util.FileTransferService;
@@ -29,7 +30,9 @@ import com.musala.atmosphere.agent.devicewrapper.util.ImeManager;
 import com.musala.atmosphere.agent.devicewrapper.util.PortForwardingService;
 import com.musala.atmosphere.agent.devicewrapper.util.ShellCommandExecutor;
 import com.musala.atmosphere.agent.devicewrapper.util.ondevicecomponent.ServiceCommunicator;
+import com.musala.atmosphere.agent.devicewrapper.util.ondevicecomponent.ServiceRequestSender;
 import com.musala.atmosphere.agent.devicewrapper.util.ondevicecomponent.UIAutomatorCommunicator;
+import com.musala.atmosphere.agent.devicewrapper.util.ondevicecomponent.UIAutomatorRequestSender;
 import com.musala.atmosphere.agent.exception.ForwardingPortFailedException;
 import com.musala.atmosphere.agent.exception.OnDeviceComponentCommunicationException;
 import com.musala.atmosphere.agent.exception.OnDeviceComponentInitializationException;
@@ -42,6 +45,7 @@ import com.musala.atmosphere.commons.PowerProperties;
 import com.musala.atmosphere.commons.RoutingAction;
 import com.musala.atmosphere.commons.ScrollDirection;
 import com.musala.atmosphere.commons.SmsMessage;
+import com.musala.atmosphere.commons.ad.service.ConnectionConstants;
 import com.musala.atmosphere.commons.beans.DeviceAcceleration;
 import com.musala.atmosphere.commons.beans.DeviceMagneticField;
 import com.musala.atmosphere.commons.beans.DeviceOrientation;
@@ -103,7 +107,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 
     private static final String GET_RAM_MEMORY_COMMAND = "cat /proc/meminfo | grep MemTotal";
 
-    protected final ShellCommandExecutor shellCommandExecutor;
+    protected final BackgroundShellCommandExecutor shellCommandExecutor;
 
     protected final IDevice wrappedDevice;
 
@@ -114,17 +118,33 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
     public AbstractWrapDevice(IDevice deviceToWrap) throws RemoteException {
         wrappedDevice = deviceToWrap;
         transferService = new FileTransferService(wrappedDevice);
-        shellCommandExecutor = new ShellCommandExecutor(wrappedDevice);
+        shellCommandExecutor = new BackgroundShellCommandExecutor(wrappedDevice, executor);
         apkInstaller = new ApkInstaller(wrappedDevice);
         imeManager = new ImeManager(shellCommandExecutor);
 
-        uiAutomatorBridgeCommunicator = new UIAutomatorCommunicator(shellCommandExecutor, transferService);
-
-        PortForwardingService forwardingService = new PortForwardingService(wrappedDevice);
         try {
-            serviceCommunicator = new ServiceCommunicator(forwardingService,
+            PortForwardingService serviceForwardingService = new PortForwardingService(wrappedDevice,
+                                                                                       ConnectionConstants.SERVICE_PORT);
+            serviceForwardingService.forwardPort();
+            ServiceRequestSender serviceRequestSender = new ServiceRequestSender(serviceForwardingService);
+
+            PortForwardingService automatorForwardingService = new PortForwardingService(wrappedDevice,
+                                                                                         ConnectionConstants.UI_AUTOMATOR_PORT);
+            automatorForwardingService.forwardPort();
+            UIAutomatorRequestSender automatorRequestSender = new UIAutomatorRequestSender(automatorForwardingService);
+            serviceCommunicator = new ServiceCommunicator(serviceRequestSender,
                                                           shellCommandExecutor,
                                                           deviceToWrap.getSerialNumber());
+            uiAutomatorBridgeCommunicator = new UIAutomatorCommunicator(automatorRequestSender,
+                                                                        shellCommandExecutor,
+                                                                        deviceToWrap.getSerialNumber());
+            // start components
+            serviceCommunicator.startComponent();
+            uiAutomatorBridgeCommunicator.startComponent();
+
+            // validate remote servers
+            serviceCommunicator.validateRemoteServer();
+            uiAutomatorBridgeCommunicator.validateRemoteServer();
         } catch (ForwardingPortFailedException | OnDeviceComponentStartingException
                 | OnDeviceComponentInitializationException e) {
             // TODO throw a new exception here when the preconditions are
@@ -155,7 +175,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
                 returnValue = shellCommandExecutor.executeSequence((List<String>) args[0]);
                 break;
             case EXECUTE_SHELL_COMMAND_IN_BACKGROUND:
-                executeShellCommandInBackground((String) args[0]);
+                shellCommandExecutor.executeInBackground((String) args[0]);
                 break;
             case INTERRUPT_BACKGROUND_SHELL_PROCESS:
                 interruptBackgroundShellProcess((String) args[0]);
@@ -251,24 +271,20 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
             // Misc functionalities
             case WAIT_FOR_EXISTS:
                 returnValue = uiAutomatorBridgeCommunicator.waitForExists((UiElementDescriptor) args[0],
-                                                                          (Integer) args[1],
-                                                                          wrappedDevice.getSerialNumber());
+                                                                          (Integer) args[1]);
                 break;
             case WAIT_UNTIL_GONE:
                 returnValue = uiAutomatorBridgeCommunicator.waitUntilGone((UiElementDescriptor) args[0],
-                                                                          (Integer) args[1],
-                                                                          wrappedDevice.getSerialNumber());
+                                                                          (Integer) args[1]);
                 break;
             case WAIT_FOR_WINDOW_UPDATE:
-                returnValue = uiAutomatorBridgeCommunicator.waitForWindowUpdate((String) args[0],
-                                                                                (int) args[1],
-                                                                                wrappedDevice.getSerialNumber());
+                returnValue = uiAutomatorBridgeCommunicator.waitForWindowUpdate((String) args[0], (int) args[1]);
                 break;
             case OPEN_NOTIFICATION_BAR:
-                returnValue = uiAutomatorBridgeCommunicator.openNotificationBar(wrappedDevice.getSerialNumber());
+                returnValue = uiAutomatorBridgeCommunicator.openNotificationBar();
                 break;
             case OPEN_QUICK_SETTINGS:
-                returnValue = uiAutomatorBridgeCommunicator.openQuickSettings(wrappedDevice.getSerialNumber());
+                returnValue = uiAutomatorBridgeCommunicator.openQuickSettings();
                 break;
             case PLAY_GESTURE:
                 uiAutomatorBridgeCommunicator.playGesture((Gesture) args[0]);
@@ -341,8 +357,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
                                                                               (UiElementDescriptor) args[1],
                                                                               (Integer) args[2],
                                                                               (Integer) args[3],
-                                                                              (Boolean) args[4],
-                                                                              wrappedDevice.getSerialNumber());
+                                                                              (Boolean) args[4]);
                 break;
         }
 
@@ -521,8 +536,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 
         String remoteFileName = String.format(XMLDUMP_REMOTE_FILE_NAME, wrappedDevice.getSerialNumber());
         String localFileName = String.format(XMLDUMP_LOCAL_FILE_NAME, wrappedDevice.getSerialNumber());
-        String xmlDumpCommand = String.format(XMLDUMP_COMMAND, remoteFileName);
-        shellCommandExecutor.execute(xmlDumpCommand);
+        uiAutomatorBridgeCommunicator.getUiDumpXml(remoteFileName);
 
         try {
             wrappedDevice.pullFile(remoteFileName, localFileName);
@@ -612,9 +626,10 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
     @Override
     protected void finalize() {
         try {
-            serviceCommunicator.stopAtmosphereService();
+            serviceCommunicator.stopComponent();
+            uiAutomatorBridgeCommunicator.stopComponent();
         } catch (OnDeviceServiceTerminationException e) {
-            String loggerMessage = String.format("Stopping ATMOSPHERE service failed for %s.",
+            String loggerMessage = String.format("Stopping ATMOSPHERE on-device component failed for %s.",
                                                  wrappedDevice.getSerialNumber());
             LOGGER.warn(loggerMessage, e);
         }

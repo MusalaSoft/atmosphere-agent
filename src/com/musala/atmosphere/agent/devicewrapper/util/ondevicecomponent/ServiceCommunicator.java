@@ -2,11 +2,8 @@ package com.musala.atmosphere.agent.devicewrapper.util.ondevicecomponent;
 
 import java.io.IOException;
 
-import com.musala.atmosphere.agent.devicewrapper.util.PortForwardingService;
-import com.musala.atmosphere.agent.devicewrapper.util.ShellCommandExecutor;
-import com.musala.atmosphere.agent.exception.OnDeviceComponentInitializationException;
+import com.musala.atmosphere.agent.devicewrapper.util.BackgroundShellCommandExecutor;
 import com.musala.atmosphere.agent.exception.OnDeviceComponentStartingException;
-import com.musala.atmosphere.agent.exception.OnDeviceComponentValidationException;
 import com.musala.atmosphere.agent.exception.OnDeviceServiceTerminationException;
 import com.musala.atmosphere.commons.ConnectionType;
 import com.musala.atmosphere.commons.PowerProperties;
@@ -27,75 +24,24 @@ import com.musala.atmosphere.commons.util.IntentBuilder.IntentAction;
  * @author yordan.petrov
  * 
  */
-public class ServiceCommunicator {
+public class ServiceCommunicator extends DeviceCommunicator<ServiceRequest> {
     private static final String ATMOSPHERE_SERVICE_COMPONENT = "com.musala.atmosphere.service/com.musala.atmosphere.service.AtmosphereService";
 
-    private ServiceRequestHandler serviceRequestHandler;
-
-    private final PortForwardingService portForwardingService;
-
-    private final String deviceSerialNumber;
-
-    private final ShellCommandExecutor shellCommandExecutor;
-
-    public ServiceCommunicator(PortForwardingService portForwarder,
-            ShellCommandExecutor commandExecutor,
+    /**
+     * Creates a {@link ServiceCommunicator service communicator} instance that communicate with an on-device component.
+     * 
+     * @param portForwarder
+     *        - a port forwarding service, that will be used to forward a local port to the remote port of the on-device
+     *        component
+     * @param commandExecutor
+     *        - a shell command executor or the device
+     * @param serialNumber
+     *        - serial number of the device
+     */
+    public ServiceCommunicator(DeviceRequestSender<ServiceRequest> requestSender,
+            BackgroundShellCommandExecutor commandExecutor,
             String serialNumber) {
-        portForwardingService = portForwarder;
-        int localPort = portForwardingService.getLocalForwardedPort();
-
-        deviceSerialNumber = serialNumber;
-        shellCommandExecutor = commandExecutor;
-
-        startAtmosphereService();
-        try {
-            serviceRequestHandler = new ServiceRequestHandler(portForwardingService, localPort);
-        } catch (OnDeviceComponentValidationException e) {
-            String errorMessage = String.format("Service initialization failed for %s.", deviceSerialNumber);
-            throw new OnDeviceComponentInitializationException(errorMessage, e);
-        }
-    }
-
-    /**
-     * Starts the Atmosphere service on the wrappedDevice.
-     * 
-     * @throws OnDeviceComponentStartingException
-     */
-    private void startAtmosphereService() {
-        IntentBuilder startSeviceIntentBuilder = new IntentBuilder(IntentAction.START_ATMOSPHERE_SERVICE);
-        startSeviceIntentBuilder.setUserId(0);
-        startSeviceIntentBuilder.putComponent(ATMOSPHERE_SERVICE_COMPONENT);
-        String startServiceIntentCommand = startSeviceIntentBuilder.buildIntentCommand();
-
-        try {
-            shellCommandExecutor.execute(startServiceIntentCommand);
-        } catch (CommandFailedException e) {
-            String errorMessage = String.format("Starting ATMOSPHERE service failed for %s.", deviceSerialNumber);
-            throw new OnDeviceComponentStartingException(errorMessage, e);
-        }
-    }
-
-    @Override
-    public void finalize() throws OnDeviceServiceTerminationException {
-        stopAtmosphereService();
-    }
-
-    /**
-     * Stops the ATMOSPHERE service on the wrapped device.
-     * 
-     * @throws OnDeviceServiceTerminationException
-     */
-    public void stopAtmosphereService() {
-        IntentBuilder stopServiceIntentBuilder = new IntentBuilder(IntentAction.ATMOSPHERE_SERVICE_CONTROL);
-        stopServiceIntentBuilder.putExtraString("command", "stop");
-        String stopServiceIntentCommand = stopServiceIntentBuilder.buildIntentCommand();
-
-        try {
-            shellCommandExecutor.execute(stopServiceIntentCommand);
-        } catch (CommandFailedException e) {
-            String errorMessage = String.format("Stopping ATMOSPHERE service failed for %s.", deviceSerialNumber);
-            throw new OnDeviceServiceTerminationException(errorMessage, e);
-        }
+        super(requestSender, commandExecutor, serialNumber);
     }
 
     /**
@@ -108,7 +54,7 @@ public class ServiceCommunicator {
         Request<ServiceRequest> serviceRequest = new Request<ServiceRequest>(ServiceRequest.GET_POWER_PROPERTIES);
 
         try {
-            PowerProperties properties = (PowerProperties) serviceRequestHandler.request(serviceRequest);
+            PowerProperties properties = (PowerProperties) requestSender.request(serviceRequest);
             return properties;
         } catch (ClassNotFoundException | IOException e) {
             // Redirect the exception to the server
@@ -126,7 +72,7 @@ public class ServiceCommunicator {
         Request<ServiceRequest> request = new Request<ServiceRequest>(ServiceRequest.GET_ORIENTATION_READINGS);
 
         try {
-            float[] response = (float[]) serviceRequestHandler.request(request);
+            float[] response = (float[]) requestSender.request(request);
 
             float orientationAzimuth = response[0];
             float orientationPitch = response[1];
@@ -151,7 +97,7 @@ public class ServiceCommunicator {
         Request<ServiceRequest> serviceRequest = new Request<ServiceRequest>(ServiceRequest.GET_POWER_PROPERTIES);
 
         try {
-            Integer serviceResponse = (Integer) serviceRequestHandler.request(serviceRequest);
+            Integer serviceResponse = (Integer) requestSender.request(serviceRequest);
             if (serviceResponse != -1) {
                 BatteryState currentBatteryState = BatteryState.getStateById(serviceResponse);
                 return currentBatteryState;
@@ -173,7 +119,7 @@ public class ServiceCommunicator {
         Request<ServiceRequest> serviceRequest = new Request<ServiceRequest>(ServiceRequest.GET_CONNECTION_TYPE);
 
         try {
-            Integer serviceResponse = (Integer) serviceRequestHandler.request(serviceRequest);
+            Integer serviceResponse = (Integer) requestSender.request(serviceRequest);
             return ConnectionType.getById(serviceResponse);
         } catch (ClassNotFoundException | IOException e) {
             throw new CommandFailedException("Getting connection type failed. See enclosed exception for more information.",
@@ -194,7 +140,7 @@ public class ServiceCommunicator {
         serviceRequest.setArguments(arguments);
 
         try {
-            serviceRequestHandler.request(serviceRequest);
+            requestSender.request(serviceRequest);
         } catch (ClassNotFoundException | IOException e) {
             throw new CommandFailedException("Setting WiFi failed. See enclosed exception for more information.", e);
         }
@@ -210,7 +156,7 @@ public class ServiceCommunicator {
     public DeviceAcceleration getAcceleration() throws CommandFailedException {
         Request<ServiceRequest> serviceRequest = new Request<ServiceRequest>(ServiceRequest.GET_ACCELERATION_READINGS);
         try {
-            Float[] acceeleration = (Float[]) serviceRequestHandler.request(serviceRequest);
+            Float[] acceeleration = (Float[]) requestSender.request(serviceRequest);
             DeviceAcceleration deviceAcceleration = new DeviceAcceleration(acceeleration[0],
                                                                            acceeleration[1],
                                                                            acceeleration[2]);
@@ -230,7 +176,7 @@ public class ServiceCommunicator {
     public float getProximity() throws CommandFailedException {
         Request<ServiceRequest> serviceRequest = new Request<ServiceRequest>(ServiceRequest.GET_PROXIMITY_READINGS);
         try {
-            float proximity = (float) serviceRequestHandler.request(serviceRequest);
+            float proximity = (float) requestSender.request(serviceRequest);
 
             return proximity;
         } catch (ClassNotFoundException | IOException e) {
@@ -248,7 +194,7 @@ public class ServiceCommunicator {
     public TelephonyInformation getTelephonyInformation() throws CommandFailedException {
         Request<ServiceRequest> serviceRequest = new Request<ServiceRequest>(ServiceRequest.GET_TELEPHONY_INFORMATION);
         try {
-            TelephonyInformation telephonyInformation = (TelephonyInformation) serviceRequestHandler.request(serviceRequest);
+            TelephonyInformation telephonyInformation = (TelephonyInformation) requestSender.request(serviceRequest);
             return telephonyInformation;
         } catch (ClassNotFoundException | IOException e) {
             throw new CommandFailedException("Getting telephony information failed.", e);
@@ -266,7 +212,7 @@ public class ServiceCommunicator {
         startAppRequest.setArguments(args);
 
         try {
-            return (boolean) serviceRequestHandler.request(startAppRequest);
+            return (boolean) requestSender.request(startAppRequest);
         } catch (ClassNotFoundException | IOException e) {
             throw new CommandFailedException("Starting application faliled.", e);
         }
@@ -286,7 +232,7 @@ public class ServiceCommunicator {
         mockLocationRequest.setArguments(args);
 
         try {
-            return (boolean) serviceRequestHandler.request(mockLocationRequest);
+            return (boolean) requestSender.request(mockLocationRequest);
         } catch (ClassNotFoundException | IOException e) {
             throw new CommandFailedException("Mocking the location of the device failed.", e);
         }
@@ -305,7 +251,7 @@ public class ServiceCommunicator {
         disableMockLocationRequest.setArguments(args);
 
         try {
-            serviceRequestHandler.request(disableMockLocationRequest);
+            requestSender.request(disableMockLocationRequest);
         } catch (ClassNotFoundException | IOException e) {
             throw new CommandFailedException("Disabling mock lcoation provider on the device failed.", e);
         }
@@ -321,7 +267,7 @@ public class ServiceCommunicator {
         Request<ServiceRequest> getAwakeStatusRequest = new Request<ServiceRequest>(ServiceRequest.GET_AWAKE_STATUS);
 
         try {
-            return (boolean) serviceRequestHandler.request(getAwakeStatusRequest);
+            return (boolean) requestSender.request(getAwakeStatusRequest);
         } catch (ClassNotFoundException | IOException e) {
             throw new CommandFailedException("Getting device awake status failed.", e);
         }
@@ -337,7 +283,7 @@ public class ServiceCommunicator {
         Request<ServiceRequest> getCameraAvailabilityRequest = new Request<ServiceRequest>(ServiceRequest.GET_CAMERA_AVAILABILITY);
 
         try {
-            return (boolean) serviceRequestHandler.request(getCameraAvailabilityRequest);
+            return (boolean) requestSender.request(getCameraAvailabilityRequest);
         } catch (ClassNotFoundException | IOException e) {
             throw new CommandFailedException("Getting device camera availability failed.", e);
         }
@@ -357,7 +303,7 @@ public class ServiceCommunicator {
         getProcessRunningRequest.setArguments(args);
 
         try {
-            return (boolean) serviceRequestHandler.request(getProcessRunningRequest);
+            return (boolean) requestSender.request(getProcessRunningRequest);
         } catch (ClassNotFoundException | IOException e) {
             throw new CommandFailedException("Checking for running process failed.", e);
         }
@@ -376,7 +322,7 @@ public class ServiceCommunicator {
         setKeyguardRequest.setArguments(args);
 
         try {
-            serviceRequestHandler.request(setKeyguardRequest);
+            requestSender.request(setKeyguardRequest);
         } catch (ClassNotFoundException | IOException e) {
             throw new CommandFailedException("Setting keyguard status failed.", e);
         }
@@ -392,7 +338,7 @@ public class ServiceCommunicator {
         Request<ServiceRequest> isLocked = new Request<ServiceRequest>(ServiceRequest.IS_LOCKED);
 
         try {
-            return (boolean) serviceRequestHandler.request(isLocked);
+            return (boolean) requestSender.request(isLocked);
         } catch (ClassNotFoundException | IOException e) {
             throw new CommandFailedException("Getting the lock state of the device failed.", e);
         }
@@ -413,7 +359,7 @@ public class ServiceCommunicator {
         bringTaskToFrontRequest.setArguments(args);
 
         try {
-            return (boolean) serviceRequestHandler.request(bringTaskToFrontRequest);
+            return (boolean) requestSender.request(bringTaskToFrontRequest);
         } catch (ClassNotFoundException | IOException e) {
             throw new CommandFailedException("Bringing the task to the front failed.", e);
         }
@@ -433,7 +379,7 @@ public class ServiceCommunicator {
         getRunningTasksRequest.setArguments(args);
 
         try {
-            return (int[]) serviceRequestHandler.request(getRunningTasksRequest);
+            return (int[]) requestSender.request(getRunningTasksRequest);
         } catch (ClassNotFoundException | IOException e) {
             throw new CommandFailedException("Getting the running tasks id failed.", e);
         }
@@ -454,7 +400,7 @@ public class ServiceCommunicator {
         waitForTasksUpdateRequest.setArguments(args);
 
         try {
-            return (boolean) serviceRequestHandler.request(waitForTasksUpdateRequest);
+            return (boolean) requestSender.request(waitForTasksUpdateRequest);
         } catch (ClassNotFoundException | IOException e) {
             throw new CommandFailedException("Waiting for the task to be moved failed.", e);
         }
@@ -472,9 +418,45 @@ public class ServiceCommunicator {
         sendBroadcastRequest.setArguments(args);
 
         try {
-            serviceRequestHandler.request(sendBroadcastRequest);
+            requestSender.request(sendBroadcastRequest);
         } catch (ClassNotFoundException | IOException e) {
             throw new CommandFailedException("Sending broadcast failed.", e);
         }
+    }
+
+    @Override
+    public void startComponent() {
+        IntentBuilder startSeviceIntentBuilder = new IntentBuilder(IntentAction.START_ATMOSPHERE_SERVICE);
+        startSeviceIntentBuilder.setUserId(0);
+        startSeviceIntentBuilder.putComponent(ATMOSPHERE_SERVICE_COMPONENT);
+        String startServiceIntentCommand = startSeviceIntentBuilder.buildIntentCommand();
+
+        try {
+            shellCommandExecutor.execute(startServiceIntentCommand);
+        } catch (CommandFailedException e) {
+            String errorMessage = String.format("Starting ATMOSPHERE service failed for %s.", deviceSerialNumber);
+            throw new OnDeviceComponentStartingException(errorMessage, e);
+        }
+    }
+
+    @Override
+    public void stopComponent() {
+        // TODO: Use socket requests here. Refactor the service to use dispatchers like the UI automator bridge.
+        IntentBuilder stopServiceIntentBuilder = new IntentBuilder(IntentAction.ATMOSPHERE_SERVICE_CONTROL);
+        stopServiceIntentBuilder.putExtraString("command", "stop");
+        String stopServiceIntentCommand = stopServiceIntentBuilder.buildIntentCommand();
+
+        try {
+            shellCommandExecutor.execute(stopServiceIntentCommand);
+        } catch (CommandFailedException e) {
+            String errorMessage = String.format("Stopping ATMOSPHERE service failed for %s.", deviceSerialNumber);
+            throw new OnDeviceServiceTerminationException(errorMessage, e);
+        }
+    }
+
+    @Override
+    public void validateRemoteServer() {
+        Request<ServiceRequest> validationRequest = new Request<ServiceRequest>(ServiceRequest.VALIDATION);
+        validateRemoteServer(validationRequest);
     }
 }

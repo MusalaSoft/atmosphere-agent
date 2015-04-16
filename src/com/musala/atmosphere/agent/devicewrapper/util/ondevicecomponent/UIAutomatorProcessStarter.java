@@ -12,6 +12,7 @@ import java.util.Map;
 
 import org.apache.log4j.Logger;
 
+import com.musala.atmosphere.agent.devicewrapper.util.BackgroundShellCommandExecutor;
 import com.musala.atmosphere.agent.devicewrapper.util.FileTransferService;
 import com.musala.atmosphere.agent.devicewrapper.util.ShellCommandExecutor;
 import com.musala.atmosphere.commons.exceptions.CommandFailedException;
@@ -25,6 +26,7 @@ import com.musala.atmosphere.commons.exceptions.CommandFailedException;
 public class UIAutomatorProcessStarter {
     private static final Logger LOGGER = Logger.getLogger(UIAutomatorProcessStarter.class.getCanonicalName());
 
+    @Deprecated
     private static final String LOCAL_REQUEST_FILE_NAME_FORMAT = "request%d.ser";
 
     private static final String ENTRY_POINT_CLASS = "com.musala.atmosphere.uiautomator.ActionDispatcher";
@@ -35,6 +37,7 @@ public class UIAutomatorProcessStarter {
 
     private Map<String, String> attachmentsKeys;
 
+    @Deprecated
     private int attachedObjectsId = 0;
 
     private Map<String, String> params;
@@ -48,6 +51,7 @@ public class UIAutomatorProcessStarter {
         params.put(key, value);
     }
 
+    @Deprecated
     public void attachObject(String key, Serializable object) {
         String fileName = String.format(LOCAL_REQUEST_FILE_NAME_FORMAT, attachedObjectsId);
 
@@ -78,14 +82,15 @@ public class UIAutomatorProcessStarter {
      * Starts a UIAutomator process with the previously specified parameters.
      * 
      * @param executor
-     *        - the device {@link ShellCommandExecutor} instance to be used for UIAutomator starting.
+     *        - the device {@link ShellCommandExecutor} instance to be used for UIAutomator starting
      * @param service
-     *        - the device {@link FileTransferService} instance to be used for file uploading.
+     *        - the device {@link FileTransferService} instance to be used for file uploading
      * @param commandExecutorTimeout
-     *        - timeout, that will be used when executing shell commands on the device.
-     * @return the execution console response.
+     *        - timeout, that will be used when executing shell commands on the device
+     * @return the execution console response
      * @throws CommandFailedException
      */
+    @Deprecated
     public String run(ShellCommandExecutor executor, FileTransferService service, int commandExecutorTimeout)
         throws CommandFailedException {
         uploadRequiredFiles(service);
@@ -97,18 +102,32 @@ public class UIAutomatorProcessStarter {
      * Starts a UIAutomator process with the previously specified parameters.
      * 
      * @param executor
-     *        - the device {@link ShellCommandExecutor} instance to be used for UIAutomator starting.
+     *        - the device {@link ShellCommandExecutor} instance to be used for UIAutomator starting
      * @param service
-     *        - the device {@link FileTransferService} instance to be used for file uploading.
-     * @return the execution console response.
+     *        - the device {@link FileTransferService} instance to be used for file uploading
+     * @return the execution console response
      * @throws CommandFailedException
      */
+    @Deprecated
     public String run(ShellCommandExecutor executor, FileTransferService service) throws CommandFailedException {
         uploadRequiredFiles(service);
         String cmdLine = buildCommand();
         return executor.execute(cmdLine);
     }
 
+    /**
+     * Starts a UIAutomator process with the previously specified parameters.
+     * 
+     * @param executor
+     *        - the device {@link ShellCommandExecutor} instance to be used for UIAutomator starting
+     * @throws CommandFailedException
+     */
+    public void runInBackground(BackgroundShellCommandExecutor executor) throws CommandFailedException {
+        String command = buildCommand();
+        executor.executeInBackground(command);
+    }
+
+    @Deprecated
     private void uploadRequiredFiles(FileTransferService service) throws CommandFailedException {
         for (String fileName : attachmentsKeys.keySet()) {
             String remoteFullPath = service.pushFile(fileName);

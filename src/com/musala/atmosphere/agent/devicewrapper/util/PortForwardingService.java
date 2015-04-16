@@ -8,7 +8,6 @@ import com.android.ddmlib.TimeoutException;
 import com.musala.atmosphere.agent.exception.ForwardingPortFailedException;
 import com.musala.atmosphere.agent.exception.PortForwardingRemovalException;
 import com.musala.atmosphere.agent.util.PortAllocator;
-import com.musala.atmosphere.commons.ad.service.ServiceConstants;
 
 /**
  * Class that handles device port forwarding. Used to forward a local port (issued to a device) to a remote (on-device)
@@ -22,9 +21,9 @@ public class PortForwardingService {
 
     private final int localForwardedPort;
 
-    private final static int NOT_FORWARDED_PORT = -1;
+    private int remoteForwardedPort;
 
-    private int remoteForwardedPort = NOT_FORWARDED_PORT;
+    private boolean isForwarded;
 
     /**
      * Creates a port forwarding service for the passed device and allocates a local port that will be used for
@@ -33,30 +32,28 @@ public class PortForwardingService {
      * @param device
      *        - device for which to create a port forwarding service.
      */
-    public PortForwardingService(IDevice device) {
+    public PortForwardingService(IDevice device, int remotePort) {
         PortAllocator portAllocator = new PortAllocator();
 
         this.device = device;
+        this.remoteForwardedPort = remotePort;
+        this.isForwarded = false;
         this.localForwardedPort = portAllocator.getPort();
     }
 
     /**
-     * Forwards the allocated local port to the ATMOSPHERE service's port on the wrapped device.
+     * Forwards the allocated local port to the remote port on the wrapped device.
      * 
      * @throws ForwardingPortFailedException
      */
-    public void forwardServicePort() throws ForwardingPortFailedException {
-        forwardPort(ServiceConstants.SERVICE_PORT);
-    }
-
-    private void forwardPort(int remotePort) throws ForwardingPortFailedException {
-        if (remoteForwardedPort == remotePort) {
+    public void forwardPort() throws ForwardingPortFailedException {
+        if (isForwarded) {
             return;
         }
 
         try {
-            device.createForward(localForwardedPort, remotePort);
-            remoteForwardedPort = remotePort;
+            device.createForward(localForwardedPort, remoteForwardedPort);
+            isForwarded = true;
         } catch (TimeoutException | AdbCommandRejectedException | IOException e) {
             String errorMessage = String.format("Could not forward port for %s.", device.getSerialNumber());
             throw new ForwardingPortFailedException(errorMessage, e);
@@ -69,13 +66,13 @@ public class PortForwardingService {
      * @throws PortForwardingRemovalException
      */
     public void removeForward() throws PortForwardingRemovalException {
-        if (remoteForwardedPort == NOT_FORWARDED_PORT) {
+        if (!isForwarded) {
             return;
         }
 
         try {
             device.removeForward(localForwardedPort, remoteForwardedPort);
-            remoteForwardedPort = NOT_FORWARDED_PORT;
+            isForwarded = false;
         } catch (TimeoutException | AdbCommandRejectedException | IOException e) {
             String errorMessage = String.format("Could not remove port forwarding for %s.", device.getSerialNumber());
             throw new PortForwardingRemovalException(errorMessage, e);
