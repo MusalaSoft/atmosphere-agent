@@ -270,6 +270,9 @@ public class DeviceManager {
         String rmiWrapperBindingId = getRmiWrapperBindingIdentifier(device);
 
         try {
+            IWrapDevice deviceWrapper = getDeviceWrapper(rmiWrapperBindingId);
+            deviceWrapper.unbindWrapper();
+
             rmiRegistry.unbind(rmiWrapperBindingId);
         } catch (NotBoundException e) {
             // Wrapper for the device was never published, so we have nothing to unbind.
@@ -384,5 +387,23 @@ public class DeviceManager {
             }
         }
         throw new NoAvailableDeviceFoundException("No emulator devices are present on the agent (current machine).");
+    }
+
+    /**
+     * Gets the wrapper of a device with the given Id.
+     *
+     * @param wrapperId
+     *        - id of the wrapper we want to get.
+     * @return {@link IWrapDevice} of a device containing given id.
+     * @throws AccessException
+     *         if the caller does not have the needed permission
+     * @throws RemoteException
+     *         if accessing the lookup method fails
+     * @throws NotBoundException
+     *         if the attempted lookup for the wrapper id has no associated binding
+     */
+    private IWrapDevice getDeviceWrapper(String wrapperId) throws AccessException, RemoteException, NotBoundException {
+        IWrapDevice deviceWrapper = (IWrapDevice) rmiRegistry.lookup(wrapperId);
+        return deviceWrapper;
     }
 }

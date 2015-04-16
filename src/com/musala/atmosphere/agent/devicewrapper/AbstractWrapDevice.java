@@ -38,8 +38,10 @@ import com.musala.atmosphere.agent.exception.OnDeviceComponentCommunicationExcep
 import com.musala.atmosphere.agent.exception.OnDeviceComponentInitializationException;
 import com.musala.atmosphere.agent.exception.OnDeviceComponentStartingException;
 import com.musala.atmosphere.agent.exception.OnDeviceServiceTerminationException;
+import com.musala.atmosphere.agent.exception.PortForwardingRemovalException;
 import com.musala.atmosphere.agent.util.DeviceScreenResolutionParser;
 import com.musala.atmosphere.agent.util.MemoryUnitConverter;
+import com.musala.atmosphere.agent.util.PortAllocator;
 import com.musala.atmosphere.commons.DeviceInformation;
 import com.musala.atmosphere.commons.PowerProperties;
 import com.musala.atmosphere.commons.RoutingAction;
@@ -115,6 +117,10 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 
     private final ImeManager imeManager;
 
+    PortForwardingService automatorForwardingService;
+
+    PortForwardingService serviceForwardingService;
+
     public AbstractWrapDevice(IDevice deviceToWrap) throws RemoteException {
         wrappedDevice = deviceToWrap;
         transferService = new FileTransferService(wrappedDevice);
@@ -123,13 +129,11 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
         imeManager = new ImeManager(shellCommandExecutor);
 
         try {
-            PortForwardingService serviceForwardingService = new PortForwardingService(wrappedDevice,
-                                                                                       ConnectionConstants.SERVICE_PORT);
+            serviceForwardingService = new PortForwardingService(wrappedDevice, ConnectionConstants.SERVICE_PORT);
             serviceForwardingService.forwardPort();
             ServiceRequestSender serviceRequestSender = new ServiceRequestSender(serviceForwardingService);
 
-            PortForwardingService automatorForwardingService = new PortForwardingService(wrappedDevice,
-                                                                                         ConnectionConstants.UI_AUTOMATOR_PORT);
+            automatorForwardingService = new PortForwardingService(wrappedDevice, ConnectionConstants.UI_AUTOMATOR_PORT);
             automatorForwardingService.forwardPort();
             UIAutomatorRequestSender automatorRequestSender = new UIAutomatorRequestSender(automatorForwardingService);
             serviceCommunicator = new ServiceCommunicator(serviceRequestSender,
@@ -624,7 +628,20 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
     }
 
     @Override
-    protected void finalize() {
+    public void unbindWrapper() throws RemoteException {
+        PortAllocator portAllocator = new PortAllocator();
+        portAllocator.releasePort(automatorForwardingService.getLocalForwardedPort());
+        portAllocator.releasePort(serviceForwardingService.getLocalForwardedPort());
+
+        try {
+            automatorForwardingService.removeForward();
+            serviceForwardingService.removeForward();
+        } catch (PortForwardingRemovalException e) {
+            String loggerPortRemovalFailedMessage = String.format("Removing Remote Forwarded Port failed for %s.",
+                                                                  wrappedDevice.getSerialNumber());
+            LOGGER.warn(loggerPortRemovalFailedMessage, e);
+        }
+
         try {
             serviceCommunicator.stopComponent();
             uiAutomatorBridgeCommunicator.stopComponent();
