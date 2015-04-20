@@ -5,6 +5,8 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 
+import org.apache.log4j.Logger;
+
 import com.android.ddmlib.AndroidDebugBridge.IDeviceChangeListener;
 import com.android.ddmlib.IDevice;
 import com.musala.atmosphere.agent.util.AgentIdCalculator;
@@ -20,6 +22,8 @@ import com.musala.atmosphere.commons.sa.exceptions.ADBridgeFailException;
  * 
  */
 class DeviceChangeListener implements IDeviceChangeListener {
+    private final static Logger LOGGER = Logger.getLogger(DeviceChangeListener.class.getCanonicalName());
+
     private DeviceManager deviceManager;
 
     private String agentId;
@@ -52,8 +56,9 @@ class DeviceChangeListener implements IDeviceChangeListener {
         this();
 
         // If the server is set, get it's AgentEventSender so we can notify the server about changes in the device list.
-        if (serverIPAddress.isEmpty() || serverIPAddress == null)
+        if (serverIPAddress.isEmpty() || serverIPAddress == null) {
             return;
+        }
 
         isServerSet = true;
         try {
@@ -73,19 +78,22 @@ class DeviceChangeListener implements IDeviceChangeListener {
     }
 
     /**
-     * Gets called when a device's state has changed.
+     * Gets called when a device's state, properties or client has changed.
      */
     @Override
     public void deviceChanged(IDevice device, int changeMask) {
-        // device is which device has changed, changeMask is what exactly changed in it
-        // If the device became online, we can now use it.
-        // If the device became offline, we can no longer use it.
-        if (changeMask == IDevice.CHANGE_STATE) {
-            if (device.isOnline()) {
-                deviceConnected(device);
-            } else if (device.isOffline()) {
-                deviceDisconnected(device);
-            }
+        switch (changeMask) {
+            case IDevice.CHANGE_STATE:
+                if (device.isOnline()) {
+                    deviceConnected(device);
+                } else if (device.isOffline()) {
+                    deviceDisconnected(device);
+                }
+
+                break;
+            case IDevice.CHANGE_BUILD_INFO:
+                updateDevice(device);
+                break;
         }
     }
 
@@ -138,7 +146,7 @@ class DeviceChangeListener implements IDeviceChangeListener {
      * @throws CommandFailedException
      */
     private void onDeviceListChanged(String deviceRmiBindingId, boolean connected)
-        throws CommandFailedException,
+            throws CommandFailedException,
             NotBoundException {
         // If the server is not set return, as we have no one to notify
         if (isServerSet == false) {
@@ -153,6 +161,28 @@ class DeviceChangeListener implements IDeviceChangeListener {
             e.printStackTrace();
             // TODO what should we do now?
             // Try reconnecting maybe?
+        }
+    }
+
+    /**
+     * Gets called when a device has changed its properties.
+     * 
+     * @param deviceToUpdate
+     *        - device with the changed properties
+     */
+    private void updateDevice(IDevice deviceToUpdate) {
+        // If the server is not set return, as we have nothing to notify
+        if (!isServerSet) {
+            return;
+        }
+
+        String changedDeviceRmiId = deviceManager.getRmiWrapperBindingIdentifier(deviceToUpdate);
+        try {
+            agentEventSender.updateDevice(agentId, changedDeviceRmiId);
+        } catch (RemoteException e) {
+            String loggerMessage = String.format("Failed to update device information on device with id %s.",
+                                                 changedDeviceRmiId);
+            LOGGER.error(loggerMessage, e);
         }
     }
 
