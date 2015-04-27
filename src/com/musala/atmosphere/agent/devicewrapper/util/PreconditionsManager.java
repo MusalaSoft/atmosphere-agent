@@ -304,6 +304,14 @@ public class PreconditionsManager {
     }
 
     /**
+     * Pushes the screen recording scripts to the temp folder of the device.
+     */
+    private void pushScreenrecordScripts() {
+        pushComponentFileToTemp(OnDeviceComponent.START_SCREENRECORD_SCRIPT);
+        pushComponentFileToTemp(OnDeviceComponent.STOP_SCREENRECORD_SCRIPT);
+    }
+
+    /**
      * Checks whether all on-device components are installed on the device.
      * 
      * @param currentComponentInstalledStatus
@@ -373,6 +381,8 @@ public class PreconditionsManager {
 
         installUiAutomatorBridge();
         installUiAutomatorBridgeLibs();
+
+        pushScreenrecordScripts();
 
         try {
             Thread.sleep(POST_INSTALLATION_TIMEOUT);

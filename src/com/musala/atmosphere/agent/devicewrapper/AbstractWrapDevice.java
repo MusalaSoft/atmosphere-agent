@@ -23,7 +23,6 @@ import com.musala.atmosphere.agent.DevicePropertyStringConstants;
 import com.musala.atmosphere.agent.devicewrapper.util.ApkInstaller;
 import com.musala.atmosphere.agent.devicewrapper.util.BackgroundPullFileRunner;
 import com.musala.atmosphere.agent.devicewrapper.util.BackgroundShellCommandExecutor;
-import com.musala.atmosphere.agent.devicewrapper.util.BackgroundShellCommandRunner;
 import com.musala.atmosphere.agent.devicewrapper.util.DeviceProfiler;
 import com.musala.atmosphere.agent.devicewrapper.util.FileTransferService;
 import com.musala.atmosphere.agent.devicewrapper.util.ImeManager;
@@ -40,6 +39,7 @@ import com.musala.atmosphere.agent.exception.OnDeviceComponentStartingException;
 import com.musala.atmosphere.agent.exception.OnDeviceServiceTerminationException;
 import com.musala.atmosphere.agent.exception.PortForwardingRemovalException;
 import com.musala.atmosphere.agent.util.DeviceScreenResolutionParser;
+import com.musala.atmosphere.agent.util.MemoryUnitConverter;
 import com.musala.atmosphere.agent.util.PortAllocator;
 import com.musala.atmosphere.commons.DeviceInformation;
 import com.musala.atmosphere.commons.PowerProperties;
@@ -92,6 +92,8 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 
     private static final String SCREENSHOT_LOCAL_FILE_NAME = "local_screen.png";
 
+    private static final String RAM_MEMORY_PATTERN = "(\\w+):(\\s+)(\\d+\\w+)";
+
     private static final String DEVICE_TYPE = "tablet";
 
     private static final int NUMBER_OF_THREADS = 20;
@@ -103,6 +105,8 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
     protected final UIAutomatorCommunicator uiAutomatorBridgeCommunicator;
 
     protected final FileTransferService transferService;
+
+    private static final String GET_RAM_MEMORY_COMMAND = "cat /proc/meminfo | grep MemTotal";
 
     protected final BackgroundShellCommandExecutor shellCommandExecutor;
 
@@ -449,7 +453,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
             deviceInformation.setManufacturer(manufacturerName);
         }
 
-        // RAM
+     // RAM
         try {
             int ramMemory = serviceCommunicator.getTatalRamMemory();
             deviceInformation.setRam(ramMemory);
@@ -457,7 +461,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
             String gettingRamFailedMessage = String.format("Getting total RAM of device [%s] failed.", wrappedDevice.getSerialNumber());
             LOGGER.error(gettingRamFailedMessage, e);
         }
-
+        
         // isTablet
         if (devicePropertiesMap.containsKey(DevicePropertyStringConstants.PROPERTY_CHARACTERISTICS.toString())) {
             String deviceCharacteristics = devicePropertiesMap.get(DevicePropertyStringConstants.PROPERTY_CHARACTERISTICS.toString());
@@ -588,6 +592,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
         BackgroundPullFileRunner commandExecutor = new BackgroundPullFileRunner(wrappedDevice,
                                                                                 remoteFilePath,
                                                                                 localFilePath);
+
         executor.submit(commandExecutor);
     }
 
@@ -604,18 +609,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
         String killProcessCommand = String.format(INTERRUPT_BACKGROUND_PROCESS_FORMAT, getPidCommand);
 
         shellCommandExecutor.execute(killProcessCommand);
-    }
 
-    /**
-     * Executes a command in background.
-     * 
-     * @param command
-     *        - shell command to be executed
-     */
-    private void executeShellCommandInBackground(String command) {
-        BackgroundShellCommandRunner commandExecutor = new BackgroundShellCommandRunner(command, wrappedDevice);
-
-        executor.submit(commandExecutor);
     }
 
     @Override

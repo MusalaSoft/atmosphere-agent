@@ -10,7 +10,9 @@ public enum OnDeviceComponent {
     SERVICE("Atmosphere Service", "AtmosphereService-release.apk", "com.musala.atmosphere.service", null),
     UI_AUTOMATOR_BRIDGE("Atmosphere UiAutomator Bridge", "AtmosphereUIAutomatorBridge.jar", null, null),
     UI_AUTOMATOR_BRIDGE_LIBS("Atmosphere UiAutomator Bridge Libraries", "AtmosphereUIAutomatorBridgeLibs.jar", null, null),
-    IME("Atmosphere Input Method Engine", "AtmosphereIME-release.apk", "com.musala.atmosphere.ime", "com.musala.atmosphere.ime/.AtmosphereIME");
+    IME("Atmosphere Input Method Engine", "AtmosphereIME-release.apk", "com.musala.atmosphere.ime", "com.musala.atmosphere.ime/.AtmosphereIME"),
+    START_SCREENRECORD_SCRIPT("Start Screenrecord Script", "start_screenrecord.sh", null, null),
+    STOP_SCREENRECORD_SCRIPT("Stop Screenrecord Script", "stop_screenrecord.sh", null, null);
 
     private OnDeviceComponent(String humanReadableName, String fileName, String packageName, String imeId) {
         this.humanReadableName = humanReadableName;
