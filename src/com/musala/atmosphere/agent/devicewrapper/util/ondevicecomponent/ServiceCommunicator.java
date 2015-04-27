@@ -110,6 +110,24 @@ public class ServiceCommunicator extends DeviceCommunicator<ServiceRequest> {
     }
 
     /**
+     * Gets the total RAM of the device.
+     * 
+     * @return the total RAM of the device.
+     * @throws CommandFailedException
+     *         if getting the total ram fails
+     */
+    public int getTatalRamMemory() throws CommandFailedException {
+        Request<ServiceRequest> serviceRequest = new Request<ServiceRequest>(ServiceRequest.GET_TOTAL_RAM);
+
+        try {
+            int serviceResponse = (int) requestSender.request(serviceRequest);
+            return serviceResponse;
+        } catch (ClassNotFoundException | IOException | CommandFailedException e) {
+            throw new CommandFailedException("Getting device's total RAM memory failed.", e);
+        }
+    }
+
+    /**
      * Gets the connection type of the device.
      * 
      * @return a member of the {@link ConnectionType} enumeration.

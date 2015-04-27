@@ -40,7 +40,6 @@ import com.musala.atmosphere.agent.exception.OnDeviceComponentStartingException;
 import com.musala.atmosphere.agent.exception.OnDeviceServiceTerminationException;
 import com.musala.atmosphere.agent.exception.PortForwardingRemovalException;
 import com.musala.atmosphere.agent.util.DeviceScreenResolutionParser;
-import com.musala.atmosphere.agent.util.MemoryUnitConverter;
 import com.musala.atmosphere.agent.util.PortAllocator;
 import com.musala.atmosphere.commons.DeviceInformation;
 import com.musala.atmosphere.commons.PowerProperties;
@@ -93,8 +92,6 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 
     private static final String SCREENSHOT_LOCAL_FILE_NAME = "local_screen.png";
 
-    private static final String RAM_MEMORY_PATTERN = "(\\w+):(\\s+)(\\d+\\w+)";
-
     private static final String DEVICE_TYPE = "tablet";
 
     private static final int NUMBER_OF_THREADS = 20;
@@ -106,8 +103,6 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
     protected final UIAutomatorCommunicator uiAutomatorBridgeCommunicator;
 
     protected final FileTransferService transferService;
-
-    private static final String GET_RAM_MEMORY_COMMAND = "cat /proc/meminfo | grep MemTotal";
 
     protected final BackgroundShellCommandExecutor shellCommandExecutor;
 
@@ -455,17 +450,13 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
         }
 
         // RAM
-        String ramMemoryString = DeviceInformation.FALLBACK_RAM_AMOUNT.toString();
-
         try {
-            ramMemoryString = shellCommandExecutor.execute(GET_RAM_MEMORY_COMMAND);
+            int ramMemory = serviceCommunicator.getTatalRamMemory();
+            deviceInformation.setRam(ramMemory);
         } catch (CommandFailedException e) {
-            LOGGER.warn("Getting device RAM failed.", e);
+            String gettingRamFailedMessage = String.format("Getting total RAM of device [%s] failed.", wrappedDevice.getSerialNumber());
+            LOGGER.error(gettingRamFailedMessage, e);
         }
-
-        String extractedRamMemoryString = ramMemoryString.replaceAll(RAM_MEMORY_PATTERN, "$3");
-
-        deviceInformation.setRam(MemoryUnitConverter.convertMemoryToMB(extractedRamMemoryString));
 
         // isTablet
         if (devicePropertiesMap.containsKey(DevicePropertyStringConstants.PROPERTY_CHARACTERISTICS.toString())) {
