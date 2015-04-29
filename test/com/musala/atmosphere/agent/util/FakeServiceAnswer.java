@@ -41,6 +41,8 @@ public class FakeServiceAnswer implements FakeOnDeviceComponentRequestHandler {
                 return 0.0f;
             case GET_CAMERA_AVAILABILITY:
                 return true;
+            case GET_TOTAL_RAM:
+                return 10;
             default:
                 return null;
         }

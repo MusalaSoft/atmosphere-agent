@@ -13,6 +13,7 @@ import java.net.UnknownHostException;
 import org.apache.log4j.Logger;
 
 import com.musala.atmosphere.agent.devicewrapper.util.PortForwardingService;
+import com.musala.atmosphere.agent.exception.PortForwardingRemovalException;
 import com.musala.atmosphere.agent.util.AgentPropertiesLoader;
 import com.musala.atmosphere.commons.ad.Request;
 import com.musala.atmosphere.commons.ad.RequestType;
@@ -192,6 +193,24 @@ public abstract class DeviceRequestSender<T extends RequestType> {
         if (socketClient != null) {
             socketClient.close();
             socketClient = null;
+        }
+    }
+
+    /**
+     * Disconnects and releases allocated ports. The request sender becomes unusable.
+     */
+    public void stop() {
+        try {
+            disconnect();
+        } catch (IOException e) {
+            LOGGER.warn("Could not ensure socket connection is closed when stopping request sender.", e);
+        }
+
+        try {
+            portForwardingService.stop();
+        } catch (PortForwardingRemovalException e) {
+            String loggerPortRemovalFailedMessage = String.format("Removing Remote Forwarded Port failed.");
+            LOGGER.warn(loggerPortRemovalFailedMessage, e);
         }
     }
 }

@@ -12,6 +12,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.apache.log4j.Logger;
 
@@ -19,10 +21,20 @@ import com.android.ddmlib.IDevice;
 import com.musala.atmosphere.agent.devicewrapper.AbstractWrapDevice;
 import com.musala.atmosphere.agent.devicewrapper.EmulatorWrapDevice;
 import com.musala.atmosphere.agent.devicewrapper.RealWrapDevice;
+import com.musala.atmosphere.agent.devicewrapper.util.BackgroundShellCommandExecutor;
+import com.musala.atmosphere.agent.devicewrapper.util.PortForwardingService;
 import com.musala.atmosphere.agent.devicewrapper.util.PreconditionsManager;
+import com.musala.atmosphere.agent.devicewrapper.util.ondevicecomponent.ServiceCommunicator;
+import com.musala.atmosphere.agent.devicewrapper.util.ondevicecomponent.ServiceRequestSender;
+import com.musala.atmosphere.agent.devicewrapper.util.ondevicecomponent.UIAutomatorCommunicator;
+import com.musala.atmosphere.agent.devicewrapper.util.ondevicecomponent.UIAutomatorRequestSender;
+import com.musala.atmosphere.agent.exception.ForwardingPortFailedException;
 import com.musala.atmosphere.agent.exception.OnDeviceComponentCommunicationException;
+import com.musala.atmosphere.agent.exception.OnDeviceComponentInitializationException;
+import com.musala.atmosphere.agent.exception.OnDeviceComponentStartingException;
 import com.musala.atmosphere.agent.util.AgentIdCalculator;
 import com.musala.atmosphere.commons.DeviceInformation;
+import com.musala.atmosphere.commons.ad.service.ConnectionConstants;
 import com.musala.atmosphere.commons.exceptions.CommandFailedException;
 import com.musala.atmosphere.commons.sa.IWrapDevice;
 import com.musala.atmosphere.commons.sa.exceptions.ADBridgeFailException;
@@ -45,7 +57,11 @@ public class DeviceManager {
 
     private final static int DEVICE_EXISTANCE_CHECK_TIMEOUT = 1000;
 
-    private static String agentID;
+    private static final int THREAD_COUNT = 20;
+
+    private static ExecutorService executor = Executors.newFixedThreadPool(THREAD_COUNT);
+
+    private static String agentId;
 
     private static AndroidDebugBridgeManager androidDebugBridgeManager;
 
@@ -64,7 +80,7 @@ public class DeviceManager {
             androidDebugBridgeManager = new AndroidDebugBridgeManager();
 
             AgentIdCalculator agentIdCalculator = new AgentIdCalculator();
-            agentID = agentIdCalculator.getId();
+            agentId = agentIdCalculator.getId();
 
             // Publish this AgentManager in the RMI registry
             try {
@@ -113,7 +129,7 @@ public class DeviceManager {
      * @return Unique identifier for the current Agent.
      */
     public String getAgentId() {
-        return agentID;
+        return agentId;
     }
 
     /**
@@ -211,12 +227,54 @@ public class DeviceManager {
         }
         preconditionsManager.manageOnDeviceComponents();
 
+        String serialNumber = device.getSerialNumber();
+
+        BackgroundShellCommandExecutor shellCommandExecutor = new BackgroundShellCommandExecutor(device, executor);
+
+        ServiceCommunicator serviceCommunicator = null;
+        UIAutomatorCommunicator automatorCommunicator = null;
+        try {
+            PortForwardingService serviceForwardingService = new PortForwardingService(device,
+                                                                                       ConnectionConstants.SERVICE_PORT);
+            serviceForwardingService.forwardPort();
+            ServiceRequestSender serviceRequestSender = new ServiceRequestSender(serviceForwardingService);
+
+            PortForwardingService automatorForwardingService = new PortForwardingService(device,
+                                                                                         ConnectionConstants.UI_AUTOMATOR_PORT);
+            automatorForwardingService.forwardPort();
+            UIAutomatorRequestSender automatorRequestSender = new UIAutomatorRequestSender(automatorForwardingService);
+            serviceCommunicator = new ServiceCommunicator(serviceRequestSender, shellCommandExecutor, serialNumber);
+            automatorCommunicator = new UIAutomatorCommunicator(automatorRequestSender,
+                                                                shellCommandExecutor,
+                                                                serialNumber);
+            // start components
+            serviceCommunicator.startComponent();
+            automatorCommunicator.startComponent();
+
+            // validate remote servers
+            serviceCommunicator.validateRemoteServer();
+            automatorCommunicator.validateRemoteServer();
+        } catch (ForwardingPortFailedException | OnDeviceComponentStartingException
+                | OnDeviceComponentInitializationException e) {
+            String errorMessage = String.format("Could not initialize communication to a on-device component for %s.",
+                                                serialNumber);
+            throw new OnDeviceComponentCommunicationException(errorMessage, e);
+        }
+
         // Create a device wrapper depending on the device type (emulator/real)
         try {
             if (device.isEmulator()) {
-                deviceWrapper = new EmulatorWrapDevice(device);
+                deviceWrapper = new EmulatorWrapDevice(device,
+                                                       executor,
+                                                       shellCommandExecutor,
+                                                       serviceCommunicator,
+                                                       automatorCommunicator);
             } else {
-                deviceWrapper = new RealWrapDevice(device);
+                deviceWrapper = new RealWrapDevice(device,
+                                                   executor,
+                                                   shellCommandExecutor,
+                                                   serviceCommunicator,
+                                                   automatorCommunicator);
             }
         } catch (NotPossibleForDeviceException e) {
             // Not really possible as we have just checked.
@@ -391,7 +449,7 @@ public class DeviceManager {
 
     /**
      * Gets the wrapper of a device with the given Id.
-     *
+     * 
      * @param wrapperId
      *        - id of the wrapper we want to get.
      * @return {@link IWrapDevice} of a device containing given id.

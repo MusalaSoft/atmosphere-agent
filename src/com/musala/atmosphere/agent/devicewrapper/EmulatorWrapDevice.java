@@ -1,13 +1,18 @@
 package com.musala.atmosphere.agent.devicewrapper;
 
 import java.rmi.RemoteException;
+import java.rmi.server.UnicastRemoteObject;
+import java.util.concurrent.ExecutorService;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
 
 import com.android.ddmlib.IDevice;
+import com.musala.atmosphere.agent.devicewrapper.util.BackgroundShellCommandExecutor;
 import com.musala.atmosphere.agent.devicewrapper.util.ExtendedEmulatorConsole;
+import com.musala.atmosphere.agent.devicewrapper.util.ondevicecomponent.ServiceCommunicator;
+import com.musala.atmosphere.agent.devicewrapper.util.ondevicecomponent.UIAutomatorCommunicator;
 import com.musala.atmosphere.agent.exception.EmulatorConnectionFailedException;
 import com.musala.atmosphere.commons.PowerProperties;
 import com.musala.atmosphere.commons.SmsMessage;
@@ -30,15 +35,32 @@ import com.musala.atmosphere.commons.util.Pair;
  * 
  */
 public class EmulatorWrapDevice extends AbstractWrapDevice {
-    /**
-	 *
-	 */
     private static final long serialVersionUID = -112607818622127351L;
 
     private final static Logger LOGGER = Logger.getLogger(EmulatorWrapDevice.class.getCanonicalName());
 
-    public EmulatorWrapDevice(IDevice deviceToWrap) throws NotPossibleForDeviceException, RemoteException {
-        super(deviceToWrap);
+    /**
+     * Creates an wrapper of the given emulator {@link IDevice device}.
+     * 
+     * @param deviceToWrap
+     *        - device to be wrapped
+     * @param executor
+     *        - an {@link ExecutorService} used for async tasks
+     * @param shellCommandExecutor
+     *        - an executor of shell commands for the wrapped device
+     * @param serviceCommunicator
+     *        - a communicator to the service component on the device
+     * @param automatorCommunicator
+     *        - a communicator to the UI automator component on the device
+     * @throws RemoteException
+     *         required when implementing {@link UnicastRemoteObject}
+     */
+    public EmulatorWrapDevice(IDevice deviceToWrap,
+            ExecutorService executor,
+            BackgroundShellCommandExecutor shellCommandExecutor,
+            ServiceCommunicator serviceCommunicator,
+            UIAutomatorCommunicator automatorCommunicator) throws NotPossibleForDeviceException, RemoteException {
+        super(deviceToWrap, executor, shellCommandExecutor, serviceCommunicator, automatorCommunicator);
 
         if (!deviceToWrap.isEmulator()) {
             throw new NotPossibleForDeviceException("Cannot create emulator wrap device for a real, physical device.");

@@ -70,6 +70,7 @@ public class AgentManagerTest {
 
     @Test
     public void testGetDeviceInformationWithValidSerialNumber() throws Exception {
+        // FIXME: I'm not really an unit test >:)
         String mockDeviceSerialNumber = "lol";
         boolean mockDeviceEmulator = false;
         Integer mockDeviceLcdDensity = 123;

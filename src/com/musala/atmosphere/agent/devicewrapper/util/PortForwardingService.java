@@ -86,8 +86,11 @@ public class PortForwardingService {
         return localForwardedPort;
     }
 
-    @Override
-    public void finalize() {
+    /**
+     * Removes port forwarding and releases allocated ports.
+     */
+    public void stop() {
         removeForward();
+        new PortAllocator().releasePort(localForwardedPort);
     }
 }

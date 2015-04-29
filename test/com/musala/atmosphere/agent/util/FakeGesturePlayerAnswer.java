@@ -10,7 +10,7 @@ public class FakeGesturePlayerAnswer implements FakeOnDeviceComponentRequestHand
 
         switch (requestType) {
             case VALIDATION:
-                return requestType;
+                return UIAutomatorRequest.VALIDATION;
 
             default:
                 return UIAutomatorRequest.VOID_RESPONSE;

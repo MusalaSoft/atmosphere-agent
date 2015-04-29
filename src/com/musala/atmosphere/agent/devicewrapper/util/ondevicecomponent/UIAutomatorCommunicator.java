@@ -14,6 +14,8 @@ import com.musala.atmosphere.commons.exceptions.CommandFailedException;
 import com.musala.atmosphere.commons.gesture.Gesture;
 import com.musala.atmosphere.commons.gesture.Timeline;
 import com.musala.atmosphere.commons.ui.UiElementDescriptor;
+import com.musala.atmosphere.commons.ui.tree.AccessibilityElement;
+import com.musala.atmosphere.commons.util.structure.tree.Tree;
 
 /**
  * Class that communicates with the ATMOSPHERE UIAutomator-based on-device component.
@@ -159,10 +161,34 @@ public class UIAutomatorCommunicator extends DeviceCommunicator<UIAutomatorReque
         return (boolean) requestActionWithResponse(UIAutomatorRequest.WAIT_FOR_WINDOW_UPDATE, arguments);
     }
 
+    /**
+     * Sends a request for dumping the screen of the device to a given XML file.
+     * 
+     * @param remoteFile
+     *        - the name of the XML file
+     * @throws CommandFailedException
+     *         - if request fails
+     */
     public void getUiDumpXml(String remoteFile) throws CommandFailedException {
         Object[] arguments = new Object[] {remoteFile};
 
         requestAction(UIAutomatorRequest.GET_UI_DUMP_XML, arguments);
+    }
+
+    /**
+     * Sends a request for building a tree representation of the active screen of the device.
+     * 
+     * @param visibleOnly
+     *        - if <code>true</code> only the visible nodes will be used; if <code>false</code> all nodes will be used
+     * @return a tree representation of the screen
+     * @throws CommandFailedException
+     *         - if request fails
+     */
+    @SuppressWarnings("unchecked")
+    public Tree<AccessibilityElement> getUiTree(boolean visibleOnly) throws CommandFailedException {
+        Object[] arguments = new Object[] {visibleOnly};
+
+        return (Tree<AccessibilityElement>) requestActionWithResponse(UIAutomatorRequest.GET_UI_TREE, arguments);
     }
 
     /**
@@ -236,7 +262,6 @@ public class UIAutomatorCommunicator extends DeviceCommunicator<UIAutomatorReque
             // Redirect the exception to the server
             LOGGER.warn("Stoopping ATMOSPHERE gesture player failed.", e);
         }
-
     }
 
     @Override

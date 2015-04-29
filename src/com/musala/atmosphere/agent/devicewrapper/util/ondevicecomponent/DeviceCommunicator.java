@@ -85,4 +85,11 @@ public abstract class DeviceCommunicator<T extends RequestType> {
             throw new OnDeviceComponentValidationException(message, e);
         }
     }
+
+    /**
+     * Releases allocated ports.
+     */
+    public void stop() {
+        requestSender.stop();
+    }
 }
