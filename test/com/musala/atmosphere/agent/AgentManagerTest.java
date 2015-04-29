@@ -75,14 +75,14 @@ public class AgentManagerTest {
         boolean mockDeviceEmulator = false;
         Integer mockDeviceLcdDensity = 123;
         String mockDeviceModel = "hello";
-        String mockDeviceOS = "mockos";
+        String mockDeviceApi = "19";
         String mockDeviceCpu = "megacpu";
 
         Map<String, String> mockPropMap = new HashMap<>();
         mockPropMap.put(DevicePropertyStringConstants.PROPERTY_REALDEVICE_LCD_DENSITY.toString(),
                         mockDeviceLcdDensity.toString());
         mockPropMap.put(DevicePropertyStringConstants.PROPERTY_PRODUCT_MODEL.toString(), mockDeviceModel);
-        mockPropMap.put(DevicePropertyStringConstants.PROPERTY_OS_VERSION.toString(), mockDeviceOS);
+        mockPropMap.put(DevicePropertyStringConstants.PROPERTY_API_LEVEL.toString(), mockDeviceApi);
         mockPropMap.put(DevicePropertyStringConstants.PROPERTY_CPU_TYPE.toString(), mockDeviceCpu);
 
         IDevice mockDevice = mock(IDevice.class);
@@ -95,11 +95,11 @@ public class AgentManagerTest {
         FakeDeviceShellAnswer shellAnswer = new FakeDeviceShellAnswer();
         Mockito.doAnswer(onDeviceAnswer).when(mockDevice).createForward(anyInt(), anyInt());
         Mockito.doAnswer(shellAnswer)
-               .when(mockDevice)
-               .executeShellCommand(Matchers.anyString(), Matchers.any(IShellOutputReceiver.class));
+        .when(mockDevice)
+        .executeShellCommand(Matchers.anyString(), Matchers.any(IShellOutputReceiver.class));
         Mockito.doAnswer(shellAnswer)
-               .when(mockDevice)
-               .executeShellCommand(Matchers.anyString(), Matchers.any(IShellOutputReceiver.class), anyInt());
+        .when(mockDevice)
+        .executeShellCommand(Matchers.anyString(), Matchers.any(IShellOutputReceiver.class), anyInt());
 
         deviceManager.registerDevice(mockDevice);
 
@@ -119,9 +119,9 @@ public class AgentManagerTest {
         assertEquals("Mock device creation / .getDeviceInformation() data mismatch. (device model)",
                      info.getModel(),
                      mockDeviceModel);
-        assertEquals("Mock device creation / .getDeviceInformation() data mismatch. (device OS)",
-                     info.getOS(),
-                     mockDeviceOS);
+        assertEquals("Mock device creation / .getDeviceInformation() data mismatch. (device Api)",
+                     info.getApiLevel(),
+                     mockDeviceApi);
         assertEquals("Mock device creation / .getDeviceInformation() data mismatch. (device screen height)",
                      info.getResolution().getKey(),
                      DeviceInformation.FALLBACK_SCREEN_RESOLUTION.getKey());

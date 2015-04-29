@@ -5,36 +5,34 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 
-import org.apache.log4j.Logger;
-
 import com.android.ddmlib.AndroidDebugBridge.IDeviceChangeListener;
 import com.android.ddmlib.IDevice;
-import com.musala.atmosphere.agent.util.AgentIdCalculator;
 import com.musala.atmosphere.commons.exceptions.CommandFailedException;
 import com.musala.atmosphere.commons.sa.IAgentEventSender;
 import com.musala.atmosphere.commons.sa.RmiStringConstants;
 import com.musala.atmosphere.commons.sa.exceptions.ADBridgeFailException;
 
 /**
- * A class to handle ADB's device list changed events
+ * A class to register ADB's device list changed events
  * 
  * @author georgi.gaydarov
  * 
  */
 class DeviceChangeListener implements IDeviceChangeListener {
-    private final static Logger LOGGER = Logger.getLogger(DeviceChangeListener.class.getCanonicalName());
-
-    private DeviceManager deviceManager;
-
-    private String agentId;
+    private final DeviceManager deviceManager;
 
     private IAgentEventSender agentEventSender;
 
     private boolean isServerSet = false;
 
+    private DeviceChangeHandler deviceChangeHandler;
+
+    /**
+     * 
+     * @throws RemoteException
+     */
     public DeviceChangeListener() throws RemoteException {
-        AgentIdCalculator agentIdCalculator = new AgentIdCalculator();
-        agentId = agentIdCalculator.getId();
+        deviceChangeHandler = new DeviceChangeHandler();
         deviceManager = new DeviceManager();
     }
 
@@ -45,12 +43,13 @@ class DeviceChangeListener implements IDeviceChangeListener {
      * </p>
      * 
      * @param serverIPAddress
-     *        IP address of the server's RMI registry.
+     *        - IP address of the server's RMI registry
      * @param serverRmiPort
-     *        Port on which the server's RMI registry is opened.
+     *        - Port on which the server's RMI registry is opened
      * @throws RemoteException
-     *         When connecting to the server fails or the AgentEventSender could not be found.
+     *         When connecting to the server fails or the AgentEventSender could not be found
      * @throws ADBridgeFailException
+     *         when adb connection fails
      */
     public DeviceChangeListener(String serverIPAddress, int serverRmiPort) throws RemoteException {
         this();
@@ -67,6 +66,7 @@ class DeviceChangeListener implements IDeviceChangeListener {
 
             // Search for the AgentEventSender in the server's registry
             agentEventSender = (IAgentEventSender) serverRegistry.lookup(RmiStringConstants.AGENT_EVENT_SENDER.toString());
+            deviceChangeHandler = new DeviceChangeHandler(agentEventSender, isServerSet);
         } catch (RemoteException e) {
             // We could not get the registry on the server or we could not connect to it at all.
             throw e;
@@ -93,97 +93,70 @@ class DeviceChangeListener implements IDeviceChangeListener {
                 break;
             case IDevice.CHANGE_BUILD_INFO:
                 updateDevice(device);
+
+                break;
+            default:
                 break;
         }
     }
 
     /**
-     * Gets called when a device is connected to the computer.
+     * Gets called when a device is connected to the Android Debug Bridge.
      */
     @Override
     public void deviceConnected(IDevice connectedDevice) {
-        if (connectedDevice.isOffline()) {
-            // If the device is offline, we have no use for it, so we don't have to register it.
-            return;
-        }
-
-        // Register the newly connected device on the AgentManager
-        String publishId = deviceManager.registerDevice(connectedDevice);
-        if (publishId != null && !publishId.isEmpty()) {
-            try {
-                onDeviceListChanged(publishId, true /* device connected */);
-            } catch (CommandFailedException | NotBoundException e) {
-
-            }
-        }
+        deviceChangeHandler.handleAction(DeviceChangeAction.CONNECT_DEVICE, connectedDevice);
     }
 
     /**
-     * Gets called when a device is disconnected from the computer.
+     * Gets called when a device is disconnected from the Android Debug Bridge.
      */
     @Override
     public void deviceDisconnected(IDevice disconnectedDevice) {
-        // Unregister the device from the AgentManager
-        String publishId = deviceManager.unregisterDevice(disconnectedDevice);
-        if (publishId != null && !publishId.isEmpty()) {
-            try {
-                onDeviceListChanged(publishId, false /* device disconnected */);
-            } catch (CommandFailedException | NotBoundException e) {
-
-            }
-        }
+        deviceChangeHandler.handleAction(DeviceChangeAction.DISCONNECT_DEVICE, disconnectedDevice);
     }
 
     /**
-     * Gets called when something in the device list has changed.
+     * Sends event to the server in order to inform it for device list change.
      * 
-     * @param deviceRmiBindingId
-     *        - RMI binding ID of the changed device's wrapper.
+     * @param device
+     *        - on which the change has occurred
      * @param connected
-     *        - true if the device is now available, false if it became unavailable.
+     *        - <code>true</code> if the device has been connected and <code>false</code> if it has been disconnected
      * @throws NotBoundException
-     *         - if an attempt is made to operate with non-existing device
+     *         if an attempt is made to operate with non-existing device
      * @throws CommandFailedException
+     *         if getting device's information fails
      */
-    private void onDeviceListChanged(String deviceRmiBindingId, boolean connected)
-            throws CommandFailedException,
-            NotBoundException {
-        // If the server is not set return, as we have no one to notify
-        if (isServerSet == false) {
-            return;
-        }
+    public void onDeviceListChanged(IDevice device, boolean connected) throws CommandFailedException, NotBoundException {
+        deviceChangeHandler.onDeviceListChanged(device.getSerialNumber(), connected);
+    }
 
-        // Else, notify the server using it's AgentEventSender
-        try {
-            agentEventSender.deviceListChanged(agentId, deviceRmiBindingId, connected);
-        } catch (RemoteException e) {
-            // We could not notify the server, maybe the connection was lost
-            e.printStackTrace();
-            // TODO what should we do now?
-            // Try reconnecting maybe?
+    /**
+     * Gets called when device's information is changed.
+     * 
+     * @param device
+     *        - on which the change has occurred
+     */
+    private void updateDevice(IDevice device) {
+        if (!isDeviceRegistered(device)) {
+            deviceConnected(device);
         }
     }
 
     /**
-     * Gets called when a device has changed its properties.
-     * 
-     * @param deviceToUpdate
-     *        - device with the changed properties
+     * Checks whether this device is already registered on the agent.
+     *
+     * @param device
+     *        - a device to look for in the registered devices
+     * @return <code>true</code> if the device is registered and <code>false</code> otherwise.
      */
-    private void updateDevice(IDevice deviceToUpdate) {
-        // If the server is not set return, as we have nothing to notify
-        if (!isServerSet) {
-            return;
-        }
-
-        String changedDeviceRmiId = deviceManager.getRmiWrapperBindingIdentifier(deviceToUpdate);
+    private boolean isDeviceRegistered(IDevice device) {
         try {
-            agentEventSender.updateDevice(agentId, changedDeviceRmiId);
+            String deviceRmiId = device.getSerialNumber();
+            return deviceManager.getAllDeviceRmiIdentifiers().contains(deviceRmiId);
         } catch (RemoteException e) {
-            String loggerMessage = String.format("Failed to update device information on device with id %s.",
-                                                 changedDeviceRmiId);
-            LOGGER.error(loggerMessage, e);
+            return false;
         }
     }
-
 }

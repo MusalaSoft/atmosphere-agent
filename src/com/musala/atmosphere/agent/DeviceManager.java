@@ -6,7 +6,6 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -57,19 +56,23 @@ public class DeviceManager {
 
     private final static int DEVICE_EXISTANCE_CHECK_TIMEOUT = 1000;
 
-    private static final int THREAD_COUNT = 20;
+    private static final int ATMOSPHERE_MIN_ALLOWED_API_LEVEL = 17;
 
-    private static ExecutorService executor = Executors.newFixedThreadPool(THREAD_COUNT);
+    private static final int NO_AVAIBLE_API_LEVEL = -1;
 
     private static String agentId;
 
     private static AndroidDebugBridgeManager androidDebugBridgeManager;
 
+    private static final int THREAD_COUNT = 20;
+
+    private static ExecutorService executor = Executors.newFixedThreadPool(THREAD_COUNT);
+
     private static Registry rmiRegistry;
 
     private static int rmiRegistryPort;
 
-    private static volatile Map<String, IDevice> connectedDevicesList = Collections.synchronizedMap(new HashMap<String, IDevice>());
+    private static volatile Map<String, IDevice> connectedDevicesList = new HashMap<String, IDevice>();
 
     public DeviceManager() throws RemoteException {
     }
@@ -102,11 +105,28 @@ public class DeviceManager {
             // Server connection will be established later, when a server registers itself.
             androidDebugBridgeManager.setListener(new DeviceChangeListener());
 
-            // Register initial device list.
-            for (IDevice initialDevice : initialDevicesList) {
-                registerDevice(initialDevice);
+            // Parallel wrapping of the devices that are currently connected to ADB.
+            DeviceManagerExecutor deviceManagerExecutor = new DeviceManagerExecutor();
+
+            for (final IDevice initialDevice : initialDevicesList) {
+                deviceManagerExecutor.execute(new Runnable() {
+
+                    @Override
+                    public void run() {
+                        registerDevice(initialDevice);
+                        try {
+                            DeviceChangeListener deviceChangeListener = androidDebugBridgeManager.getCurrentListener();
+                            deviceChangeListener.onDeviceListChanged(initialDevice, true);
+                        } catch (CommandFailedException | NotBoundException e) {
+                            String sendingEventFailedMessage = String.format("Sending device list change event to the Server failed for device [%s]",
+                                                                             initialDevice.getSerialNumber());
+                            LOGGER.error(sendingEventFailedMessage, e);
+                        }
+                    }
+                });
             }
 
+            deviceManagerExecutor.releaseResources();
             LOGGER.info("Device manager created successfully.");
         }
     }
@@ -166,6 +186,22 @@ public class DeviceManager {
             // The device is already registered, nothing to do here.
             // This should not normally happen!
             LOGGER.warn("Trying to register a device that is already registered.");
+            return null;
+        }
+
+        Map<String, String> devicePropertiesMap = connectedDevice.getProperties();
+        String apiLevelString = devicePropertiesMap.get(DevicePropertyStringConstants.PROPERTY_API_LEVEL.toString());
+        int deviceApiLevel = NO_AVAIBLE_API_LEVEL;
+        if (apiLevelString != null) {
+            deviceApiLevel = Integer.parseInt(apiLevelString);
+        }
+
+        if (deviceApiLevel < ATMOSPHERE_MIN_ALLOWED_API_LEVEL) {
+            String notCompatibleDeviceMessage = String.format("Device [%s] is not compatible with ATMOSPHERE. Device's API level needs to be %d or higher. ON THREAD: %s",
+                                                              connectedDeviceSerialNumber,
+                                                              ATMOSPHERE_MIN_ALLOWED_API_LEVEL,
+                                                              Thread.currentThread().getName());
+            LOGGER.info(notCompatibleDeviceMessage);
             return null;
         }
 
@@ -388,7 +424,7 @@ public class DeviceManager {
         }
 
         throw new TimeoutReachedException("Timeout was reached and a device with serial number " + serialNumber
-                + " is still not present.");
+                                          + " is still not present.");
     }
 
     /**
