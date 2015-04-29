@@ -90,7 +90,7 @@ public class PortForwardingService {
      * Removes port forwarding and releases allocated ports.
      */
     public void stop() {
-        removeForward();
         new PortAllocator().releasePort(localForwardedPort);
+        removeForward();
     }
 }
