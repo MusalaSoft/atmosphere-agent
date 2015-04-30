@@ -95,11 +95,11 @@ public class AgentManagerTest {
         FakeDeviceShellAnswer shellAnswer = new FakeDeviceShellAnswer();
         Mockito.doAnswer(onDeviceAnswer).when(mockDevice).createForward(anyInt(), anyInt());
         Mockito.doAnswer(shellAnswer)
-        .when(mockDevice)
-        .executeShellCommand(Matchers.anyString(), Matchers.any(IShellOutputReceiver.class));
+               .when(mockDevice)
+               .executeShellCommand(Matchers.anyString(), Matchers.any(IShellOutputReceiver.class));
         Mockito.doAnswer(shellAnswer)
-        .when(mockDevice)
-        .executeShellCommand(Matchers.anyString(), Matchers.any(IShellOutputReceiver.class), anyInt());
+               .when(mockDevice)
+               .executeShellCommand(Matchers.anyString(), Matchers.any(IShellOutputReceiver.class), anyInt());
 
         deviceManager.registerDevice(mockDevice);
 
@@ -121,7 +121,7 @@ public class AgentManagerTest {
                      mockDeviceModel);
         assertEquals("Mock device creation / .getDeviceInformation() data mismatch. (device Api)",
                      info.getApiLevel(),
-                     mockDeviceApi);
+                     Integer.parseInt(mockDeviceApi));
         assertEquals("Mock device creation / .getDeviceInformation() data mismatch. (device screen height)",
                      info.getResolution().getKey(),
                      DeviceInformation.FALLBACK_SCREEN_RESOLUTION.getKey());
