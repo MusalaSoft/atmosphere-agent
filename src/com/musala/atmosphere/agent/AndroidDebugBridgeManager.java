@@ -74,6 +74,13 @@ public class AndroidDebugBridgeManager {
     }
 
     /**
+     * Gets the current {@link DeviceChangeListener}.
+     */
+    public DeviceChangeListener getCurrentListener() {
+        return currentDeviceChangeListener;
+    }
+
+    /**
      * Gets the {@link AndroidDebugBridge} instance used by the {@link AndroidDebugBridgeManager}. Make sure you have
      * called {@link #startAndroidDebugBridge()} first.
      * 
