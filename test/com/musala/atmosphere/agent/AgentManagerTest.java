@@ -106,6 +106,8 @@ public class AgentManagerTest {
         Registry agentRegistry = LocateRegistry.getRegistry("localhost", RMI_PORT);
         IWrapDevice device = (IWrapDevice) agentRegistry.lookup(mockDeviceSerialNumber);
 
+        //TODO getting device information fails for the not mocked data such as Ram and Camera.
+        //It is because the service socket server is stopped after it has been validated. It should be fixed. 
         DeviceInformation info = (DeviceInformation) device.route(RoutingAction.GET_DEVICE_INFORMATION);
         assertEquals("Mock device creation / .getDeviceInformation() data mismatch. (serial number)",
                      info.getSerialNumber(),

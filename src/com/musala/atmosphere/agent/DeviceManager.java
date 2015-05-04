@@ -229,7 +229,7 @@ public class DeviceManager {
             // The device was never registered, so nothing to do here.
             // This should not normally happen!
             LOGGER.warn("Trying to unregister a device [" + disconnectedDeviceSerialNumber
-                    + "] that was not present in the devices list.");
+                        + "] that was not present in the devices list.");
             return null;
         }
 
@@ -274,22 +274,20 @@ public class DeviceManager {
                                                                                        ConnectionConstants.SERVICE_PORT);
             serviceForwardingService.forwardPort();
             ServiceRequestSender serviceRequestSender = new ServiceRequestSender(serviceForwardingService);
+            serviceCommunicator = new ServiceCommunicator(serviceRequestSender, shellCommandExecutor, serialNumber);
+            serviceCommunicator.startComponent();
+            serviceCommunicator.validateRemoteServer();
 
             PortForwardingService automatorForwardingService = new PortForwardingService(device,
                                                                                          ConnectionConstants.UI_AUTOMATOR_PORT);
             automatorForwardingService.forwardPort();
             UIAutomatorRequestSender automatorRequestSender = new UIAutomatorRequestSender(automatorForwardingService);
-            serviceCommunicator = new ServiceCommunicator(serviceRequestSender, shellCommandExecutor, serialNumber);
             automatorCommunicator = new UIAutomatorCommunicator(automatorRequestSender,
                                                                 shellCommandExecutor,
                                                                 serialNumber);
-            // start components
-            serviceCommunicator.startComponent();
             automatorCommunicator.startComponent();
-
-            // validate remote servers
-            serviceCommunicator.validateRemoteServer();
             automatorCommunicator.validateRemoteServer();
+
         } catch (ForwardingPortFailedException | OnDeviceComponentStartingException
                 | OnDeviceComponentInitializationException e) {
             String errorMessage = String.format("Could not initialize communication to a on-device component for %s.",
@@ -424,7 +422,7 @@ public class DeviceManager {
         }
 
         throw new TimeoutReachedException("Timeout was reached and a device with serial number " + serialNumber
-                                          + " is still not present.");
+                + " is still not present.");
     }
 
     /**
@@ -445,7 +443,7 @@ public class DeviceManager {
      * @throws NoAvailableDeviceFoundException
      */
     public IWrapDevice getFirstAvailableDeviceWrapper()
-        throws RemoteException,
+            throws RemoteException,
             NotBoundException,
             NoAvailableDeviceFoundException {
         List<String> wrapperIdentifiers = getAllDeviceRmiIdentifiers();
@@ -466,7 +464,7 @@ public class DeviceManager {
      * @throws NoAvailableDeviceFoundException
      */
     public IWrapDevice getFirstAvailableEmulatorDeviceWrapper()
-        throws RemoteException,
+            throws RemoteException,
             NotBoundException,
             NoAvailableDeviceFoundException {
         // TODO: Move to EmulatorManager.
