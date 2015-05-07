@@ -3,12 +3,21 @@ package com.musala.atmosphere.agent.devicewrapper;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.nio.channels.FileChannel;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.concurrent.CompletionService;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 
 import org.apache.log4j.Logger;
 
@@ -18,9 +27,16 @@ import com.android.ddmlib.IDevice;
 import com.android.ddmlib.ShellCommandUnresponsiveException;
 import com.android.ddmlib.SyncException;
 import com.android.ddmlib.TimeoutException;
+import com.coremedia.iso.boxes.Container;
+import com.googlecode.mp4parser.authoring.Movie;
+import com.googlecode.mp4parser.authoring.Track;
+import com.googlecode.mp4parser.authoring.builder.DefaultMp4Builder;
+import com.googlecode.mp4parser.authoring.builder.Mp4Builder;
+import com.googlecode.mp4parser.authoring.container.mp4.MovieCreator;
+import com.googlecode.mp4parser.authoring.tracks.AppendTrack;
 import com.musala.atmosphere.agent.DevicePropertyStringConstants;
 import com.musala.atmosphere.agent.devicewrapper.util.ApkInstaller;
-import com.musala.atmosphere.agent.devicewrapper.util.BackgroundPullFileRunner;
+import com.musala.atmosphere.agent.devicewrapper.util.BackgroundPullFileTask;
 import com.musala.atmosphere.agent.devicewrapper.util.BackgroundShellCommandExecutor;
 import com.musala.atmosphere.agent.devicewrapper.util.DeviceProfiler;
 import com.musala.atmosphere.agent.devicewrapper.util.FileTransferService;
@@ -48,6 +64,7 @@ import com.musala.atmosphere.commons.ui.UiElementDescriptor;
 import com.musala.atmosphere.commons.util.Pair;
 
 public abstract class AbstractWrapDevice extends UnicastRemoteObject implements IWrapDevice {
+
     /**
      * auto generated serialization id
      */
@@ -80,19 +97,45 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 
     private static final String SCREENSHOT_LOCAL_FILE_NAME = "local_screen.png";
 
-    private static final String RAM_MEMORY_PATTERN = "(\\w+):(\\s+)(\\d+\\w+)";
+    private static final String SCREEN_RECORD_COMPONENT_PATH = "/data/local/tmp";
+
+    private static final String RECORDS_DIRECTORY_NAME = "AtmosphereScreenRecords";
+
+    private static final String START_SCREENRECORD_SCRIPT_NAME = "start_screenrecord.sh";
+
+    private static final String STOP_SCREENRECORD_SCRIPT_NAME = "stop_screenrecord.sh";
+
+    private static final String START_SCREEN_RECORD_COMMAND = String.format("sh %s/%s",
+                                                                            SCREEN_RECORD_COMPONENT_PATH,
+                                                                            START_SCREENRECORD_SCRIPT_NAME);
+
+    private static final String STOP_SCREEN_RECORD_COMMAND = String.format("sh %s/%s",
+                                                                           SCREEN_RECORD_COMPONENT_PATH,
+                                                                           STOP_SCREENRECORD_SCRIPT_NAME);
+
+    private static final String SCREEN_RECORDS_REMOTE_PATH = String.format("%s/%s",
+                                                                           SCREEN_RECORD_COMPONENT_PATH,
+                                                                           RECORDS_DIRECTORY_NAME);
+
+    private static final String SCREEN_RECORDS_LOCAL_DIR = System.getProperty("user.dir");
+
+    private static final String MERGED_RECORDS_DIR_NAME = "ScreenRecords";
+
+    private static final String RECORDS_FILENAMES_DELIMITER = "\r\n";
+
+    private static final String TIMESTAMP_FORMAT = "yyyy-MM-dd-HH-mm-ss";
 
     private static final String DEVICE_TYPE = "tablet";
 
     private ExecutorService executor;
+
+    private CompletionService<Boolean> pullFileCompletionService;
 
     protected final ServiceCommunicator serviceCommunicator;
 
     protected final UIAutomatorCommunicator automatorCommunicator;
 
     protected final FileTransferService transferService;
-
-    private static final String GET_RAM_MEMORY_COMMAND = "cat /proc/meminfo | grep MemTotal";
 
     protected final BackgroundShellCommandExecutor shellCommandExecutor;
 
@@ -132,6 +175,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
         transferService = new FileTransferService(wrappedDevice);
         apkInstaller = new ApkInstaller(wrappedDevice);
         imeManager = new ImeManager(shellCommandExecutor);
+        pullFileCompletionService = new ExecutorCompletionService<Boolean>(executor);
     }
 
     @Override
@@ -337,6 +381,14 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
                                                                       (Integer) args[2],
                                                                       (Integer) args[3],
                                                                       (Boolean) args[4]);
+                break;
+
+            // Screen recording related
+            case START_RECORDING:
+                startScreenRecording();
+                break;
+            case STOP_RECORDING:
+                stopScreenRecording();
                 break;
         }
 
@@ -561,16 +613,11 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
      *        - full path to the file which should be pulled
      * @param localFilePath
      *        - full local path to the destination file
-     * @throws CommandFailedException
-     *         - in case of failing to pull the selected file
      */
-    private void pullFile(String remoteFilePath, String localFilePath) throws CommandFailedException {
+    private void pullFile(String remoteFilePath, String localFilePath) {
         // FIXME: Implement sending the file to the client after pulling it locally.
-        BackgroundPullFileRunner commandExecutor = new BackgroundPullFileRunner(wrappedDevice,
-                                                                                remoteFilePath,
-                                                                                localFilePath);
-
-        executor.submit(commandExecutor);
+        BackgroundPullFileTask pullFileTask = new BackgroundPullFileTask(wrappedDevice, remoteFilePath, localFilePath);
+        pullFileCompletionService.submit(pullFileTask);
     }
 
     /**
@@ -587,6 +634,127 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 
         shellCommandExecutor.execute(killProcessCommand);
 
+    }
+
+    private void combineVideoFiles(String directoryPath) throws IOException {
+        File file = new File(directoryPath);
+        String[] fileNames = file.list();
+
+        int filesCount = fileNames.length;
+        Movie[] movies = new Movie[filesCount];
+
+        for (int index = 0; index < filesCount; index++) {
+            String currentFilePath = String.format("%s%s%s", directoryPath, File.separator, fileNames[index]);
+            movies[index] = MovieCreator.build(currentFilePath);
+        }
+
+        List<Track> videoTracks = new LinkedList<Track>();
+
+        for (Movie movie : movies) {
+            for (Track track : movie.getTracks()) {
+                if (track.getHandler().equals("vide")) {
+                    videoTracks.add(track);
+                }
+            }
+        }
+
+        Movie combinedMovie = new Movie();
+        Track[] tracksToCombine = videoTracks.toArray(new Track[videoTracks.size()]);
+        AppendTrack appendTrack = new AppendTrack(tracksToCombine);
+
+        combinedMovie.addTrack(appendTrack);
+
+        Mp4Builder videoBuilder = new DefaultMp4Builder();
+        Container combinedMovieContainer = videoBuilder.build(combinedMovie);
+
+        File mergedRecordsDirectory = new File(MERGED_RECORDS_DIR_NAME);
+
+        if (!mergedRecordsDirectory.exists()) {
+            mergedRecordsDirectory.mkdirs();
+        }
+
+        String timestamp = new SimpleDateFormat(TIMESTAMP_FORMAT).format(new Date());
+        RandomAccessFile randomAccessFile = new RandomAccessFile(String.format("%s%s%s%s%s_%s_screen_record.mp4",
+                                                                               SCREEN_RECORDS_LOCAL_DIR,
+                                                                               File.separator,
+                                                                               MERGED_RECORDS_DIR_NAME,
+                                                                               File.separator,
+                                                                               timestamp,
+                                                                               wrappedDevice.getSerialNumber()), "rw");
+        FileChannel fileChannel = randomAccessFile.getChannel();
+        combinedMovieContainer.writeContainer(fileChannel);
+
+        fileChannel.close();
+        randomAccessFile.close();
+    }
+
+    private void startScreenRecording() {
+        shellCommandExecutor.executeInBackground(START_SCREEN_RECORD_COMMAND);
+    }
+
+    private void stopScreenRecording() throws CommandFailedException {
+        String output = shellCommandExecutor.execute(STOP_SCREEN_RECORD_COMMAND);
+
+        if (output.trim().length() <= 0) {
+            return;
+        }
+
+        File recordsDirectory = new File(SCREEN_RECORDS_LOCAL_DIR);
+
+        if (!recordsDirectory.exists()) {
+            recordsDirectory.mkdirs();
+        }
+
+        String[] screenRecordFilenames = output.split(RECORDS_FILENAMES_DELIMITER);
+
+        String timestamp = new SimpleDateFormat(TIMESTAMP_FORMAT).format(new Date());
+        String separatedVideosDirectoryPath = String.format("%s%s%s_%s_VideoRecords",
+                                                            SCREEN_RECORDS_LOCAL_DIR,
+                                                            File.separator,
+                                                            timestamp,
+                                                            wrappedDevice.getSerialNumber());
+
+        File separateVideosDirectory = new File(separatedVideosDirectoryPath);
+
+        if (!separateVideosDirectory.exists()) {
+            separateVideosDirectory.mkdirs();
+        }
+
+        for (String filename : screenRecordFilenames) {
+            String currentRecordRemotePath = String.format("%s/%s", SCREEN_RECORDS_REMOTE_PATH, filename);
+            String currentRecordLocalPath = String.format("%s%s%s",
+                                                          separatedVideosDirectoryPath,
+                                                          File.separator,
+                                                          filename);
+            pullFile(currentRecordRemotePath, currentRecordLocalPath);
+        }
+
+        for (int i = 0; i < screenRecordFilenames.length; i++) {
+            Future<Boolean> futureTask = null;
+
+            try {
+                futureTask = pullFileCompletionService.take();
+                Boolean isFilePulled = futureTask.get();
+
+                if (!isFilePulled) {
+                    LOGGER.warn(String.format("Pulling some of the video records from device %s failed.",
+                                              wrappedDevice.getSerialNumber()));
+                }
+            } catch (InterruptedException | ExecutionException e) {
+
+            } finally {
+                if (futureTask != null) {
+                    futureTask.cancel(true);
+                }
+            }
+        }
+
+        try {
+            combineVideoFiles(separatedVideosDirectoryPath);
+        } catch (IOException e) {
+            LOGGER.error(String.format("Failed to merge video records pulled from device with serial number %s.",
+                                       wrappedDevice.getSerialNumber()), e);
+        }
     }
 
     @Override
