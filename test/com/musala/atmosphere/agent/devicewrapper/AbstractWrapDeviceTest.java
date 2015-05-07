@@ -1,12 +1,14 @@
 package com.musala.atmosphere.agent.devicewrapper;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import java.rmi.RemoteException;
 import java.util.concurrent.ExecutorService;
 
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -56,6 +58,7 @@ public class AbstractWrapDeviceTest {
                 ServiceCommunicator serviceCommunicator,
                 UIAutomatorCommunicator automatorCommunicator) throws RemoteException {
             super(deviceToWrap, executor, shellCommandExecutor, serviceCommunicator, automatorCommunicator);
+
         }
 
         @Override
@@ -119,8 +122,16 @@ public class AbstractWrapDeviceTest {
     @Mock
     private ServiceCommunicator serviceCommunicator;
 
+    @Mock
+    private static ExecutorService mockedExecutor;
+
     @InjectMocks
     private FakeWrapDevice testWrapDevice;
+
+    @BeforeClass
+    public static void setUp() {
+        mockedExecutor = mock(ExecutorService.class);
+    }
 
     @Test
     public void testGetDeviceOrientation() throws Exception {
