@@ -35,7 +35,7 @@ public class DeviceCompatibilityTest {
 
     @BeforeClass
     public static void tearUp() throws Exception {
-        String pathToAdb = AgentPropertiesLoader.getADBPath();
+        String pathToAdb = AgentPropertiesLoader.getAdbPath();
         AndroidDebugBridgeManager androidDebugBridgeManager = new AndroidDebugBridgeManager();
         androidDebugBridgeManager.setAndroidDebugBridgePath(pathToAdb);
         androidDebugBridgeManager.startAndroidDebugBridge();

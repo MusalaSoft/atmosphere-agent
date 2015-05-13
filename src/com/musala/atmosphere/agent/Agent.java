@@ -69,7 +69,7 @@ public class Agent {
 
         try {
             // Registry registry = LocateRegistry.createRegistry(agentRmiPort);
-            String pathToAdb = AgentPropertiesLoader.getADBPath();
+            String pathToAdb = AgentPropertiesLoader.getAdbPath();
             androidDebugBridgeManager = new AndroidDebugBridgeManager();
             androidDebugBridgeManager.setAndroidDebugBridgePath(pathToAdb);
             androidDebugBridgeManager.startAndroidDebugBridge();

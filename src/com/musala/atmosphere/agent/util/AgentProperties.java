@@ -18,7 +18,8 @@ public enum AgentProperties {
     ADB_MAX_FORWARD_PORT("adb.max.forward.port"),
     ON_DEVICE_COMPONENT_CONNECTION_RETRY_LIMIT("ondevicecomponent.connection.retry.limit"),
     DEVICE_AUTOMATIC_SETUP("device.automatic.setup"),
-    ON_DEVICE_COMPONENT_FILES_PATH("ondevicecomponent.files.path");
+    ON_DEVICE_COMPONENT_FILES_PATH("ondevicecomponent.files.path"),
+    SDK_DIR("sdk.dir");
 
     private String value;
 

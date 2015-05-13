@@ -19,9 +19,9 @@ public class PortAllocator {
      * TODO: This constants should be passed to the constructor of the object when a dependency injection mechanism is
      * introduced.
      */
-    private static final int MIN_FORWARD_PORT = AgentPropertiesLoader.getADBMinForwardPort();
+    private static final int MIN_FORWARD_PORT = AgentPropertiesLoader.getAdbMinForwardPort();
 
-    private static final int MAX_FORWARD_PORT = AgentPropertiesLoader.getADBMaxForwardPort();
+    private static final int MAX_FORWARD_PORT = AgentPropertiesLoader.getAdbMaxForwardPort();
 
     private static final int MIN_TCP_PORT = 0;
 

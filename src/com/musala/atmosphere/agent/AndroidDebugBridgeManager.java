@@ -110,7 +110,7 @@ public class AndroidDebugBridgeManager {
             } catch (InterruptedException e) {
             }
             // let's not wait > timeout milliseconds.
-            if (timeout * 100 > AgentPropertiesLoader.getADBConnectionTimeout()) {
+            if (timeout * 100 > AgentPropertiesLoader.getAdbConnectionTimeout()) {
                 LOGGER.fatal("Timeout getting initial device list.");
 
                 throw new ADBridgeFailException("Bridge timed out.");

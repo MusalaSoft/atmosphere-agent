@@ -46,7 +46,7 @@ public class AgentManagerTest {
         DdmPreferences.setLogLevel("warn");
         Log.setLogOutput(new DdmLibLogListener(Level.ALL, false /* do no log to a file */));
 
-        String pathToAdb = AgentPropertiesLoader.getADBPath();
+        String pathToAdb = AgentPropertiesLoader.getAdbPath();
         AndroidDebugBridgeManager androidDebugBridgeManager = new AndroidDebugBridgeManager();
         androidDebugBridgeManager.setAndroidDebugBridgePath(pathToAdb);
         androidDebugBridgeManager.startAndroidDebugBridge();

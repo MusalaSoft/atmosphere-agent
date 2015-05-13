@@ -18,16 +18,7 @@ public class AgentPropertiesLoader {
 
     private static final String ADB_PATH_FORMAT = "%s%cplatform-tools%cadb";
 
-    private static final String ADB_PATH = String.format(ADB_PATH_FORMAT,
-                                                         ADB_ENVIRONMENT_PATH,
-                                                         SEPARATOR_CHAR,
-                                                         SEPARATOR_CHAR);
-
     private static final String ADB_SDK_TOOLS_FORMAT = "%s%ctools";
-
-    private static final String ANDROID_SDK_TOOLS = String.format(ADB_SDK_TOOLS_FORMAT,
-                                                                  ADB_ENVIRONMENT_PATH,
-                                                                  SEPARATOR_CHAR);
 
     private static final String AGENT_PROPERTIES_FILE = "./agent.properties";
 
@@ -47,12 +38,28 @@ public class AgentPropertiesLoader {
     }
 
     /**
+     * Returns the directory of the SDK. Loads the property from the Agent's configuration file. If such property is not
+     * available uses ANDROID_HOME in the environment variables.
+     * 
+     * @return the directory of the SDK
+     */
+    private static String getSdkDir() {
+        String sdkDir = getPropertyString(AgentProperties.SDK_DIR);
+
+        if (sdkDir == null || sdkDir.trim().isEmpty()) {
+            sdkDir = ADB_ENVIRONMENT_PATH;
+        }
+
+        return sdkDir;
+    }
+
+    /**
      * Returns the path to ADB from the config file.
      * 
      * @return - the path to the Android Debug Bridge.
      */
-    public static String getADBPath() {
-        return ADB_PATH;
+    public static String getAdbPath() {
+        return String.format(ADB_PATH_FORMAT, getSdkDir(), SEPARATOR_CHAR, SEPARATOR_CHAR);
     }
 
     /**
@@ -60,7 +67,7 @@ public class AgentPropertiesLoader {
      * 
      * @return - int, the timeout in miliseconds.
      */
-    public static int getADBConnectionTimeout() {
+    public static int getAdbConnectionTimeout() {
         String returnValueString = getPropertyString(AgentProperties.ADB_CONNECTION_TIMEOUT);
         int returnValue = Integer.parseInt(returnValueString);
         return returnValue;
@@ -94,7 +101,7 @@ public class AgentPropertiesLoader {
      * @return
      */
     public static String getAndroidSdkToolsDirPath() {
-        return ANDROID_SDK_TOOLS;
+        return String.format(ADB_SDK_TOOLS_FORMAT, getSdkDir(), SEPARATOR_CHAR);
     }
 
     /**
@@ -144,7 +151,7 @@ public class AgentPropertiesLoader {
      * 
      * @return - the minimum port identifier that will be used for connection to an ATMOSPHERE on-device component.
      */
-    public static int getADBMinForwardPort() {
+    public static int getAdbMinForwardPort() {
         String returnValueString = getPropertyString(AgentProperties.ADB_MIN_FORWARD_PORT);
         int returnValueInt = Integer.parseInt(returnValueString);
         return returnValueInt;
@@ -155,7 +162,7 @@ public class AgentPropertiesLoader {
      * 
      * @return - the maximum port identifier that will be used for connection to the ATMOSPHERE service.
      */
-    public static int getADBMaxForwardPort() {
+    public static int getAdbMaxForwardPort() {
         String returnValueString = getPropertyString(AgentProperties.ADB_MAX_FORWARD_PORT);
         int returnValueInt = Integer.parseInt(returnValueString);
         return returnValueInt;
