@@ -557,30 +557,38 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
     /**
      * Gets the UIAutomator UI XML dump.
      * 
-     * @return UI XML file dump in a string.
+     * @return UI XML file dump in a string
      * @throws CommandFailedException
+     *         when UI XML dump fails
      */
     private String getUiXml() throws CommandFailedException {
-
         String remoteFileName = String.format(XMLDUMP_REMOTE_FILE_NAME, wrappedDevice.getSerialNumber());
         String localFileName = String.format(XMLDUMP_LOCAL_FILE_NAME, wrappedDevice.getSerialNumber());
         automatorCommunicator.getUiDumpXml(remoteFileName);
 
+        File xmlDumpFile = null;
+        Scanner xmlDumpFileScanner = null;
+
         try {
             wrappedDevice.pullFile(remoteFileName, localFileName);
 
-            File xmlDumpFile = new File(localFileName);
-            Scanner xmlDumpFileScanner = new Scanner(xmlDumpFile, "UTF-8");
+            xmlDumpFile = new File(localFileName);
+            xmlDumpFileScanner = new Scanner(xmlDumpFile, "UTF-8");
             xmlDumpFileScanner.useDelimiter("\\Z");
-            String uiDumpContents = xmlDumpFileScanner.next();
 
-            xmlDumpFileScanner.close();
-            xmlDumpFile.delete();
+            if (!xmlDumpFileScanner.hasNext()) {
+                throw new CommandFailedException("Error obtaining UI hierarchy.");
+            }
 
-            return uiDumpContents;
+            return xmlDumpFileScanner.next();
         } catch (SyncException | IOException | AdbCommandRejectedException | TimeoutException e) {
             LOGGER.error("UI dump failed.", e);
             throw new CommandFailedException("UI dump failed. See the enclosed exception for more information.", e);
+        } finally {
+            if (xmlDumpFile != null && xmlDumpFileScanner != null) {
+                xmlDumpFileScanner.close();
+                xmlDumpFile.delete();
+            }
         }
     }
 
