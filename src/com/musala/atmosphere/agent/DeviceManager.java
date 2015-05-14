@@ -35,11 +35,11 @@ import com.musala.atmosphere.agent.util.AgentIdCalculator;
 import com.musala.atmosphere.commons.DeviceInformation;
 import com.musala.atmosphere.commons.ad.service.ConnectionConstants;
 import com.musala.atmosphere.commons.exceptions.CommandFailedException;
+import com.musala.atmosphere.commons.exceptions.NoAvailableDeviceFoundException;
 import com.musala.atmosphere.commons.sa.IWrapDevice;
 import com.musala.atmosphere.commons.sa.exceptions.ADBridgeFailException;
 import com.musala.atmosphere.commons.sa.exceptions.DeviceBootTimeoutReachedException;
 import com.musala.atmosphere.commons.sa.exceptions.DeviceNotFoundException;
-import com.musala.atmosphere.commons.sa.exceptions.NoAvailableDeviceFoundException;
 import com.musala.atmosphere.commons.sa.exceptions.NotPossibleForDeviceException;
 import com.musala.atmosphere.commons.sa.exceptions.TimeoutReachedException;
 
@@ -229,7 +229,7 @@ public class DeviceManager {
             // The device was never registered, so nothing to do here.
             // This should not normally happen!
             LOGGER.warn("Trying to unregister a device [" + disconnectedDeviceSerialNumber
-                        + "] that was not present in the devices list.");
+                    + "] that was not present in the devices list.");
             return null;
         }
 
@@ -440,12 +440,8 @@ public class DeviceManager {
      * @return the first available device wrapper ({@link IWrapDevice} interface).
      * @throws RemoteException
      * @throws NotBoundException
-     * @throws NoAvailableDeviceFoundException
      */
-    public IWrapDevice getFirstAvailableDeviceWrapper()
-            throws RemoteException,
-            NotBoundException,
-            NoAvailableDeviceFoundException {
+    public IWrapDevice getFirstAvailableDeviceWrapper() throws RemoteException, NotBoundException {
         List<String> wrapperIdentifiers = getAllDeviceRmiIdentifiers();
 
         if (wrapperIdentifiers.isEmpty()) {
@@ -461,12 +457,8 @@ public class DeviceManager {
      * @return the first available emulator wrapper ({@link IWrapDevice} interface).
      * @throws RemoteException
      * @throws NotBoundException
-     * @throws NoAvailableDeviceFoundException
      */
-    public IWrapDevice getFirstAvailableEmulatorDeviceWrapper()
-            throws RemoteException,
-            NotBoundException,
-            NoAvailableDeviceFoundException {
+    public IWrapDevice getFirstAvailableEmulatorDeviceWrapper() throws RemoteException, NotBoundException {
         // TODO: Move to EmulatorManager.
         List<String> wrapperIdentifiers = getAllDeviceRmiIdentifiers();
 

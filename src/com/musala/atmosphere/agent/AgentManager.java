@@ -29,7 +29,6 @@ import com.musala.atmosphere.commons.sa.SystemSpecification;
 import com.musala.atmosphere.commons.sa.exceptions.ADBridgeFailException;
 import com.musala.atmosphere.commons.sa.exceptions.DeviceBootTimeoutReachedException;
 import com.musala.atmosphere.commons.sa.exceptions.DeviceNotFoundException;
-import com.musala.atmosphere.commons.sa.exceptions.NoAvailableDeviceFoundException;
 import com.musala.atmosphere.commons.sa.exceptions.NotPossibleForDeviceException;
 import com.musala.atmosphere.commons.sa.exceptions.TimeoutReachedException;
 
@@ -301,18 +300,12 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager {
     }
 
     @Override
-    public IWrapDevice getFirstAvailableDeviceWrapper()
-        throws RemoteException,
-            NotBoundException,
-            NoAvailableDeviceFoundException {
+    public IWrapDevice getFirstAvailableDeviceWrapper() throws RemoteException, NotBoundException {
         return deviceManager.getFirstAvailableDeviceWrapper();
     }
 
     @Override
-    public IWrapDevice getFirstAvailableEmulatorDeviceWrapper()
-        throws RemoteException,
-            NotBoundException,
-            NoAvailableDeviceFoundException {
+    public IWrapDevice getFirstAvailableEmulatorDeviceWrapper() throws RemoteException, NotBoundException {
         return deviceManager.getFirstAvailableEmulatorDeviceWrapper();
     }
 
