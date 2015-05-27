@@ -1,6 +1,7 @@
 package com.musala.atmosphere.agent.devicewrapper.util.ondevicecomponent;
 
 import java.io.IOException;
+import java.util.List;
 
 import org.apache.log4j.Logger;
 
@@ -14,6 +15,7 @@ import com.musala.atmosphere.commons.exceptions.CommandFailedException;
 import com.musala.atmosphere.commons.gesture.Gesture;
 import com.musala.atmosphere.commons.gesture.Timeline;
 import com.musala.atmosphere.commons.ui.UiElementDescriptor;
+import com.musala.atmosphere.commons.ui.selector.UiElementSelector;
 import com.musala.atmosphere.commons.ui.tree.AccessibilityElement;
 import com.musala.atmosphere.commons.util.structure.tree.Tree;
 
@@ -189,6 +191,25 @@ public class UIAutomatorCommunicator extends DeviceCommunicator<UIAutomatorReque
         Object[] arguments = new Object[] {visibleOnly};
 
         return (Tree<AccessibilityElement>) requestActionWithResponse(UIAutomatorRequest.GET_UI_TREE, arguments);
+    }
+
+    /**
+     * Sends a request for getting all {@link AccessibilityElement UI elements} present on the screen and matching the
+     * given selector.
+     * 
+     * @param visibleOnly
+     *        - if <code>true</code> only the visible elements will be searched; if <code>false</code> all elements will
+     *        be searched
+     * @return a list containing all found elements matching the selector
+     * @throws CommandFailedException
+     *         if the request fails
+     */
+    @SuppressWarnings("unchecked")
+    public List<AccessibilityElement> getUiElements(UiElementSelector selector, Boolean visibleOnly)
+        throws CommandFailedException {
+        Object[] arguments = new Object[] {selector, visibleOnly};
+
+        return (List<AccessibilityElement>) requestActionWithResponse(UIAutomatorRequest.GET_UI_ELEMENTS, arguments);
     }
 
     /**

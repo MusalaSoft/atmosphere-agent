@@ -61,6 +61,7 @@ import com.musala.atmosphere.commons.exceptions.CommandFailedException;
 import com.musala.atmosphere.commons.gesture.Gesture;
 import com.musala.atmosphere.commons.sa.IWrapDevice;
 import com.musala.atmosphere.commons.ui.UiElementDescriptor;
+import com.musala.atmosphere.commons.ui.selector.UiElementSelector;
 import com.musala.atmosphere.commons.util.Pair;
 
 public abstract class AbstractWrapDevice extends UnicastRemoteObject implements IWrapDevice {
@@ -262,6 +263,9 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
                 break;
             case GET_RUNNING_TASK_IDS:
                 returnValue = serviceCommunicator.getRunningTaskIds(args);
+                break;
+            case GET_UI_ELEMENTS:
+                returnValue = automatorCommunicator.getUiElements((UiElementSelector) args[0], (Boolean) args[1]);
                 break;
 
             // Setters
