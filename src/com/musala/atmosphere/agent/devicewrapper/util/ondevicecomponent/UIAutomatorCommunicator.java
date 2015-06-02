@@ -213,6 +213,35 @@ public class UIAutomatorCommunicator extends DeviceCommunicator<UIAutomatorReque
     }
 
     /**
+     * Sends a request for getting all {@link AccessibilityElement child UI elements} of the
+     * {@link AccessibilityElement element} passed as argument. Returned elements must match all properties contained in
+     * the given {@link UiElementSelector selector}.
+     * 
+     * @param parentElement
+     *        - {@link AccessibilityElement accessibility element} whose children will be traversed
+     * @param selector
+     *        - {@link UiElementSelector element selector} containing properties used for matching the traversed
+     *        children
+     * @param directChildrenOnly
+     *        - if <code>true</code> only direct children will be traversed, else all successors will be traversed
+     * @param visibleOnly
+     *        - if <code>true</code> only the visible elements will be searched; if <code>false</code> all elements will
+     *        be searched
+     * @return a list containing all children found matching the given selector
+     * @throws CommandFailedException
+     *         if the request fails
+     */
+    @SuppressWarnings("unchecked")
+    public List<AccessibilityElement> getChildren(AccessibilityElement parentElement,
+                                                  UiElementSelector selector,
+                                                  Boolean directChildrenOnly,
+                                                  Boolean visibleOnly) throws CommandFailedException {
+        Object[] requestArguments = new Object[] {parentElement, selector, directChildrenOnly, visibleOnly};
+
+        return (List<AccessibilityElement>) requestActionWithResponse(UIAutomatorRequest.GET_CHILDREN, requestArguments);
+    }
+
+    /**
      * Requests the given {@link UIAutomatorRequest action} and returns the response.
      * 
      * @param requestType

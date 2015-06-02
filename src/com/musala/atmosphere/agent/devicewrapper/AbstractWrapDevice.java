@@ -62,6 +62,7 @@ import com.musala.atmosphere.commons.gesture.Gesture;
 import com.musala.atmosphere.commons.sa.IWrapDevice;
 import com.musala.atmosphere.commons.ui.UiElementDescriptor;
 import com.musala.atmosphere.commons.ui.selector.UiElementSelector;
+import com.musala.atmosphere.commons.ui.tree.AccessibilityElement;
 import com.musala.atmosphere.commons.util.Pair;
 
 public abstract class AbstractWrapDevice extends UnicastRemoteObject implements IWrapDevice {
@@ -266,6 +267,12 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
                 break;
             case GET_UI_ELEMENTS:
                 returnValue = automatorCommunicator.getUiElements((UiElementSelector) args[0], (Boolean) args[1]);
+                break;
+            case GET_CHILDREN:
+                returnValue = automatorCommunicator.getChildren((AccessibilityElement) args[0],
+                                                                (UiElementSelector) args[1],
+                                                                (Boolean) args[2],
+                                                                (Boolean) args[3]);
                 break;
 
             // Setters
