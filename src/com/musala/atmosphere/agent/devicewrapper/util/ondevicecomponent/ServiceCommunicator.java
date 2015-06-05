@@ -165,6 +165,42 @@ public class ServiceCommunicator extends DeviceCommunicator<ServiceRequest> {
     }
 
     /**
+     * Opens the location settings activity.
+     * 
+     * @throws CommandFailedException
+     *         if failed to open the location settings
+     * 
+     */
+    public void openLocationSettings() throws CommandFailedException {
+        Request<ServiceRequest> serviceRequest = new Request<ServiceRequest>(ServiceRequest.OPEN_LOCATION_SETTINGS);
+
+        try {
+            requestSender.request(serviceRequest);
+        } catch (ClassNotFoundException | IOException e) {
+            throw new CommandFailedException("Opening location settings failed. See enclosed exception for more information.",
+                                             e);
+        }
+    }
+
+    /**
+     * Check if the GPS location is enabled on this device.
+     * 
+     * @return <code>true</code> if the GPS location is enabled, <code>false</code> if it's disabled
+     * @throws CommandFailedException
+     *         if failed to get the GPS location state of the device
+     */
+    public boolean isGpsLocationEnabled() throws CommandFailedException {
+        Request<ServiceRequest> serviceRequest = new Request<ServiceRequest>(ServiceRequest.IS_GPS_LOCATION_ENABLED);
+
+        try {
+            return (boolean) requestSender.request(serviceRequest);
+        } catch (ClassNotFoundException | IOException e) {
+            throw new CommandFailedException("Getting GPS Location state of the device failed. See enclosed exception for more information.",
+                                             e);
+        }
+    }
+
+    /**
      * Fetches the sensor acceleration readings of the device.
      * 
      * @return a {@link DeviceAcceleration} instance.

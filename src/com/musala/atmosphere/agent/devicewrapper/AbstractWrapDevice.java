@@ -354,6 +354,12 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
             case IS_LOCKED:
                 returnValue = serviceCommunicator.isLocked();
                 break;
+            case OPEN_LOCATION_SETTINGS:
+                serviceCommunicator.openLocationSettings();
+                break;
+            case IS_GPS_LOCATION_ENABLED:
+                returnValue = serviceCommunicator.isGpsLocationEnabled();
+                break;
 
             // Call related
             case CALL_CANCEL:
