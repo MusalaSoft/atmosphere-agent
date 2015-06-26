@@ -478,6 +478,25 @@ public class ServiceCommunicator extends DeviceCommunicator<ServiceRequest> {
         }
     }
 
+    /**
+     * Shows a tap location on the device screen.
+     * 
+     * @param args
+     *        - args[0] should contain the point where the tap will be placed
+     * @throws CommandFailedException
+     *         if showing the tap location fails
+     */
+    public void showTapLocation(Object[] args) throws CommandFailedException {
+        Request<ServiceRequest> showTapLocationRequest = new Request<ServiceRequest>(ServiceRequest.SHOW_TAP_LOCATION);
+        showTapLocationRequest.setArguments(args);
+
+        try {
+            requestSender.request(showTapLocationRequest);
+        } catch (ClassNotFoundException | IOException e) {
+            throw new CommandFailedException("Failed to show the tap location.", e);
+        }
+    }
+
     @Override
     public void startComponent() {
         IntentBuilder startSeviceIntentBuilder = new IntentBuilder(IntentAction.START_ATMOSPHERE_SERVICE);
