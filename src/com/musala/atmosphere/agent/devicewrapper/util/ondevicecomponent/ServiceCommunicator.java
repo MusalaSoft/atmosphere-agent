@@ -461,6 +461,23 @@ public class ServiceCommunicator extends DeviceCommunicator<ServiceRequest> {
     }
 
     /**
+     * Checks if there is any audio currently playing on the device.
+     * 
+     * @return <code>true</code> if and audio is playing, <code>false</code> otherwise.
+     * @throws CommandFailedException
+     *         if checking for audio playing fails
+     */
+    public boolean isAudioPlaying() throws CommandFailedException {
+        Request<ServiceRequest> isAudioPlayingRequest = new Request<ServiceRequest>(ServiceRequest.IS_AUDIO_PLAYING);
+
+        try {
+            return (boolean) requestSender.request(isAudioPlayingRequest);
+        } catch (ClassNotFoundException | IOException e) {
+            throw new CommandFailedException("Checking if an audio is currently playing failed.", e);
+        }
+    }
+
+    /**
      * Broadcast the given intent to all interested BroadcastReceivers.
      * 
      * @param args

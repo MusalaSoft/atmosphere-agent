@@ -360,6 +360,9 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
             case IS_GPS_LOCATION_ENABLED:
                 returnValue = serviceCommunicator.isGpsLocationEnabled();
                 break;
+            case IS_AUDIO_PLAYING:
+                returnValue = serviceCommunicator.isAudioPlaying();
+                break;
 
             // Call related
             case CALL_CANCEL:
