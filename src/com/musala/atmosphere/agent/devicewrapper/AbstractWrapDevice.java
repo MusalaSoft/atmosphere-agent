@@ -61,6 +61,8 @@ import com.musala.atmosphere.commons.exceptions.CommandFailedException;
 import com.musala.atmosphere.commons.gesture.Gesture;
 import com.musala.atmosphere.commons.sa.IWrapDevice;
 import com.musala.atmosphere.commons.ui.UiElementDescriptor;
+import com.musala.atmosphere.commons.ui.selector.UiElementSelector;
+import com.musala.atmosphere.commons.ui.tree.AccessibilityElement;
 import com.musala.atmosphere.commons.util.Pair;
 
 public abstract class AbstractWrapDevice extends UnicastRemoteObject implements IWrapDevice {
@@ -147,7 +149,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 
     /**
      * Creates an abstract wrapper of the given {@link IDevice device}.
-     * 
+     *
      * @param deviceToWrap
      *        - device to be wrapped
      * @param executor
@@ -162,10 +164,10 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
      *         - required when implementing {@link UnicastRemoteObject}
      */
     public AbstractWrapDevice(IDevice deviceToWrap,
-            ExecutorService executor,
-            BackgroundShellCommandExecutor shellCommandExecutor,
-            ServiceCommunicator serviceCommunicator,
-            UIAutomatorCommunicator automatorCommunicator) throws RemoteException {
+                              ExecutorService executor,
+                              BackgroundShellCommandExecutor shellCommandExecutor,
+                              ServiceCommunicator serviceCommunicator,
+                              UIAutomatorCommunicator automatorCommunicator) throws RemoteException {
         // TODO: Use a dependency injection mechanism here.
         this.wrappedDevice = deviceToWrap;
         this.executor = executor;
@@ -189,7 +191,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
         Object returnValue = null;
 
         switch (action) {
-        // Shell command related
+            // Shell command related
             case EXECUTE_SHELL_COMMAND:
                 returnValue = shellCommandExecutor.execute((String) args[0]);
                 break;
@@ -203,7 +205,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
                 interruptBackgroundShellProcess((String) args[0]);
                 break;
 
-            // APK file installation related
+                // APK file installation related
             case APK_INIT_INSTALL:
                 apkInstaller.initAPKInstall();
                 break;
@@ -217,7 +219,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
                 apkInstaller.discardAPK();
                 break;
 
-            // Getters
+                // Getters
             case GET_DEVICE_INFORMATION:
                 returnValue = getDeviceInformation();
                 break;
@@ -263,8 +265,20 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
             case GET_RUNNING_TASK_IDS:
                 returnValue = serviceCommunicator.getRunningTaskIds(args);
                 break;
+            case GET_UI_ELEMENTS:
+                returnValue = automatorCommunicator.getUiElements((UiElementSelector) args[0], (Boolean) args[1]);
+                break;
+            case GET_CHILDREN:
+                returnValue = automatorCommunicator.getChildren((AccessibilityElement) args[0],
+                                                                (UiElementSelector) args[1],
+                                                                (Boolean) args[2],
+                                                                (Boolean) args[3]);
+                break;
+            case CHECK_ELEMENT_PRESENCE:
+                returnValue = automatorCommunicator.isElementPresent((AccessibilityElement) args[0], (Boolean) args[1]);
+                break;
 
-            // Setters
+                // Setters
             case SET_POWER_PROPERTIES:
                 setPowerProperties((PowerProperties) args[0]);
                 break;
@@ -293,7 +307,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
                 serviceCommunicator.setKeyguard(args);
                 break;
 
-            // Misc functionalities
+                // Misc functionalities
             case WAIT_FOR_EXISTS:
                 returnValue = automatorCommunicator.waitForExists((UiElementDescriptor) args[0], (Integer) args[1]);
                 break;
@@ -364,7 +378,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
                 serviceCommunicator.showTapLocation(args);
                 break;
 
-            // Call related
+                // Call related
             case CALL_CANCEL:
                 cancelCall((PhoneNumber) args[0]);
                 break;
@@ -378,12 +392,12 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
                 acceptCall((PhoneNumber) args[0]);
                 break;
 
-            // SMS related
+                // SMS related
             case SMS_RECEIVE:
                 receiveSms((SmsMessage) args[0]);
                 break;
 
-            // Scrollable View related
+                // Scrollable View related
             case SCROLL_TO_DIRECTION:
                 returnValue = automatorCommunicator.scrollToDirection((ScrollDirection) args[0],
                                                                       (UiElementDescriptor) args[1],
@@ -392,7 +406,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
                                                                       (Boolean) args[4]);
                 break;
 
-            // Screen recording related
+                // Screen recording related
             case START_RECORDING:
                 startScreenRecording();
                 break;
@@ -406,7 +420,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 
     /**
      * Gets the amount of free RAM on the device.
-     * 
+     *
      * @return Memory amount in MB.
      * @throws CommandFailedException
      */
@@ -425,7 +439,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 
     /**
      * Gets a {@link DeviceInformation} descriptor structure for the {@link IDevice} in this wrapper.
-     * 
+     *
      * @return The populated {@link DeviceInformation} instance.
      */
     public DeviceInformation getDeviceInformation() {
@@ -536,7 +550,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 
     /**
      * Returns a JPEG compressed display screenshot.
-     * 
+     *
      * @return Image in an array of bytes that, when dumped to a file, shows the device display.
      * @throws CommandFailedException
      */
@@ -565,7 +579,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 
     /**
      * Gets the UIAutomator UI XML dump.
-     * 
+     *
      * @return UI XML file dump in a string
      * @throws CommandFailedException
      *         when UI XML dump fails
@@ -603,7 +617,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 
     /**
      * Executes a force-stop process command
-     * 
+     *
      * @param args
      *        - containing the package of the force-stopped process
      * @throws CommandFailedException
@@ -614,7 +628,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 
     /**
      * Uninstalls an application by a given package name.
-     * 
+     *
      * @param args
      *        - containing the package of the process.
      * @throws CommandFailedException
@@ -625,7 +639,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 
     /**
      * Pulls a single file from the device and save it locally.
-     * 
+     *
      * @param remoteFilePath
      *        - full path to the file which should be pulled
      * @param localFilePath
@@ -639,7 +653,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 
     /**
      * Attempts to kill a process running in background with <code>SIGINT</code>.
-     * 
+     *
      * @param processName
      *        - the name of the process to be killed
      * @throws CommandFailedException

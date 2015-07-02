@@ -1,6 +1,7 @@
 package com.musala.atmosphere.agent.devicewrapper.util.ondevicecomponent;
 
 import java.io.IOException;
+import java.util.List;
 
 import org.apache.log4j.Logger;
 
@@ -14,30 +15,31 @@ import com.musala.atmosphere.commons.exceptions.CommandFailedException;
 import com.musala.atmosphere.commons.gesture.Gesture;
 import com.musala.atmosphere.commons.gesture.Timeline;
 import com.musala.atmosphere.commons.ui.UiElementDescriptor;
+import com.musala.atmosphere.commons.ui.selector.UiElementSelector;
 import com.musala.atmosphere.commons.ui.tree.AccessibilityElement;
 import com.musala.atmosphere.commons.util.structure.tree.Tree;
 
 /**
  * Class that communicates with the ATMOSPHERE UIAutomator-based on-device component.
- * 
+ *
  * @author yordan.petrov
- * 
+ *
  */
 public class UIAutomatorCommunicator extends DeviceCommunicator<UIAutomatorRequest> {
     private static final Logger LOGGER = Logger.getLogger(UIAutomatorCommunicator.class);
 
     public UIAutomatorCommunicator(DeviceRequestSender<UIAutomatorRequest> requestSender,
-            BackgroundShellCommandExecutor commandExecutor,
-            String serialNumber) {
+                                   BackgroundShellCommandExecutor commandExecutor,
+                                   String serialNumber) {
         super(requestSender, commandExecutor, serialNumber);
     }
 
     /**
      * Plays the passed list of {@link Timeline} instances.
-     * 
+     *
      * @param pointerTimelines
      *        - a list of {@link Timeline} instances.
-     * 
+     *
      * @throws CommandFailedException
      */
     public void playGesture(Gesture gesture) throws CommandFailedException {
@@ -59,7 +61,7 @@ public class UIAutomatorCommunicator extends DeviceCommunicator<UIAutomatorReque
     /**
      * Starts a process on the UIAutomatorBridge that executes scrolling in a direction determined by the
      * scrollDirection parameter.
-     * 
+     *
      * @param scrollDirection
      *        determine scrolling direction
      * @param viewDescriptor
@@ -86,14 +88,14 @@ public class UIAutomatorCommunicator extends DeviceCommunicator<UIAutomatorReque
     /**
      * Starts a process on the UIAutomatorBridge that waits for a UI element to appear on the screen with a given
      * timeout.
-     * 
+     *
      * @param descriptor
      *        - the descriptor of the UI element
      * @param timeout
      *        - the given timeout
      * @return - returns <code>true</code> if the element exists or <code>false</code> if there isn't such element on
      *         the screen
-     * 
+     *
      * @throws CommandFailedException
      */
     public boolean waitForExists(UiElementDescriptor descriptor, Integer timeout) throws CommandFailedException {
@@ -105,14 +107,14 @@ public class UIAutomatorCommunicator extends DeviceCommunicator<UIAutomatorReque
     /**
      * Starts a process on the UIAutomatorBridge that waits for a UI element to disappear on the screen with a given
      * timeout.
-     * 
+     *
      * @param descriptor
      *        - the descriptor of the UI element
      * @param timeout
      *        - the given timeout.
      * @return <code>true</code> if the element disappears or <code>false</code> if there is such element on the screen
      *         after the timeout
-     * 
+     *
      * @throws CommandFailedException
      */
     public boolean waitUntilGone(UiElementDescriptor descriptor, Integer timeout) throws CommandFailedException {
@@ -123,7 +125,7 @@ public class UIAutomatorCommunicator extends DeviceCommunicator<UIAutomatorReque
 
     /**
      * Starts a process on the UIAutomatorBridge that opens the notification bar on the device.
-     * 
+     *
      * @return <code>true</code> if the notification bar has been successfully opened, <code>false</code> otherwise
      * @throws CommandFailedException
      */
@@ -133,7 +135,7 @@ public class UIAutomatorCommunicator extends DeviceCommunicator<UIAutomatorReque
 
     /**
      * Starts a process on the UIAutomatorBridge that opens the quick settings on the device.
-     * 
+     *
      * @return <code>true</code> if the quick settings have been successfully opened, <code>false</code> otherwise
      * @throws CommandFailedException
      */
@@ -145,7 +147,7 @@ public class UIAutomatorCommunicator extends DeviceCommunicator<UIAutomatorReque
      * Starts a process on the UI automator bridge that Waits for a window content update event to occur. If a package
      * name for the window is specified, but the current window does not have the same package name, the function
      * returns immediately.
-     * 
+     *
      * @param packageName
      *        - the specified window package name (can be null). If null, a window update from any front-end window will
      *        end the wait
@@ -163,7 +165,7 @@ public class UIAutomatorCommunicator extends DeviceCommunicator<UIAutomatorReque
 
     /**
      * Sends a request for dumping the screen of the device to a given XML file.
-     * 
+     *
      * @param remoteFile
      *        - the name of the XML file
      * @throws CommandFailedException
@@ -177,7 +179,7 @@ public class UIAutomatorCommunicator extends DeviceCommunicator<UIAutomatorReque
 
     /**
      * Sends a request for building a tree representation of the active screen of the device.
-     * 
+     *
      * @param visibleOnly
      *        - if <code>true</code> only the visible nodes will be used; if <code>false</code> all nodes will be used
      * @return a tree representation of the screen
@@ -192,8 +194,73 @@ public class UIAutomatorCommunicator extends DeviceCommunicator<UIAutomatorReque
     }
 
     /**
+     * Sends a request for getting all {@link AccessibilityElement UI elements} present on the screen and matching the
+     * given selector.
+     *
+     * @param visibleOnly
+     *        - if <code>true</code> only the visible elements will be searched; if <code>false</code> all elements will
+     *        be searched
+     * @return a list containing all found elements matching the selector
+     * @throws CommandFailedException
+     *         if the request fails
+     */
+    @SuppressWarnings("unchecked")
+    public List<AccessibilityElement> getUiElements(UiElementSelector selector, Boolean visibleOnly)
+            throws CommandFailedException {
+        Object[] arguments = new Object[] {selector, visibleOnly};
+
+        return (List<AccessibilityElement>) requestActionWithResponse(UIAutomatorRequest.GET_UI_ELEMENTS, arguments);
+    }
+
+    /**
+     * Sends a request for getting all {@link AccessibilityElement child UI elements} of the
+     * {@link AccessibilityElement element} passed as argument. Returned elements must match all properties contained in
+     * the given {@link UiElementSelector selector}.
+     *
+     * @param parentElement
+     *        - {@link AccessibilityElement accessibility element} whose children will be traversed
+     * @param selector
+     *        - {@link UiElementSelector element selector} containing properties used for matching the traversed
+     *        children
+     * @param directChildrenOnly
+     *        - if <code>true</code> only direct children will be traversed, else all successors will be traversed
+     * @param visibleOnly
+     *        - if <code>true</code> only the visible elements will be searched; if <code>false</code> all elements will
+     *        be searched
+     * @return a list containing all children found matching the given selector
+     * @throws CommandFailedException
+     *         if the request fails
+     */
+    @SuppressWarnings("unchecked")
+    public List<AccessibilityElement> getChildren(AccessibilityElement parentElement,
+                                                  UiElementSelector selector,
+                                                  Boolean directChildrenOnly,
+                                                  Boolean visibleOnly) throws CommandFailedException {
+        Object[] requestArguments = new Object[] {parentElement, selector, directChildrenOnly, visibleOnly};
+
+        return (List<AccessibilityElement>) requestActionWithResponse(UIAutomatorRequest.GET_CHILDREN, requestArguments);
+    }
+
+    /**
+     * Sends a request for validating an element presence on the screen.
+     *
+     * @param element
+     *        - the wrapper around the searched element
+     * @param visibleOnly
+     *        - if <code>true</code> only the visible nodes will be used; if <code>false</code> all nodes will be used
+     * @return <code>true</code> if the element is present on the screen; <code>false</code> otherwise
+     * @throws CommandFailedException
+     *         - if request fails
+     */
+    public boolean isElementPresent(AccessibilityElement element, boolean visibleOnly) throws CommandFailedException {
+        Object[] arguments = new Object[] {element, visibleOnly};
+
+        return (boolean) requestActionWithResponse(UIAutomatorRequest.CHECK_ELEMENT_PRESENCE, arguments);
+    }
+
+    /**
      * Requests the given {@link UIAutomatorRequest action} and returns the response.
-     * 
+     *
      * @param requestType
      *        - the {@link UIAutomatorRequest requested action}
      * @param arguments
@@ -203,7 +270,7 @@ public class UIAutomatorCommunicator extends DeviceCommunicator<UIAutomatorReque
      *         - if the request fails
      */
     private Object requestActionWithResponse(UIAutomatorRequest requestType, Object[] arguments)
-        throws CommandFailedException {
+            throws CommandFailedException {
         Request<UIAutomatorRequest> automatorRequest = new Request<UIAutomatorRequest>(requestType);
         automatorRequest.setArguments(arguments);
 
@@ -219,7 +286,7 @@ public class UIAutomatorCommunicator extends DeviceCommunicator<UIAutomatorReque
 
     /**
      * Starts a process on the UI automator corresponding to the passed parameters, with the default execution timeout.
-     * 
+     *
      * @param requestType
      *        - the type of the request to start
      * @param arguments
