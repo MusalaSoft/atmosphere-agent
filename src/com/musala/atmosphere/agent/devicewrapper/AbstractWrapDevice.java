@@ -129,6 +129,8 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 
     private static final String DEVICE_TYPE = "tablet";
 
+    private static final String CLEAR_APP_DATA_COMMAND = "pm clear";
+
     private ExecutorService executor;
 
     private CompletionService<Boolean> pullFileCompletionService;
@@ -376,6 +378,9 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
                 break;
             case SHOW_TAP_LOCATION:
                 serviceCommunicator.showTapLocation(args);
+                break;
+            case CLEAR_APP_DATA:
+                clearApplicationData((String) args[0]);
                 break;
 
                 // Call related
@@ -786,6 +791,20 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
             LOGGER.error(String.format("Failed to merge video records pulled from device with serial number %s.",
                                        wrappedDevice.getSerialNumber()), e);
         }
+    }
+
+    /**
+     * Clears the data of a given application.
+     * 
+     * @param packageName
+     *        - the package name of the given application
+     * @throws CommandFailedException
+     *         when fails to clear the application data
+     */
+    private void clearApplicationData(String packageName) throws CommandFailedException {
+        String clearApplicationDataCommand = String.format("%s %s", CLEAR_APP_DATA_COMMAND, packageName);
+
+        shellCommandExecutor.execute(clearApplicationDataCommand);
     }
 
     @Override
