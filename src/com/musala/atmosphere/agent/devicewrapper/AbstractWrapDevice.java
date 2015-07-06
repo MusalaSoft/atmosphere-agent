@@ -381,6 +381,9 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
             case SHOW_TAP_LOCATION:
                 serviceCommunicator.showTapLocation(args);
                 break;
+            case IS_AUDIO_PLAYING:
+                returnValue = serviceCommunicator.isAudioPlaying();
+                break;
             case CLEAR_APP_DATA:
                 clearApplicationData((String) args[0]);
                 break;
