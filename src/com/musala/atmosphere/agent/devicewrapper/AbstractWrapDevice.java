@@ -99,6 +99,8 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 
     private static final String SCREENSHOT_LOCAL_FILE_NAME = "local_screen.png";
 
+    private static final String FIRST_SCREEN_RECORD_NAME = "1.mp4";
+
     private static final String SCREEN_RECORD_COMPONENT_PATH = "/data/local/tmp";
 
     private static final String RECORDS_DIRECTORY_NAME = "AtmosphereScreenRecords";
@@ -737,7 +739,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 
         String[] screenRecordFilenames = output.split(RECORDS_FILENAMES_DELIMITER);
 
-        if (!screenRecordFilenames[0].equals("1.mp4")) {
+        if (!screenRecordFilenames[0].equals(FIRST_SCREEN_RECORD_NAME)) {
             return;
         }
 
