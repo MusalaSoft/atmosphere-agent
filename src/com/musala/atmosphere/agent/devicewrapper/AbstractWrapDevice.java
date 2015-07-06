@@ -166,10 +166,10 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
      *         - required when implementing {@link UnicastRemoteObject}
      */
     public AbstractWrapDevice(IDevice deviceToWrap,
-                              ExecutorService executor,
-                              BackgroundShellCommandExecutor shellCommandExecutor,
-                              ServiceCommunicator serviceCommunicator,
-                              UIAutomatorCommunicator automatorCommunicator) throws RemoteException {
+            ExecutorService executor,
+            BackgroundShellCommandExecutor shellCommandExecutor,
+            ServiceCommunicator serviceCommunicator,
+            UIAutomatorCommunicator automatorCommunicator) throws RemoteException {
         // TODO: Use a dependency injection mechanism here.
         this.wrappedDevice = deviceToWrap;
         this.executor = executor;
@@ -193,7 +193,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
         Object returnValue = null;
 
         switch (action) {
-            // Shell command related
+        // Shell command related
             case EXECUTE_SHELL_COMMAND:
                 returnValue = shellCommandExecutor.execute((String) args[0]);
                 break;
@@ -207,7 +207,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
                 interruptBackgroundShellProcess((String) args[0]);
                 break;
 
-                // APK file installation related
+            // APK file installation related
             case APK_INIT_INSTALL:
                 apkInstaller.initAPKInstall();
                 break;
@@ -221,7 +221,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
                 apkInstaller.discardAPK();
                 break;
 
-                // Getters
+            // Getters
             case GET_DEVICE_INFORMATION:
                 returnValue = getDeviceInformation();
                 break;
@@ -280,7 +280,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
                 returnValue = automatorCommunicator.isElementPresent((AccessibilityElement) args[0], (Boolean) args[1]);
                 break;
 
-                // Setters
+            // Setters
             case SET_POWER_PROPERTIES:
                 setPowerProperties((PowerProperties) args[0]);
                 break;
@@ -309,7 +309,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
                 serviceCommunicator.setKeyguard(args);
                 break;
 
-                // Misc functionalities
+            // Misc functionalities
             case WAIT_FOR_EXISTS:
                 returnValue = automatorCommunicator.waitForExists((UiElementDescriptor) args[0], (Integer) args[1]);
                 break;
@@ -383,7 +383,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
                 clearApplicationData((String) args[0]);
                 break;
 
-                // Call related
+            // Call related
             case CALL_CANCEL:
                 cancelCall((PhoneNumber) args[0]);
                 break;
@@ -397,12 +397,12 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
                 acceptCall((PhoneNumber) args[0]);
                 break;
 
-                // SMS related
+            // SMS related
             case SMS_RECEIVE:
                 receiveSms((SmsMessage) args[0]);
                 break;
 
-                // Scrollable View related
+            // Scrollable View related
             case SCROLL_TO_DIRECTION:
                 returnValue = automatorCommunicator.scrollToDirection((ScrollDirection) args[0],
                                                                       (UiElementDescriptor) args[1],
@@ -411,7 +411,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
                                                                       (Boolean) args[4]);
                 break;
 
-                // Screen recording related
+            // Screen recording related
             case START_RECORDING:
                 startScreenRecording();
                 break;
@@ -735,13 +735,17 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
             return;
         }
 
+        String[] screenRecordFilenames = output.split(RECORDS_FILENAMES_DELIMITER);
+
+        if (!screenRecordFilenames[0].equals("1.mp4")) {
+            return;
+        }
+
         File recordsDirectory = new File(SCREEN_RECORDS_LOCAL_DIR);
 
         if (!recordsDirectory.exists()) {
             recordsDirectory.mkdirs();
         }
-
-        String[] screenRecordFilenames = output.split(RECORDS_FILENAMES_DELIMITER);
 
         String timestamp = new SimpleDateFormat(TIMESTAMP_FORMAT).format(new Date());
         String separatedVideosDirectoryPath = String.format("%s%s%s_%s_VideoRecords",
