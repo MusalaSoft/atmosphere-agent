@@ -147,7 +147,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 
     /**
      * Creates an abstract wrapper of the given {@link IDevice device}.
-     * 
+     *
      * @param deviceToWrap
      *        - device to be wrapped
      * @param executor
@@ -262,6 +262,9 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
                 break;
             case GET_RUNNING_TASK_IDS:
                 returnValue = serviceCommunicator.getRunningTaskIds(args);
+                break;
+            case GET_LAST_TOAST:
+                returnValue = automatorCommunicator.getLastToast();
                 break;
 
             // Setters
@@ -403,7 +406,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 
     /**
      * Gets the amount of free RAM on the device.
-     * 
+     *
      * @return Memory amount in MB.
      * @throws CommandFailedException
      */
@@ -422,7 +425,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 
     /**
      * Gets a {@link DeviceInformation} descriptor structure for the {@link IDevice} in this wrapper.
-     * 
+     *
      * @return The populated {@link DeviceInformation} instance.
      */
     public DeviceInformation getDeviceInformation() {
@@ -533,7 +536,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 
     /**
      * Returns a JPEG compressed display screenshot.
-     * 
+     *
      * @return Image in an array of bytes that, when dumped to a file, shows the device display.
      * @throws CommandFailedException
      */
@@ -562,7 +565,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 
     /**
      * Gets the UIAutomator UI XML dump.
-     * 
+     *
      * @return UI XML file dump in a string
      * @throws CommandFailedException
      *         when UI XML dump fails
@@ -600,7 +603,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 
     /**
      * Executes a force-stop process command
-     * 
+     *
      * @param args
      *        - containing the package of the force-stopped process
      * @throws CommandFailedException
@@ -611,7 +614,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 
     /**
      * Uninstalls an application by a given package name.
-     * 
+     *
      * @param args
      *        - containing the package of the process.
      * @throws CommandFailedException
@@ -622,7 +625,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 
     /**
      * Pulls a single file from the device and save it locally.
-     * 
+     *
      * @param remoteFilePath
      *        - full path to the file which should be pulled
      * @param localFilePath
@@ -636,7 +639,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 
     /**
      * Attempts to kill a process running in background with <code>SIGINT</code>.
-     * 
+     *
      * @param processName
      *        - the name of the process to be killed
      * @throws CommandFailedException

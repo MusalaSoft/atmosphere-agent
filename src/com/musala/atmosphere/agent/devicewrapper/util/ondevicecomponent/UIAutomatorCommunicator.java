@@ -19,9 +19,9 @@ import com.musala.atmosphere.commons.util.structure.tree.Tree;
 
 /**
  * Class that communicates with the ATMOSPHERE UIAutomator-based on-device component.
- * 
+ *
  * @author yordan.petrov
- * 
+ *
  */
 public class UIAutomatorCommunicator extends DeviceCommunicator<UIAutomatorRequest> {
     private static final Logger LOGGER = Logger.getLogger(UIAutomatorCommunicator.class);
@@ -34,10 +34,10 @@ public class UIAutomatorCommunicator extends DeviceCommunicator<UIAutomatorReque
 
     /**
      * Plays the passed list of {@link Timeline} instances.
-     * 
+     *
      * @param pointerTimelines
      *        - a list of {@link Timeline} instances.
-     * 
+     *
      * @throws CommandFailedException
      */
     public void playGesture(Gesture gesture) throws CommandFailedException {
@@ -59,7 +59,7 @@ public class UIAutomatorCommunicator extends DeviceCommunicator<UIAutomatorReque
     /**
      * Starts a process on the UIAutomatorBridge that executes scrolling in a direction determined by the
      * scrollDirection parameter.
-     * 
+     *
      * @param scrollDirection
      *        determine scrolling direction
      * @param viewDescriptor
@@ -86,14 +86,14 @@ public class UIAutomatorCommunicator extends DeviceCommunicator<UIAutomatorReque
     /**
      * Starts a process on the UIAutomatorBridge that waits for a UI element to appear on the screen with a given
      * timeout.
-     * 
+     *
      * @param descriptor
      *        - the descriptor of the UI element
      * @param timeout
      *        - the given timeout
      * @return - returns <code>true</code> if the element exists or <code>false</code> if there isn't such element on
      *         the screen
-     * 
+     *
      * @throws CommandFailedException
      */
     public boolean waitForExists(UiElementDescriptor descriptor, Integer timeout) throws CommandFailedException {
@@ -105,14 +105,14 @@ public class UIAutomatorCommunicator extends DeviceCommunicator<UIAutomatorReque
     /**
      * Starts a process on the UIAutomatorBridge that waits for a UI element to disappear on the screen with a given
      * timeout.
-     * 
+     *
      * @param descriptor
      *        - the descriptor of the UI element
      * @param timeout
      *        - the given timeout.
      * @return <code>true</code> if the element disappears or <code>false</code> if there is such element on the screen
      *         after the timeout
-     * 
+     *
      * @throws CommandFailedException
      */
     public boolean waitUntilGone(UiElementDescriptor descriptor, Integer timeout) throws CommandFailedException {
@@ -123,7 +123,7 @@ public class UIAutomatorCommunicator extends DeviceCommunicator<UIAutomatorReque
 
     /**
      * Starts a process on the UIAutomatorBridge that opens the notification bar on the device.
-     * 
+     *
      * @return <code>true</code> if the notification bar has been successfully opened, <code>false</code> otherwise
      * @throws CommandFailedException
      */
@@ -133,7 +133,7 @@ public class UIAutomatorCommunicator extends DeviceCommunicator<UIAutomatorReque
 
     /**
      * Starts a process on the UIAutomatorBridge that opens the quick settings on the device.
-     * 
+     *
      * @return <code>true</code> if the quick settings have been successfully opened, <code>false</code> otherwise
      * @throws CommandFailedException
      */
@@ -145,7 +145,7 @@ public class UIAutomatorCommunicator extends DeviceCommunicator<UIAutomatorReque
      * Starts a process on the UI automator bridge that Waits for a window content update event to occur. If a package
      * name for the window is specified, but the current window does not have the same package name, the function
      * returns immediately.
-     * 
+     *
      * @param packageName
      *        - the specified window package name (can be null). If null, a window update from any front-end window will
      *        end the wait
@@ -163,11 +163,11 @@ public class UIAutomatorCommunicator extends DeviceCommunicator<UIAutomatorReque
 
     /**
      * Sends a request for dumping the screen of the device to a given XML file.
-     * 
+     *
      * @param remoteFile
      *        - the name of the XML file
      * @throws CommandFailedException
-     *         - if request fails
+     *         if request fails
      */
     public void getUiDumpXml(String remoteFile) throws CommandFailedException {
         Object[] arguments = new Object[] {remoteFile};
@@ -177,12 +177,12 @@ public class UIAutomatorCommunicator extends DeviceCommunicator<UIAutomatorReque
 
     /**
      * Sends a request for building a tree representation of the active screen of the device.
-     * 
+     *
      * @param visibleOnly
      *        - if <code>true</code> only the visible nodes will be used; if <code>false</code> all nodes will be used
      * @return a tree representation of the screen
      * @throws CommandFailedException
-     *         - if request fails
+     *         if request fails
      */
     @SuppressWarnings("unchecked")
     public Tree<AccessibilityElement> getUiTree(boolean visibleOnly) throws CommandFailedException {
@@ -192,15 +192,28 @@ public class UIAutomatorCommunicator extends DeviceCommunicator<UIAutomatorReque
     }
 
     /**
+     * Sends a request for obtaining the text of the last detected toast message of the device.
+     *
+     * @return the text of the last toast message or <code>null</code> if such is not detected yet
+     * @throws CommandFailedException
+     *         if request fails
+     */
+    public Object getLastToast() throws CommandFailedException {
+        Object[] arguments = new Object[] {};
+
+        return requestActionWithResponse(UIAutomatorRequest.GET_LAST_TOAST, arguments);
+    }
+
+    /**
      * Requests the given {@link UIAutomatorRequest action} and returns the response.
-     * 
+     *
      * @param requestType
      *        - the {@link UIAutomatorRequest requested action}
      * @param arguments
      *        - the arguments that are passed with the request
      * @return the response from the request
      * @throws CommandFailedException
-     *         - if the request fails
+     *         if the request fails
      */
     private Object requestActionWithResponse(UIAutomatorRequest requestType, Object[] arguments)
         throws CommandFailedException {
@@ -219,7 +232,7 @@ public class UIAutomatorCommunicator extends DeviceCommunicator<UIAutomatorReque
 
     /**
      * Starts a process on the UI automator corresponding to the passed parameters, with the default execution timeout.
-     * 
+     *
      * @param requestType
      *        - the type of the request to start
      * @param arguments
