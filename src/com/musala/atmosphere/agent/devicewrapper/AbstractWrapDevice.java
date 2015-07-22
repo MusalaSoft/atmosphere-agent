@@ -387,6 +387,9 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
             case CLEAR_APP_DATA:
                 clearApplicationData((String) args[0]);
                 break;
+            case STOP_BACKGROUND_PROCESS:
+                serviceCommunicator.stopBackgroundProcess(args);
+                break;
 
             // Call related
             case CALL_CANCEL:
