@@ -514,6 +514,25 @@ public class ServiceCommunicator extends DeviceCommunicator<ServiceRequest> {
         }
     }
 
+    /**
+     * Stops all background processes associated with the given package.
+     * 
+     * @param args
+     *        - args[0] should contain the given package name
+     * @throws CommandFailedException
+     *         if stopping the background processes fails
+     */
+    public void stopBackgroundProcess(Object[] args) throws CommandFailedException {
+        Request<ServiceRequest> stopBackgroundProcessRequest = new Request<ServiceRequest>(ServiceRequest.STOP_BACKGROUND_PROCESS);
+        stopBackgroundProcessRequest.setArguments(args);
+
+        try {
+            requestSender.request(stopBackgroundProcessRequest);
+        } catch (ClassNotFoundException | IOException e) {
+            throw new CommandFailedException("Stopping the given background process failed.", e);
+        }
+    }
+
     @Override
     public void startComponent() {
         IntentBuilder startSeviceIntentBuilder = new IntentBuilder(IntentAction.START_ATMOSPHERE_SERVICE);
