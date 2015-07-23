@@ -169,7 +169,7 @@ public class UIAutomatorCommunicator extends DeviceCommunicator<UIAutomatorReque
      * @param remoteFile
      *        - the name of the XML file
      * @throws CommandFailedException
-     *         - if request fails
+     *         if request fails
      */
     public void getUiDumpXml(String remoteFile) throws CommandFailedException {
         Object[] arguments = new Object[] {remoteFile};
@@ -184,13 +184,26 @@ public class UIAutomatorCommunicator extends DeviceCommunicator<UIAutomatorReque
      *        - if <code>true</code> only the visible nodes will be used; if <code>false</code> all nodes will be used
      * @return a tree representation of the screen
      * @throws CommandFailedException
-     *         - if request fails
+     *         if request fails
      */
     @SuppressWarnings("unchecked")
     public Tree<AccessibilityElement> getUiTree(boolean visibleOnly) throws CommandFailedException {
         Object[] arguments = new Object[] {visibleOnly};
 
         return (Tree<AccessibilityElement>) requestActionWithResponse(UIAutomatorRequest.GET_UI_TREE, arguments);
+    }
+
+    /**
+     * Sends a request for obtaining the text of the last detected toast message of the device.
+     *
+     * @return the text of the last toast message or <code>null</code> if such is not detected yet
+     * @throws CommandFailedException
+     *         if request fails
+     */
+    public Object getLastToast() throws CommandFailedException {
+        Object[] arguments = new Object[] {};
+
+        return requestActionWithResponse(UIAutomatorRequest.GET_LAST_TOAST, arguments);
     }
 
     /**
@@ -267,7 +280,7 @@ public class UIAutomatorCommunicator extends DeviceCommunicator<UIAutomatorReque
      *        - the arguments that are passed with the request
      * @return the response from the request
      * @throws CommandFailedException
-     *         - if the request fails
+     *         if the request fails
      */
     private Object requestActionWithResponse(UIAutomatorRequest requestType, Object[] arguments)
             throws CommandFailedException {

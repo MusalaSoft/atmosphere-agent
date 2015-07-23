@@ -269,6 +269,9 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
             case GET_RUNNING_TASK_IDS:
                 returnValue = serviceCommunicator.getRunningTaskIds(args);
                 break;
+	case GET_LAST_TOAST:
+                returnValue = automatorCommunicator.getLastToast();
+                break;
             case GET_UI_ELEMENTS:
                 returnValue = automatorCommunicator.getUiElements((UiElementSelector) args[0], (Boolean) args[1]);
                 break;
