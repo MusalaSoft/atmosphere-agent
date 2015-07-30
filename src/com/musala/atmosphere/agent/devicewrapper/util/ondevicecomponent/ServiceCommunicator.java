@@ -548,6 +548,24 @@ public class ServiceCommunicator extends DeviceCommunicator<ServiceRequest> {
         }
     }
 
+    /**
+     * Retrieves token from the Augmented Traffic Control tool used for authentication before the Agent will be able to
+     * modify the network connection properties.
+     * 
+     * @return string in JSON format containing key value pairs - token, device ip address in the network, validity of
+     *         the token
+     */
+    public String retrieveToken() throws CommandFailedException {
+        Request<ServiceRequest> receiveTokenRequest = new Request<ServiceRequest>(ServiceRequest.RETRIEVE_TOKEN);
+
+        try {
+            return (String) requestSender.request(receiveTokenRequest);
+        } catch (ClassNotFoundException | IOException | CommandFailedException e) {
+            throw new CommandFailedException(String.format("Retrieving token for device %s failed.", deviceSerialNumber),
+                                             e);
+        }
+    }
+
     @Override
     public void stopComponent() {
         // TODO: Use socket requests here. Refactor the service to use dispatchers like the UI automator bridge.
@@ -568,4 +586,5 @@ public class ServiceCommunicator extends DeviceCommunicator<ServiceRequest> {
         Request<ServiceRequest> validationRequest = new Request<ServiceRequest>(ServiceRequest.VALIDATION);
         validateRemoteServer(validationRequest);
     }
+
 }
