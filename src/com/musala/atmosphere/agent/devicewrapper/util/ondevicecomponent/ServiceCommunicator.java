@@ -554,6 +554,8 @@ public class ServiceCommunicator extends DeviceCommunicator<ServiceRequest> {
      * 
      * @return string in JSON format containing key value pairs - token, device ip address in the network, validity of
      *         the token
+     * @throws CommandFailedException
+     *         if sending request for retrieving token fails
      */
     public String retrieveToken() throws CommandFailedException {
         Request<ServiceRequest> receiveTokenRequest = new Request<ServiceRequest>(ServiceRequest.RETRIEVE_TOKEN);
@@ -562,6 +564,45 @@ public class ServiceCommunicator extends DeviceCommunicator<ServiceRequest> {
             return (String) requestSender.request(receiveTokenRequest);
         } catch (ClassNotFoundException | IOException | CommandFailedException e) {
             throw new CommandFailedException(String.format("Retrieving token for device %s failed.", deviceSerialNumber),
+                                             e);
+        }
+    }
+
+    /**
+     * Sends request to the service for modifying WiFi connection properties.
+     * 
+     * @param args
+     *        - contains information about the connection properties to be set
+     * @throws CommandFailedException
+     *         if sending request for device shaping fails
+     */
+    public void shapeDevice(Object[] args) throws CommandFailedException {
+        Request<ServiceRequest> shapeDeviceRequest = new Request<ServiceRequest>(ServiceRequest.SHAPE_DEVICE);
+        shapeDeviceRequest.setArguments(args);
+
+        try {
+            requestSender.request(shapeDeviceRequest);
+        } catch (ClassNotFoundException | IOException | CommandFailedException e) {
+            throw new CommandFailedException(String.format("Modifying WiFi connection properties for device %s failed.",
+                                                           deviceSerialNumber),
+                                             e);
+        }
+    }
+
+    /**
+     * Sends request to the service for restoring WiFi connection properties.
+     * 
+     * @throws CommandFailedException
+     *         if sending request for unshaping fails
+     */
+    public void unshapeDevice() throws CommandFailedException {
+        Request<ServiceRequest> shapeDeviceRequest = new Request<ServiceRequest>(ServiceRequest.UNSHAPE_DEVICE);
+
+        try {
+            requestSender.request(shapeDeviceRequest);
+        } catch (ClassNotFoundException | IOException | CommandFailedException e) {
+            throw new CommandFailedException(String.format("Restoring WiFi connection properties for device %s failed.",
+                                                           deviceSerialNumber),
                                              e);
         }
     }
