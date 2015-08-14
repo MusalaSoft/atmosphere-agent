@@ -44,7 +44,7 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager {
      */
     private static final long serialVersionUID = 8467038223162311366L;
 
-    private final static Logger LOGGER = Logger.getLogger(AgentManager.class.getCanonicalName());
+    private static final Logger LOGGER = Logger.getLogger(AgentManager.class.getCanonicalName());
 
     private AndroidDebugBridgeManager androidDebugBridgeManager;
 
@@ -98,7 +98,7 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager {
         rmiRegistry.rebind(RmiStringConstants.AGENT_EVENT_RECEIVER.toString(), agentEventReceiver);
 
         rmiRegistryPort = rmiPort;
-        deviceManager = new DeviceManager();
+        deviceManager = new DeviceManager(rmiPort);
 
         LOGGER.info("AgentManager created successfully.");
     }
@@ -139,6 +139,9 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager {
 
                 UnicastRemoteObject.unexportObject(rmiRegistry, true);
             }
+
+            // Stops the chrome driver started as a service
+            deviceManager.stopChromeDriverService();
         } catch (Exception e) {
             // If something cannot be closed it was never opened, so it's okay.
             // Nothing to do here.

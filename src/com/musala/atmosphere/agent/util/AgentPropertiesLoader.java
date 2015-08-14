@@ -201,4 +201,13 @@ public class AgentPropertiesLoader {
         String onDeviceComponentFilesPath = getPropertyString(AgentProperties.ON_DEVICE_COMPONENT_FILES_PATH);
         return onDeviceComponentFilesPath.concat("\\");
     }
+
+    /**
+     * Returns the path to the Chrome Driver executable from the config file.
+     * 
+     * @return - the path to the Chrome Driver executable
+     */
+    public static String getChromeDriverExecutablePath() {
+        return getPropertyString(AgentProperties.CHROME_DRIVER_EXECUTABLE_PATH);
+    }
 }

@@ -1,5 +1,6 @@
 package com.musala.atmosphere.agent;
 
+import java.io.File;
 import java.rmi.AccessException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
@@ -15,6 +16,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import org.apache.log4j.Logger;
+import org.openqa.selenium.chrome.ChromeDriverService;
 
 import com.android.ddmlib.IDevice;
 import com.musala.atmosphere.agent.devicewrapper.AbstractWrapDevice;
@@ -32,6 +34,7 @@ import com.musala.atmosphere.agent.exception.OnDeviceComponentCommunicationExcep
 import com.musala.atmosphere.agent.exception.OnDeviceComponentInitializationException;
 import com.musala.atmosphere.agent.exception.OnDeviceComponentStartingException;
 import com.musala.atmosphere.agent.util.AgentIdCalculator;
+import com.musala.atmosphere.agent.util.AgentPropertiesLoader;
 import com.musala.atmosphere.commons.DeviceInformation;
 import com.musala.atmosphere.commons.ad.service.ConnectionConstants;
 import com.musala.atmosphere.commons.exceptions.CommandFailedException;
@@ -50,11 +53,13 @@ import com.musala.atmosphere.commons.sa.exceptions.TimeoutReachedException;
  * 
  */
 public class DeviceManager {
-    private final static Logger LOGGER = Logger.getLogger(DeviceManager.class.getCanonicalName());
+    private static final Logger LOGGER = Logger.getLogger(DeviceManager.class.getCanonicalName());
+
+    private static final String CHROME_DRIVER_EXECUTABLE_PATH = AgentPropertiesLoader.getChromeDriverExecutablePath();
 
     private static final int BOOT_VALIDATION_TIMEOUT = 120000;
 
-    private final static int DEVICE_EXISTANCE_CHECK_TIMEOUT = 1000;
+    private static final int DEVICE_EXISTANCE_CHECK_TIMEOUT = 1000;
 
     private static final int ATMOSPHERE_MIN_ALLOWED_API_LEVEL = 17;
 
@@ -74,7 +79,9 @@ public class DeviceManager {
 
     private static volatile Map<String, IDevice> connectedDevicesList = new HashMap<String, IDevice>();
 
-    public DeviceManager() throws RemoteException {
+    private ChromeDriverService chromeDriverService;
+
+    public DeviceManager() {
     }
 
     public DeviceManager(int rmiPort) throws RemoteException {
@@ -127,6 +134,9 @@ public class DeviceManager {
             }
 
             deviceManagerExecutor.releaseResources();
+            chromeDriverService = new ChromeDriverService.Builder().usingDriverExecutable(new File(CHROME_DRIVER_EXECUTABLE_PATH))
+                                                                   .usingAnyFreePort()
+                                                                   .build();
             LOGGER.info("Device manager created successfully.");
         }
     }
@@ -302,13 +312,15 @@ public class DeviceManager {
                                                        executor,
                                                        shellCommandExecutor,
                                                        serviceCommunicator,
-                                                       automatorCommunicator);
+                                                       automatorCommunicator,
+                                                       chromeDriverService);
             } else {
                 deviceWrapper = new RealWrapDevice(device,
                                                    executor,
                                                    shellCommandExecutor,
                                                    serviceCommunicator,
-                                                   automatorCommunicator);
+                                                   automatorCommunicator,
+                                                   chromeDriverService);
             }
         } catch (NotPossibleForDeviceException e) {
             // Not really possible as we have just checked.
@@ -471,6 +483,14 @@ public class DeviceManager {
             }
         }
         throw new NoAvailableDeviceFoundException("No emulator devices are present on the agent (current machine).");
+    }
+
+    /**
+     * Stops the chrome driver started as a service.
+     * 
+     */
+    public void stopChromeDriverService() {
+        chromeDriverService.stop();
     }
 
     /**

@@ -20,6 +20,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
 import org.apache.log4j.Logger;
+import org.openqa.selenium.chrome.ChromeDriverService;
 
 import com.android.ddmlib.AdbCommandRejectedException;
 import com.android.ddmlib.CollectingOutputReceiver;
@@ -46,6 +47,7 @@ import com.musala.atmosphere.agent.devicewrapper.util.ondevicecomponent.ServiceC
 import com.musala.atmosphere.agent.devicewrapper.util.ondevicecomponent.UIAutomatorCommunicator;
 import com.musala.atmosphere.agent.exception.OnDeviceServiceTerminationException;
 import com.musala.atmosphere.agent.util.DeviceScreenResolutionParser;
+import com.musala.atmosphere.agent.webview.ChromeDriverManager;
 import com.musala.atmosphere.commons.DeviceInformation;
 import com.musala.atmosphere.commons.PowerProperties;
 import com.musala.atmosphere.commons.RoutingAction;
@@ -151,6 +153,8 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 
     private final ImeManager imeManager;
 
+    private ChromeDriverManager chromeDriverManager;
+
     /**
      * Creates an abstract wrapper of the given {@link IDevice device}.
      *
@@ -171,17 +175,21 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
             ExecutorService executor,
             BackgroundShellCommandExecutor shellCommandExecutor,
             ServiceCommunicator serviceCommunicator,
-            UIAutomatorCommunicator automatorCommunicator) throws RemoteException {
+            UIAutomatorCommunicator automatorCommunicator,
+            ChromeDriverService chromeDriverService) throws RemoteException {
         // TODO: Use a dependency injection mechanism here.
         this.wrappedDevice = deviceToWrap;
         this.executor = executor;
         this.shellCommandExecutor = shellCommandExecutor;
         this.serviceCommunicator = serviceCommunicator;
         this.automatorCommunicator = automatorCommunicator;
+
         transferService = new FileTransferService(wrappedDevice);
         apkInstaller = new ApkInstaller(wrappedDevice);
         imeManager = new ImeManager(shellCommandExecutor);
         pullFileCompletionService = new ExecutorCompletionService<Boolean>(executor);
+
+        chromeDriverManager = new ChromeDriverManager(chromeDriverService, deviceToWrap.getSerialNumber());
     }
 
     @Override
@@ -269,7 +277,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
             case GET_RUNNING_TASK_IDS:
                 returnValue = serviceCommunicator.getRunningTaskIds(args);
                 break;
-	case GET_LAST_TOAST:
+            case GET_LAST_TOAST:
                 returnValue = automatorCommunicator.getLastToast();
                 break;
             case GET_UI_ELEMENTS:

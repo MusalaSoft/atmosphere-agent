@@ -7,6 +7,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
+import org.openqa.selenium.chrome.ChromeDriverService;
 
 import com.android.ddmlib.IDevice;
 import com.musala.atmosphere.agent.devicewrapper.util.BackgroundShellCommandExecutor;
@@ -59,8 +60,14 @@ public class EmulatorWrapDevice extends AbstractWrapDevice {
             ExecutorService executor,
             BackgroundShellCommandExecutor shellCommandExecutor,
             ServiceCommunicator serviceCommunicator,
-            UIAutomatorCommunicator automatorCommunicator) throws NotPossibleForDeviceException, RemoteException {
-        super(deviceToWrap, executor, shellCommandExecutor, serviceCommunicator, automatorCommunicator);
+            UIAutomatorCommunicator automatorCommunicator,
+            ChromeDriverService chromeDriverService) throws NotPossibleForDeviceException, RemoteException {
+        super(deviceToWrap,
+              executor,
+              shellCommandExecutor,
+              serviceCommunicator,
+              automatorCommunicator,
+              chromeDriverService);
 
         if (!deviceToWrap.isEmulator()) {
             throw new NotPossibleForDeviceException("Cannot create emulator wrap device for a real, physical device.");
