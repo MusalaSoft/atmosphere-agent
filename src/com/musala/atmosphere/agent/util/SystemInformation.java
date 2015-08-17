@@ -1,9 +1,6 @@
 package com.musala.atmosphere.agent.util;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
 
 import org.apache.log4j.Logger;
 import org.hyperic.sigar.Cpu;
@@ -12,9 +9,9 @@ import org.hyperic.sigar.Sigar;
 import org.hyperic.sigar.SigarException;
 
 /**
- * 
+ *
  * @author valyo.yolovski
- * 
+ *
  */
 public class SystemInformation {
     private final static Logger LOGGER = Logger.getLogger(SystemInformation.class.getCanonicalName());
@@ -28,38 +25,40 @@ public class SystemInformation {
     private static final int FALLBACK_CPU_COUNT = 1;
 
     /**
-     * Returns true if Intel® HAXM (Hardware Accelerated Execution Manager) is available and false if it is not.
-     * 
+     * Returns true if Intel HAXM (Hardware Accelerated Execution Manager) is available and false if it is not.
+     *
      * @return - true if HAXM is available; false otherwise.
      */
     public static boolean isHaxm() {
         // TODO This method should be refactored so we maintain cross-platform support.
         // We'll probably need a class that implements logic for cross-platform command execution.
         // Or maybe a low level libraries (dum dum dum...).
-        try {
-            String[] haxmValidationCommand = {"cmd.exe", "/C", "sc query intelhaxm"};
-            Runtime runtime = Runtime.getRuntime();
-            Process haxmValidationProcess = runtime.exec(haxmValidationCommand);
-            BufferedReader haxmValidationReader = new BufferedReader(new InputStreamReader(haxmValidationProcess.getInputStream()));
-            String readLine = haxmValidationReader.readLine();
-            while (readLine != null) {
-                if (readLine.contains("SERVICE_NAME: intelhaxm")) {
-                    LOGGER.info("Haxm available.");
-                    return true;
-                }
 
-                readLine = haxmValidationReader.readLine();
-            }
-        } catch (IOException e) {
-            LOGGER.warn("Could not validate HAXM.", e);
-        }
+        // try {
+        // String[] haxmValidationCommand = {"cmd.exe", "/C", "sc query intelhaxm"};
+        // Runtime runtime = Runtime.getRuntime();
+        // Process haxmValidationProcess = runtime.exec(haxmValidationCommand);
+        // BufferedReader haxmValidationReader = new BufferedReader(new
+        // InputStreamReader(haxmValidationProcess.getInputStream()));
+        // String readLine = haxmValidationReader.readLine();
+        // while (readLine != null) {
+        // if (readLine.contains("SERVICE_NAME: intelhaxm")) {
+        // LOGGER.info("Haxm available.");
+        // return true;
+        // }
+        //
+        // readLine = haxmValidationReader.readLine();
+        // }
+        // } catch (IOException e) {
+        // LOGGER.warn("Could not validate HAXM.", e);
+        // }
 
         return false;
     }
 
     /**
      * Returns the free disk space on the hard disk in MBs.
-     * 
+     *
      * @return the free disk space on the hard disk in MBs.
      */
     public static long getFreeDiskSpace() {
@@ -77,7 +76,7 @@ public class SystemInformation {
 
     /**
      * Gets the total RAM memory available on the device.
-     * 
+     *
      * @return the total RAM memory in MBs.
      */
     public static long getTotalRam() {
@@ -97,7 +96,7 @@ public class SystemInformation {
 
     /**
      * Gets the free RAM memory available on the device.
-     * 
+     *
      * @return the free RAM memory in MBs.
      */
     public static long getFreeRam() {
@@ -117,7 +116,7 @@ public class SystemInformation {
 
     /**
      * Gets the number of CPUs available on the device.
-     * 
+     *
      * @return the number of CPUs available on the device.
      */
     public static int getCpuCount() {
@@ -133,7 +132,7 @@ public class SystemInformation {
 
     /**
      * Executes SciMark benchmark tests and returns the benchmark score.
-     * 
+     *
      * @return SciMark benchmark score.
      */
     public static double getScimarkScore() {

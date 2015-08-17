@@ -199,6 +199,6 @@ public class AgentPropertiesLoader {
      */
     public static String getOnDeviceComponentFilesPath() {
         String onDeviceComponentFilesPath = getPropertyString(AgentProperties.ON_DEVICE_COMPONENT_FILES_PATH);
-        return onDeviceComponentFilesPath.concat("\\");
+        return onDeviceComponentFilesPath.concat(File.separator);
     }
 }
