@@ -437,6 +437,11 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
             case STOP_RECORDING:
                 stopScreenRecording();
                 break;
+
+            // WebView Related
+            case GET_WEB_VIEW:
+                chromeDriverManager.initDriver((String) args[0]);
+                break;
         }
 
         return returnValue;
