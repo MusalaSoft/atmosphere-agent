@@ -47,7 +47,7 @@ import com.musala.atmosphere.agent.devicewrapper.util.ondevicecomponent.ServiceC
 import com.musala.atmosphere.agent.devicewrapper.util.ondevicecomponent.UIAutomatorCommunicator;
 import com.musala.atmosphere.agent.exception.OnDeviceServiceTerminationException;
 import com.musala.atmosphere.agent.util.DeviceScreenResolutionParser;
-import com.musala.atmosphere.agent.webview.ChromeDriverManager;
+import com.musala.atmosphere.agent.webview.WebElementManager;
 import com.musala.atmosphere.commons.DeviceInformation;
 import com.musala.atmosphere.commons.PowerProperties;
 import com.musala.atmosphere.commons.RoutingAction;
@@ -66,6 +66,7 @@ import com.musala.atmosphere.commons.ui.UiElementDescriptor;
 import com.musala.atmosphere.commons.ui.selector.UiElementSelector;
 import com.musala.atmosphere.commons.ui.tree.AccessibilityElement;
 import com.musala.atmosphere.commons.util.Pair;
+import com.musala.atmosphere.commons.webelement.selection.WebElementSelectionCriterion;
 
 public abstract class AbstractWrapDevice extends UnicastRemoteObject implements IWrapDevice {
 
@@ -153,7 +154,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 
     private final ImeManager imeManager;
 
-    private ChromeDriverManager chromeDriverManager;
+    private WebElementManager webElementManager;
 
     /**
      * Creates an abstract wrapper of the given {@link IDevice device}.
@@ -189,7 +190,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
         imeManager = new ImeManager(shellCommandExecutor);
         pullFileCompletionService = new ExecutorCompletionService<Boolean>(executor);
 
-        chromeDriverManager = new ChromeDriverManager(chromeDriverService, deviceToWrap.getSerialNumber());
+        webElementManager = new WebElementManager(chromeDriverService, deviceToWrap.getSerialNumber());
     }
 
     @Override
@@ -440,7 +441,21 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 
             // WebView Related
             case GET_WEB_VIEW:
-                chromeDriverManager.initDriver((String) args[0]);
+                webElementManager.initDriver((String) args[0]);
+                break;
+            case FIND_WEB_ELEMENT:
+                returnValue = webElementManager.findElement((WebElementSelectionCriterion) args[0], (String) args[1]);
+
+                // TODO: Remove closing driver after a routing action for closing the driver is implemented for example
+                // on webViewInstance.disconnect();
+                webElementManager.closeDriver();
+                break;
+            case FIND_WEB_ELEMENTS:
+                returnValue = webElementManager.findElements((WebElementSelectionCriterion) args[0], (String) args[1]);
+
+                // TODO: Remove closing driver after a routing action for closing the driver is implemented for example
+                // on webViewInstance.disconnect();
+                webElementManager.closeDriver();
                 break;
         }
 
