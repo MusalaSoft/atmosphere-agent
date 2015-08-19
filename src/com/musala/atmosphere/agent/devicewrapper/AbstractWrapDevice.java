@@ -432,10 +432,10 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 
             // WiFi connection properties related
             case SHAPE_DEVICE:
-                serviceCommunicator.shapeDevice(args);
+                returnValue = serviceCommunicator.shapeDevice(args);
                 break;
             case UNSHAPE_DEVICE:
-                serviceCommunicator.unshapeDevice();
+                returnValue = serviceCommunicator.unshapeDevice();
                 break;
         }
 
