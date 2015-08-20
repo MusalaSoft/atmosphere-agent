@@ -113,15 +113,7 @@ public class WebElementManager {
      */
     public List<Map<String, Object>> findElements(WebElementSelectionCriterion selectionCriterion, String criterionValue) {
         By criterion = findBy(selectionCriterion, criterionValue);
-        List<WebElement> webElements = null;
-
-        try {
-            webElements = driver.findElements(criterion);
-        } catch (NoSuchElementException e) {
-            throw new WebElementNotPresentException(String.format("Web elements for the requested search criterion  %s and value %s are not present on the screen!",
-                                                                  selectionCriterion,
-                                                                  criterionValue));
-        }
+        List<WebElement> webElements = driver.findElements(criterion);
 
         List<Map<String, Object>> foundElements = new ArrayList<Map<String, Object>>();
         for (WebElement element : webElements) {
@@ -187,7 +179,9 @@ public class WebElementManager {
      * Closes the instance of the driver used for retrieving data from the corresponding WebView present on the screen.
      */
     public void closeDriver() {
-        driver.quit();
+        if (driver != null) {
+            driver.quit();
+        }
     }
 
     /**
