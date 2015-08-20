@@ -152,6 +152,20 @@ public class WebElementManager {
     }
 
     /**
+     * Gets the tag name of the element.
+     * 
+     * @param selectionCriterion
+     *        - criterion by which the element will be selected
+     * @param criterionValue
+     *        - value of the criterion
+     * @return string representing the tag name of the element
+     */
+    public String getTagName(WebElementSelectionCriterion selectionCriterion, String criterionValue) {
+        WebElement element = getWebElement(selectionCriterion, criterionValue);
+        return element.getTagName();
+    }
+
+    /**
      * Executes action on the web element selected by the given criterion.
      * 
      * @param webElementAction
@@ -170,6 +184,8 @@ public class WebElementManager {
                 return isSelected(selectionCriterion, criterionValue);
             case IS_DISPLAYED:
                 return isDisplayed(selectionCriterion, criterionValue);
+            case GET_TAG_NAME:
+                return getTagName(selectionCriterion, criterionValue);
             default:
                 return null;
         }
