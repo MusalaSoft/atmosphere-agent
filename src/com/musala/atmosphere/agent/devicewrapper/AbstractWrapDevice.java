@@ -445,16 +445,11 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
                 break;
             case FIND_WEB_ELEMENT:
                 returnValue = webElementManager.findElement((WebElementSelectionCriterion) args[0], (String) args[1]);
-
-                // TODO: Remove closing driver after a routing action for closing the driver is implemented for example
-                // on webViewInstance.disconnect();
-                webElementManager.closeDriver();
                 break;
             case FIND_WEB_ELEMENTS:
                 returnValue = webElementManager.findElements((WebElementSelectionCriterion) args[0], (String) args[1]);
-
-                // TODO: Remove closing driver after a routing action for closing the driver is implemented for example
-                // on webViewInstance.disconnect();
+                break;
+            case CLOSE_CHROME_DRIVER:
                 webElementManager.closeDriver();
                 break;
         }
