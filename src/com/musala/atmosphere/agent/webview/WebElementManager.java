@@ -17,6 +17,7 @@ import org.openqa.selenium.chrome.ChromeDriverService;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.remote.DesiredCapabilities;
 
+import com.musala.atmosphere.commons.webelement.actions.WebElementAction;
 import com.musala.atmosphere.commons.webelement.selection.WebElementNotPresentException;
 import com.musala.atmosphere.commons.webelement.selection.WebElementSelectionCriterion;
 
@@ -131,10 +132,86 @@ public class WebElementManager {
     }
 
     /**
+     * Checks if the element by the given criterion is displayed.
+     * 
+     * @param selectionCriterion
+     *        - criterion by which the element will be selected
+     * @param criterionValue
+     *        - value of the criterion
+     * @return <code>true</code> if the element is displayed, <code>false</code> otherwise
+     */
+    public boolean isDisplayed(WebElementSelectionCriterion selectionCriterion, String criterionValue) {
+        WebElement element = getWebElement(selectionCriterion, criterionValue);
+        return element.isDisplayed();
+    }
+
+    /**
+     * Checks if the element by the given criterion is selected.
+     * 
+     * @param selectionCriterion
+     *        - criterion by which the element will be selected
+     * @param criterionValue
+     *        - value of the criterion
+     * @return <code>true</code> if the element is selected, <code>false</code> otherwise
+     */
+    public boolean isSelected(WebElementSelectionCriterion selectionCriterion, String criterionValue) {
+        WebElement element = getWebElement(selectionCriterion, criterionValue);
+        return element.isSelected();
+    }
+
+    /**
+     * Executes action on the web element selected by the given criterion.
+     * 
+     * @param webElementAction
+     *        - type of the action that will be executed
+     * @param selectionCriterion
+     *        - criterion by which the element will be selected
+     * @param criterionValue
+     *        - value of the criterion
+     * @return {@link Object} containing the result of the executed action
+     */
+    public Object executeAction(WebElementAction webElementAction,
+                                WebElementSelectionCriterion selectionCriterion,
+                                String criterionValue) {
+        switch (webElementAction) {
+            case IS_SELECTED:
+                return isSelected(selectionCriterion, criterionValue);
+            case IS_DISPLAYED:
+                return isDisplayed(selectionCriterion, criterionValue);
+            default:
+                return null;
+        }
+    }
+
+    /**
      * Closes the instance of the driver used for retrieving data from the corresponding WebView present on the screen.
      */
     public void closeDriver() {
         driver.quit();
+    }
+
+    /**
+     * Gets a web element by the given criteria.
+     * 
+     * @param selectionCriterion
+     *        - criterion by which the element will be selected
+     * @param criterionValue
+     *        - value of the criterion
+     * @return the web element instance
+     */
+    private WebElement getWebElement(WebElementSelectionCriterion selectionCriterion, String criterionValue) {
+        By criterion = findBy(selectionCriterion, criterionValue);
+        WebElement foundElement = null;
+
+        try {
+            foundElement = driver.findElement(criterion);
+        } catch (NoSuchElementException e) {
+            throw new WebElementNotPresentException(String.format("The Web element for the requested search criterion  %s and value %s is no longer present on the screen!",
+                                                                  selectionCriterion,
+                                                                  criterionValue));
+        }
+
+        return foundElement;
     }
 
     private By findBy(WebElementSelectionCriterion selectionCriterion, String criterionValue) {
