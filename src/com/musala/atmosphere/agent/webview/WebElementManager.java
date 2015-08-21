@@ -182,6 +182,21 @@ public class WebElementManager {
     }
 
     /**
+     * Get the visible (i.e. not hidden by CSS) innerText of this element, including sub-elements, without any leading
+     * or trailing whitespace.
+     * 
+     * @param selectionCriterion
+     *        - criterion by which the element will be selected
+     * @param criterionValue
+     *        - value of the criterion
+     * @return the inner text of this element
+     */
+    public String getText(WebElementSelectionCriterion selectionCriterion, String criterionValue) {
+        WebElement element = getWebElement(selectionCriterion, criterionValue);
+        return element.getText();
+    }
+
+    /**
      * Executes action on the web element selected by the given criterion.
      * 
      * @param webElementAction
@@ -204,6 +219,8 @@ public class WebElementManager {
                 return getTagName(selectionCriterion, criterionValue);
             case GET_SIZE:
                 return getSize(selectionCriterion, criterionValue);
+            case GET_TEXT:
+                return getText(selectionCriterion, criterionValue);
             case TAP:
                 tap(selectionCriterion, criterionValue);
             default:
