@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.openqa.selenium.By;
+import org.openqa.selenium.Dimension;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.WebDriver;
@@ -17,6 +18,7 @@ import org.openqa.selenium.chrome.ChromeDriverService;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.remote.DesiredCapabilities;
 
+import com.musala.atmosphere.commons.util.Pair;
 import com.musala.atmosphere.commons.webelement.actions.WebElementAction;
 import com.musala.atmosphere.commons.webelement.selection.WebElementNotPresentException;
 import com.musala.atmosphere.commons.webelement.selection.WebElementSelectionCriterion;
@@ -111,7 +113,8 @@ public class WebElementManager {
      *        - value of the criterion used for matching
      * @return list of {@link Map attributes} corresponding to the found elements
      */
-    public List<Map<String, Object>> findElements(WebElementSelectionCriterion selectionCriterion, String criterionValue) {
+    public List<Map<String, Object>> findElements(WebElementSelectionCriterion selectionCriterion,
+                                                  String criterionValue) {
         By criterion = findBy(selectionCriterion, criterionValue);
         List<WebElement> webElements = driver.findElements(criterion);
 
@@ -186,6 +189,8 @@ public class WebElementManager {
                 return isDisplayed(selectionCriterion, criterionValue);
             case GET_TAG_NAME:
                 return getTagName(selectionCriterion, criterionValue);
+            case GET_SIZE:
+                return getSize(selectionCriterion, criterionValue);
             default:
                 return null;
         }
@@ -263,5 +268,21 @@ public class WebElementManager {
         }
 
         return elementAttributes;
+    }
+
+    /**
+     * Gets the size of a web element by the given criterion.
+     * 
+     * @param selectionCriterion
+     *        - criterion by which the element will be selected
+     * @param criterionValue
+     *        - value of the criterion
+     * @return size of the web element
+     */
+    private Pair<Integer, Integer> getSize(WebElementSelectionCriterion selectionCriterion, String criterionValue) {
+        WebElement element = getWebElement(selectionCriterion, criterionValue);
+        Dimension dimensions = element.getSize();
+        Pair<Integer, Integer> size = new Pair<Integer, Integer>(dimensions.getWidth(), dimensions.getHeight());
+        return size;
     }
 }
