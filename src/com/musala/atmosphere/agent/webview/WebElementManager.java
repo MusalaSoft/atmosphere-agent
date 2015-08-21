@@ -127,6 +127,19 @@ public class WebElementManager {
     }
 
     /**
+     * Taps on a web element.
+     * 
+     * @param selectionCriterion
+     *        - criterion by which the element will be selected
+     * @param criterionValue
+     *        - value of the criterion
+     */
+    private void tap(WebElementSelectionCriterion selectionCriterion, String criterionValue) {
+        WebElement element = getWebElement(selectionCriterion, criterionValue);
+        ((JavascriptExecutor) driver).executeScript("arguments[0].click();", element);
+    }
+
+    /**
      * Checks if the element by the given criterion is displayed.
      * 
      * @param selectionCriterion
@@ -135,7 +148,7 @@ public class WebElementManager {
      *        - value of the criterion
      * @return <code>true</code> if the element is displayed, <code>false</code> otherwise
      */
-    public boolean isDisplayed(WebElementSelectionCriterion selectionCriterion, String criterionValue) {
+    private boolean isDisplayed(WebElementSelectionCriterion selectionCriterion, String criterionValue) {
         WebElement element = getWebElement(selectionCriterion, criterionValue);
         return element.isDisplayed();
     }
@@ -149,7 +162,7 @@ public class WebElementManager {
      *        - value of the criterion
      * @return <code>true</code> if the element is selected, <code>false</code> otherwise
      */
-    public boolean isSelected(WebElementSelectionCriterion selectionCriterion, String criterionValue) {
+    private boolean isSelected(WebElementSelectionCriterion selectionCriterion, String criterionValue) {
         WebElement element = getWebElement(selectionCriterion, criterionValue);
         return element.isSelected();
     }
@@ -163,7 +176,7 @@ public class WebElementManager {
      *        - value of the criterion
      * @return string representing the tag name of the element
      */
-    public String getTagName(WebElementSelectionCriterion selectionCriterion, String criterionValue) {
+    private String getTagName(WebElementSelectionCriterion selectionCriterion, String criterionValue) {
         WebElement element = getWebElement(selectionCriterion, criterionValue);
         return element.getTagName();
     }
@@ -191,6 +204,8 @@ public class WebElementManager {
                 return getTagName(selectionCriterion, criterionValue);
             case GET_SIZE:
                 return getSize(selectionCriterion, criterionValue);
+            case TAP:
+                tap(selectionCriterion, criterionValue);
             default:
                 return null;
         }
