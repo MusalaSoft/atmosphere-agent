@@ -113,8 +113,7 @@ public class WebElementManager {
      *        - value of the criterion used for matching
      * @return list of {@link Map attributes} corresponding to the found elements
      */
-    public List<Map<String, Object>> findElements(WebElementSelectionCriterion selectionCriterion,
-                                                  String criterionValue) {
+    public List<Map<String, Object>> findElements(WebElementSelectionCriterion selectionCriterion, String criterionValue) {
         By criterion = findBy(selectionCriterion, criterionValue);
         List<WebElement> webElements = driver.findElements(criterion);
 
@@ -223,6 +222,8 @@ public class WebElementManager {
                 return getText(selectionCriterion, criterionValue);
             case TAP:
                 tap(selectionCriterion, criterionValue);
+            case FOCUS:
+                focus(selectionCriterion, criterionValue);
             default:
                 return null;
         }
@@ -316,5 +317,18 @@ public class WebElementManager {
         Dimension dimensions = element.getSize();
         Pair<Integer, Integer> size = new Pair<Integer, Integer>(dimensions.getWidth(), dimensions.getHeight());
         return size;
+    }
+
+    /**
+     * Focuses a web element by the given criterion.
+     * 
+     * @param selectionCriterion
+     *        - criterion by which the element will be selected
+     * @param criterionValue
+     *        - value of the criterion
+     */
+    private void focus(WebElementSelectionCriterion selectionCriterion, String criterionValue) {
+        WebElement element = getWebElement(selectionCriterion, criterionValue);
+        ((JavascriptExecutor) driver).executeScript("arguments[0].focus();", element);
     }
 }
