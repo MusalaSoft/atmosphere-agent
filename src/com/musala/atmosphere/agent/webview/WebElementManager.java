@@ -18,6 +18,7 @@ import org.openqa.selenium.chrome.ChromeDriverService;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.remote.DesiredCapabilities;
 
+import com.musala.atmosphere.commons.geometry.Point;
 import com.musala.atmosphere.commons.util.Pair;
 import com.musala.atmosphere.commons.webelement.actions.WebElementAction;
 import com.musala.atmosphere.commons.webelement.selection.WebElementNotPresentException;
@@ -190,9 +191,23 @@ public class WebElementManager {
      *        - value of the criterion
      * @return the inner text of this element
      */
-    public String getText(WebElementSelectionCriterion selectionCriterion, String criterionValue) {
+    private String getText(WebElementSelectionCriterion selectionCriterion, String criterionValue) {
         WebElement element = getWebElement(selectionCriterion, criterionValue);
         return element.getText();
+    }
+
+    /**
+     * Gets the upper left corner location of the element relative to the WebView that contains the element.
+     * 
+     * @param selectionCriterion
+     *        - criterion by which the element will be selected
+     * @param criterionValue
+     *        - value of the criterion
+     * @return {@link Point} containing the relative position of the element
+     */
+    private Point getRelativePosition(WebElementSelectionCriterion selectionCriterion, String criterionValue) {
+            WebElement element = getWebElement(selectionCriterion, criterionValue);
+            return new Point(element.getLocation().getX(), element.getLocation().getY());
     }
 
     /**
@@ -224,6 +239,8 @@ public class WebElementManager {
                 tap(selectionCriterion, criterionValue);
             case FOCUS:
                 focus(selectionCriterion, criterionValue);
+            case GET_POSITION:
+                return getRelativePosition(selectionCriterion, criterionValue);
             default:
                 return null;
         }
