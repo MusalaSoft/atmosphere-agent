@@ -66,7 +66,8 @@ import com.musala.atmosphere.commons.ui.UiElementDescriptor;
 import com.musala.atmosphere.commons.ui.selector.UiElementSelector;
 import com.musala.atmosphere.commons.ui.tree.AccessibilityElement;
 import com.musala.atmosphere.commons.util.Pair;
-import com.musala.atmosphere.commons.webelement.actions.WebElementAction;
+import com.musala.atmosphere.commons.webelement.action.WebElementAction;
+import com.musala.atmosphere.commons.webelement.action.WebElementWaitCondition;
 import com.musala.atmosphere.commons.webelement.selection.WebElementSelectionCriterion;
 
 public abstract class AbstractWrapDevice extends UnicastRemoteObject implements IWrapDevice {
@@ -457,10 +458,17 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
                 returnValue = webElementManager.executeAction((WebElementAction) args[0],
                                                               (WebElementSelectionCriterion) args[1],
                                                               (String) args[2]);
+                break;
             case GET_CSS_VALUE:
                 returnValue = webElementManager.getCssValue((WebElementSelectionCriterion) args[0],
                                                             (String) args[1],
                                                             (String) args[2]);
+                break;
+            case WAIT_FOR_WEB_ELEMENT:
+                returnValue = webElementManager.waitForCondition((WebElementSelectionCriterion) args[0],
+                                                                 (String) args[1],
+                                                                 (WebElementWaitCondition) args[2],
+                                                                 (Integer) args[3]);
                 break;
         }
 

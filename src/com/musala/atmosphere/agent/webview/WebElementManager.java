@@ -11,16 +11,20 @@ import org.openqa.selenium.By;
 import org.openqa.selenium.Dimension;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.NoSuchElementException;
+import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeDriverService;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.remote.DesiredCapabilities;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
 
 import com.musala.atmosphere.commons.geometry.Point;
 import com.musala.atmosphere.commons.util.Pair;
-import com.musala.atmosphere.commons.webelement.actions.WebElementAction;
+import com.musala.atmosphere.commons.webelement.action.WebElementAction;
+import com.musala.atmosphere.commons.webelement.action.WebElementWaitCondition;
 import com.musala.atmosphere.commons.webelement.selection.WebElementNotPresentException;
 import com.musala.atmosphere.commons.webelement.selection.WebElementSelectionCriterion;
 
@@ -114,8 +118,7 @@ public class WebElementManager {
      *        - value of the criterion used for matching
      * @return list of {@link Map attributes} corresponding to the found elements
      */
-    public List<Map<String, Object>> findElements(WebElementSelectionCriterion selectionCriterion,
-                                                  String criterionValue) {
+    public List<Map<String, Object>> findElements(WebElementSelectionCriterion selectionCriterion, String criterionValue) {
         By criterion = findBy(selectionCriterion, criterionValue);
         List<WebElement> webElements = driver.findElements(criterion);
 
@@ -377,12 +380,66 @@ public class WebElementManager {
      * Submits the web element form by the given criterion.
      * 
      * @param selectionCriterion
-     *        - criterion by which the element wil be selected
+     *        - criterion by which the element will be selected
      * @param criterionValue
      *        - value of the criterion
      */
     private void submitForm(WebElementSelectionCriterion selectionCriterion, String criterionValue) {
         WebElement element = getWebElement(selectionCriterion, criterionValue);
         element.submit();
+    }
+
+    /**
+     * Waits for a web element to meet a given {@link WebElementWaitCondition}, with given timeout.
+     * 
+     * @param selectionCriterion
+     *        - {@link WebElementSelectionCriterion} by which the element will be selected
+     * @param criterionValue
+     *        - value of the criterion
+     * @param condition
+     *        - {@link WebElementWaitCondition} that the web element needs to meet
+     * @param timeout
+     *        - the given timeout
+     * @return <code>true</code> if the element meets the condition, before the end of the given timeout,
+     *         <code>false</code> otherwise
+     */
+    public boolean waitForCondition(WebElementSelectionCriterion selectionCriterion,
+                                    String criterionValue,
+                                    WebElementWaitCondition condition,
+                                    int timeout) {
+        switch (condition) {
+            case ELEMENT_EXISTS:
+                return waitForElementExists(selectionCriterion, criterionValue, timeout);
+            default:
+                return false;
+        }
+    }
+
+    /**
+     * Waits for the existence of a given web element with a given timeout.
+     * 
+     * @param selectionCriterion
+     *        - {@link WebElementSelectionCriterion} by which the element will be selected
+     * @param criterionValue
+     *        - value of the criterion
+     * @param timeout
+     *        - the given timeout in milliseconds
+     * @return <code>true</code> if the element is present in the screen, before the given timeout, <code>false</code>
+     *         otherwise
+     */
+    private boolean waitForElementExists(WebElementSelectionCriterion selectionCriterion,
+                                         String criterionValue,
+                                         int timeout) {
+        int timeoutInSeconds = timeout / 1000;
+
+        WebDriverWait webDriverWait = new WebDriverWait(driver, timeoutInSeconds);
+        By locator = findBy(selectionCriterion, criterionValue);
+
+        try {
+            webDriverWait.until(ExpectedConditions.presenceOfElementLocated(locator));
+            return true;
+        } catch (TimeoutException e) {
+            return false;
+        }
     }
 }
