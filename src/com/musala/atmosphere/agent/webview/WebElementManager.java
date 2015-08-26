@@ -128,6 +128,23 @@ public class WebElementManager {
     }
 
     /**
+     * Gets the value of a given CSS property.
+     * 
+     * @param selectionCriterion
+     *        - criterion by which the element will be selected
+     * @param criterionValue
+     *        - value of the criterion
+     * @param cssProperty
+     *        - the given CSS property
+     * @return String representing the value of the wanted property
+     */
+    public String getCssValue(WebElementSelectionCriterion selectionCriterion, String criterionValue, String cssProperty) {
+        WebElement element = getWebElement(selectionCriterion, criterionValue);
+
+        return element.getCssValue(cssProperty);
+    }
+
+    /**
      * Taps on a web element.
      * 
      * @param selectionCriterion

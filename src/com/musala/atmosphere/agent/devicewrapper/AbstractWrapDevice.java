@@ -457,6 +457,10 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
                 returnValue = webElementManager.executeAction((WebElementAction) args[0],
                                                               (WebElementSelectionCriterion) args[1],
                                                               (String) args[2]);
+            case GET_CSS_VALUE:
+                returnValue = webElementManager.getCssValue((WebElementSelectionCriterion) args[0],
+                                                            (String) args[1],
+                                                            (String) args[2]);
                 break;
         }
 
