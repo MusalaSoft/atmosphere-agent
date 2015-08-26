@@ -114,7 +114,8 @@ public class WebElementManager {
      *        - value of the criterion used for matching
      * @return list of {@link Map attributes} corresponding to the found elements
      */
-    public List<Map<String, Object>> findElements(WebElementSelectionCriterion selectionCriterion, String criterionValue) {
+    public List<Map<String, Object>> findElements(WebElementSelectionCriterion selectionCriterion,
+                                                  String criterionValue) {
         By criterion = findBy(selectionCriterion, criterionValue);
         List<WebElement> webElements = driver.findElements(criterion);
 
@@ -206,8 +207,8 @@ public class WebElementManager {
      * @return {@link Point} containing the relative position of the element
      */
     private Point getRelativePosition(WebElementSelectionCriterion selectionCriterion, String criterionValue) {
-            WebElement element = getWebElement(selectionCriterion, criterionValue);
-            return new Point(element.getLocation().getX(), element.getLocation().getY());
+        WebElement element = getWebElement(selectionCriterion, criterionValue);
+        return new Point(element.getLocation().getX(), element.getLocation().getY());
     }
 
     /**
@@ -237,13 +238,19 @@ public class WebElementManager {
                 return getText(selectionCriterion, criterionValue);
             case TAP:
                 tap(selectionCriterion, criterionValue);
+                break;
             case FOCUS:
                 focus(selectionCriterion, criterionValue);
+                break;
             case GET_POSITION:
                 return getRelativePosition(selectionCriterion, criterionValue);
+            case SUBMIT_FORM:
+                submitForm(selectionCriterion, criterionValue);
+                break;
             default:
                 return null;
         }
+        return null;
     }
 
     /**
@@ -347,5 +354,18 @@ public class WebElementManager {
     private void focus(WebElementSelectionCriterion selectionCriterion, String criterionValue) {
         WebElement element = getWebElement(selectionCriterion, criterionValue);
         ((JavascriptExecutor) driver).executeScript("arguments[0].focus();", element);
+    }
+
+    /**
+     * Submits the web element form by the given criterion.
+     * 
+     * @param selectionCriterion
+     *        - criterion by which the element wil be selected
+     * @param criterionValue
+     *        - value of the criterion
+     */
+    private void submitForm(WebElementSelectionCriterion selectionCriterion, String criterionValue) {
+        WebElement element = getWebElement(selectionCriterion, criterionValue);
+        element.submit();
     }
 }
