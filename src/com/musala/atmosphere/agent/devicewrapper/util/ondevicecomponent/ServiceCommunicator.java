@@ -20,16 +20,16 @@ import com.musala.atmosphere.commons.util.IntentBuilder.IntentAction;
 
 /**
  * Class that communicates with the ATMOSPHERE service.
- * 
+ *
  * @author yordan.petrov
- * 
+ *
  */
 public class ServiceCommunicator extends DeviceCommunicator<ServiceRequest> {
     private static final String ATMOSPHERE_SERVICE_COMPONENT = "com.musala.atmosphere.service/com.musala.atmosphere.service.AtmosphereService";
 
     /**
      * Creates a {@link ServiceCommunicator service communicator} instance that communicate with an on-device component.
-     * 
+     *
      * @param portForwarder
      *        - a port forwarding service, that will be used to forward a local port to the remote port of the on-device
      *        component
@@ -46,7 +46,7 @@ public class ServiceCommunicator extends DeviceCommunicator<ServiceRequest> {
 
     /**
      * Gets the device power environment properties.
-     * 
+     *
      * @return a {@link PowerProperties} data container instance.
      * @throws CommandFailedException
      */
@@ -64,7 +64,7 @@ public class ServiceCommunicator extends DeviceCommunicator<ServiceRequest> {
 
     /**
      * Fetches the sensor orientation readings of the device.
-     * 
+     *
      * @return a {@link DeviceOrientation} instance.
      * @throws CommandFailedException
      */
@@ -89,7 +89,7 @@ public class ServiceCommunicator extends DeviceCommunicator<ServiceRequest> {
 
     /**
      * Gets the battery state of the device.
-     * 
+     *
      * @return a member of the {@link BatteryState BatteryState} enumeration.
      * @throws CommandFailedException
      */
@@ -111,7 +111,7 @@ public class ServiceCommunicator extends DeviceCommunicator<ServiceRequest> {
 
     /**
      * Gets the total RAM of the device.
-     * 
+     *
      * @return the total RAM of the device.
      * @throws CommandFailedException
      *         if getting the total ram fails
@@ -129,7 +129,7 @@ public class ServiceCommunicator extends DeviceCommunicator<ServiceRequest> {
 
     /**
      * Gets the connection type of the device.
-     * 
+     *
      * @return a member of the {@link ConnectionType} enumeration.
      * @throws CommandFailedException
      */
@@ -147,7 +147,7 @@ public class ServiceCommunicator extends DeviceCommunicator<ServiceRequest> {
 
     /**
      * Sets the WiFi state on the device.
-     * 
+     *
      * @param state
      *        - true if the WiFi should be on; false if it should be off.
      * @throws CommandFailedException
@@ -166,10 +166,10 @@ public class ServiceCommunicator extends DeviceCommunicator<ServiceRequest> {
 
     /**
      * Opens the location settings activity.
-     * 
+     *
      * @throws CommandFailedException
      *         if failed to open the location settings
-     * 
+     *
      */
     public void openLocationSettings() throws CommandFailedException {
         Request<ServiceRequest> serviceRequest = new Request<ServiceRequest>(ServiceRequest.OPEN_LOCATION_SETTINGS);
@@ -184,7 +184,7 @@ public class ServiceCommunicator extends DeviceCommunicator<ServiceRequest> {
 
     /**
      * Check if the GPS location is enabled on this device.
-     * 
+     *
      * @return <code>true</code> if the GPS location is enabled, <code>false</code> if it's disabled
      * @throws CommandFailedException
      *         if failed to get the GPS location state of the device
@@ -202,7 +202,7 @@ public class ServiceCommunicator extends DeviceCommunicator<ServiceRequest> {
 
     /**
      * Fetches the sensor acceleration readings of the device.
-     * 
+     *
      * @return a {@link DeviceAcceleration} instance.
      * @throws CommandFailedException
      *         - if the execution of the command failed
@@ -223,7 +223,7 @@ public class ServiceCommunicator extends DeviceCommunicator<ServiceRequest> {
 
     /**
      * Fetches the sensor proximity readings of the device.
-     * 
+     *
      * @return a float representing the proximity of the device
      * @throws CommandFailedException
      */
@@ -241,7 +241,7 @@ public class ServiceCommunicator extends DeviceCommunicator<ServiceRequest> {
 
     /**
      * Gets information about the telephony services on the device.
-     * 
+     *
      * @return {@link TelephonyInformation} instance.
      * @throws CommandFailedException
      */
@@ -257,7 +257,7 @@ public class ServiceCommunicator extends DeviceCommunicator<ServiceRequest> {
 
     /**
      * Starts an application on the device.
-     * 
+     *
      * @return <code>true</code> if the application launch is successful and <code>false</code> otherwise
      * @throws CommandFailedException
      */
@@ -274,7 +274,7 @@ public class ServiceCommunicator extends DeviceCommunicator<ServiceRequest> {
 
     /**
      * Sends a request to the ATMOSPHERE service to mock the current location of the device using the passed location.
-     * 
+     *
      * @param args
      *        - a {@link GeoLocation} object representing the mock location
      * @return <code>true</code> if mocking the location is successful, <code>false</code> otherwise
@@ -294,7 +294,7 @@ public class ServiceCommunicator extends DeviceCommunicator<ServiceRequest> {
 
     /**
      * Sends a request to the ATMOSPHERE service to stop mocking the location of a given provider.
-     * 
+     *
      * @param args
      *        - a {@link String} representing the provider name
      * @throws CommandFailedException
@@ -313,7 +313,7 @@ public class ServiceCommunicator extends DeviceCommunicator<ServiceRequest> {
 
     /**
      * Checks if the device is awake.
-     * 
+     *
      * @return - <code>true</code> if the device is awake and <code>false</code> otherwise
      * @throws CommandFailedException
      */
@@ -329,7 +329,7 @@ public class ServiceCommunicator extends DeviceCommunicator<ServiceRequest> {
 
     /**
      * Checks if the device has an available camera.
-     * 
+     *
      * @return true if the device has a camera, else false
      * @throws CommandFailedException
      */
@@ -345,7 +345,7 @@ public class ServiceCommunicator extends DeviceCommunicator<ServiceRequest> {
 
     /**
      * Checks of there are running Processes on the device with the given package
-     * 
+     *
      * @param args
      *        -contains the packageName
      * @return true if there are such processes and false otherwise
@@ -365,7 +365,7 @@ public class ServiceCommunicator extends DeviceCommunicator<ServiceRequest> {
 
     /**
      * Sets the Keyguard status on the Device.
-     * 
+     *
      * @param args
      *        - <code>false</code> for the keyguard to be dismissed and <code>true</code> to be re enabled
      * @throws CommandFailedException
@@ -384,7 +384,7 @@ public class ServiceCommunicator extends DeviceCommunicator<ServiceRequest> {
 
     /**
      * Used to check the lock state of the device.
-     * 
+     *
      * @throws CommandFailedException
      *         if checking for the lock state fails.
      */
@@ -400,7 +400,7 @@ public class ServiceCommunicator extends DeviceCommunicator<ServiceRequest> {
 
     /**
      * Brings the task with the given id to the front.
-     * 
+     *
      * @param args
      *        - id of the task which is going to be brought to front and timeout to wait while the task is brought to
      *        front.
@@ -421,7 +421,7 @@ public class ServiceCommunicator extends DeviceCommunicator<ServiceRequest> {
 
     /**
      * Gets the ids of the running tasks.
-     * 
+     *
      * @param args
      *        - integer with maximum number of tasks to be returned.
      * @return array of the task ids that are currently running.
@@ -441,7 +441,7 @@ public class ServiceCommunicator extends DeviceCommunicator<ServiceRequest> {
 
     /**
      * Wait for the given task to be moved to the given position.
-     * 
+     *
      * @param args
      *        - containing the id of the task, the position in which the task should be updated to and timeout to wait
      *        for moving the task.
@@ -462,7 +462,7 @@ public class ServiceCommunicator extends DeviceCommunicator<ServiceRequest> {
 
     /**
      * Checks if there is any audio currently playing on the device.
-     * 
+     *
      * @return <code>true</code> if and audio is playing, <code>false</code> otherwise.
      * @throws CommandFailedException
      *         if checking for audio playing fails
@@ -479,10 +479,10 @@ public class ServiceCommunicator extends DeviceCommunicator<ServiceRequest> {
 
     /**
      * Broadcast the given intent to all interested BroadcastReceivers.
-     * 
+     *
      * @param args
      *        - args[0] should contain the AtmosphereIntent object for the broadcast
-     * 
+     *
      */
     public void sendBroadcast(Object args[]) throws CommandFailedException {
         Request<ServiceRequest> sendBroadcastRequest = new Request<ServiceRequest>(ServiceRequest.SEND_BROADCAST);
@@ -497,7 +497,7 @@ public class ServiceCommunicator extends DeviceCommunicator<ServiceRequest> {
 
     /**
      * Shows a tap location on the device screen.
-     * 
+     *
      * @param args
      *        - args[0] should contain the point where the tap will be placed
      * @throws CommandFailedException
@@ -516,7 +516,7 @@ public class ServiceCommunicator extends DeviceCommunicator<ServiceRequest> {
 
     /**
      * Stops all background processes associated with the given package.
-     * 
+     *
      * @param args
      *        - args[0] should contain the given package name
      * @throws CommandFailedException
@@ -551,9 +551,11 @@ public class ServiceCommunicator extends DeviceCommunicator<ServiceRequest> {
     /**
      * Retrieves token from the Augmented Traffic Control tool used for authentication before the Agent will be able to
      * modify the network connection properties.
-     * 
+     *
      * @return string in JSON format containing key value pairs - token, device ip address in the network, validity of
      *         the token
+     * @throws CommandFailedException
+     *         if sending request for retrieving token fails
      */
     public String retrieveToken() throws CommandFailedException {
         Request<ServiceRequest> receiveTokenRequest = new Request<ServiceRequest>(ServiceRequest.RETRIEVE_TOKEN);
@@ -561,7 +563,49 @@ public class ServiceCommunicator extends DeviceCommunicator<ServiceRequest> {
         try {
             return (String) requestSender.request(receiveTokenRequest);
         } catch (ClassNotFoundException | IOException | CommandFailedException e) {
-            throw new CommandFailedException(String.format("Retrieving token for device %s failed.", deviceSerialNumber),
+            throw new CommandFailedException(String.format("Retrieving token for device %s failed.",
+                                                           deviceSerialNumber),
+                                             e);
+        }
+    }
+
+    /**
+     * Sends request to the service for modifying WiFi connection properties.
+     *
+     * @param args
+     *        - contains information about the connection properties to be set
+     * @throws CommandFailedException
+     *         if sending request for device shaping fails
+     * @return <code>true</code> if shaping is successful, <code>false</code> otherwise
+     */
+    public Boolean shapeDevice(Object[] args) throws CommandFailedException {
+        Request<ServiceRequest> shapeDeviceRequest = new Request<ServiceRequest>(ServiceRequest.SHAPE_DEVICE);
+        shapeDeviceRequest.setArguments(args);
+
+        try {
+            return (Boolean) requestSender.request(shapeDeviceRequest);
+        } catch (ClassNotFoundException | IOException | CommandFailedException e) {
+            throw new CommandFailedException(String.format("Modifying WiFi connection properties for device %s failed.",
+                                                           deviceSerialNumber),
+                                             e);
+        }
+    }
+
+    /**
+     * Sends request to the service for restoring WiFi connection properties.
+     *
+     * @throws CommandFailedException
+     *         if sending request for unshaping fails
+     * @return <code>true</code> if unshaping is successful, <code>false</code> otherwise
+     */
+    public Boolean unshapeDevice() throws CommandFailedException {
+        Request<ServiceRequest> shapeDeviceRequest = new Request<ServiceRequest>(ServiceRequest.UNSHAPE_DEVICE);
+
+        try {
+            return (Boolean) requestSender.request(shapeDeviceRequest);
+        } catch (ClassNotFoundException | IOException | CommandFailedException e) {
+            throw new CommandFailedException(String.format("Restoring WiFi connection properties for device %s failed.",
+                                                           deviceSerialNumber),
                                              e);
         }
     }

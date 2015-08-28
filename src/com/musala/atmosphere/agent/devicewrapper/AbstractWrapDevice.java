@@ -269,7 +269,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
             case GET_RUNNING_TASK_IDS:
                 returnValue = serviceCommunicator.getRunningTaskIds(args);
                 break;
-	case GET_LAST_TOAST:
+            case GET_LAST_TOAST:
                 returnValue = automatorCommunicator.getLastToast();
                 break;
             case GET_UI_ELEMENTS:
@@ -428,6 +428,14 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
                 break;
             case STOP_RECORDING:
                 stopScreenRecording();
+                break;
+
+            // WiFi connection properties related
+            case SHAPE_DEVICE:
+                returnValue = serviceCommunicator.shapeDevice(args);
+                break;
+            case UNSHAPE_DEVICE:
+                returnValue = serviceCommunicator.unshapeDevice();
                 break;
         }
 
