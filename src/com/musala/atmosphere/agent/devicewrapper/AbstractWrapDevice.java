@@ -68,7 +68,6 @@ import com.musala.atmosphere.commons.ui.tree.AccessibilityElement;
 import com.musala.atmosphere.commons.util.Pair;
 import com.musala.atmosphere.commons.webelement.action.WebElementAction;
 import com.musala.atmosphere.commons.webelement.action.WebElementWaitCondition;
-import com.musala.atmosphere.commons.webelement.selection.WebElementSelectionCriterion;
 
 public abstract class AbstractWrapDevice extends UnicastRemoteObject implements IWrapDevice {
 
@@ -206,7 +205,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
         Object returnValue = null;
 
         switch (action) {
-        // Shell command related
+            // Shell command related
             case EXECUTE_SHELL_COMMAND:
                 returnValue = shellCommandExecutor.execute((String) args[0]);
                 break;
@@ -446,29 +445,24 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
                 webElementManager.initDriver((String) args[0]);
                 break;
             case FIND_WEB_ELEMENT:
-                returnValue = webElementManager.findElement((WebElementSelectionCriterion) args[0], (String) args[1]);
+                returnValue = webElementManager.findElement((String) args[0]);
                 break;
             case FIND_WEB_ELEMENTS:
-                returnValue = webElementManager.findElements((WebElementSelectionCriterion) args[0], (String) args[1]);
+                returnValue = webElementManager.findElements((String) args[0]);
                 break;
             case CLOSE_CHROME_DRIVER:
                 webElementManager.closeDriver();
                 break;
             case WEB_ELEMENT_ACTION:
-                returnValue = webElementManager.executeAction((WebElementAction) args[0],
-                                                              (WebElementSelectionCriterion) args[1],
-                                                              (String) args[2]);
+                returnValue = webElementManager.executeAction((WebElementAction) args[0], (String) args[1]);
                 break;
             case GET_CSS_VALUE:
-                returnValue = webElementManager.getCssValue((WebElementSelectionCriterion) args[0],
-                                                            (String) args[1],
-                                                            (String) args[2]);
+                returnValue = webElementManager.getCssValue((String) args[0], (String) args[1]);
                 break;
             case WAIT_FOR_WEB_ELEMENT:
-                returnValue = webElementManager.waitForCondition((WebElementSelectionCriterion) args[0],
-                                                                 (String) args[1],
-                                                                 (WebElementWaitCondition) args[2],
-                                                                 (Integer) args[3]);
+                returnValue = webElementManager.waitForCondition((String) args[0],
+                                                                 (WebElementWaitCondition) args[1],
+                                                                 (Integer) args[2]);
                 break;
         }
 
@@ -768,7 +762,8 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
                                                                                MERGED_RECORDS_DIR_NAME,
                                                                                File.separator,
                                                                                timestamp,
-                                                                               wrappedDevice.getSerialNumber()), "rw");
+                                                                               wrappedDevice.getSerialNumber()),
+                                                                 "rw");
         FileChannel fileChannel = randomAccessFile.getChannel();
         combinedMovieContainer.writeContainer(fileChannel);
 
@@ -845,13 +840,14 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
             combineVideoFiles(separatedVideosDirectoryPath);
         } catch (IOException e) {
             LOGGER.error(String.format("Failed to merge video records pulled from device with serial number %s.",
-                                       wrappedDevice.getSerialNumber()), e);
+                                       wrappedDevice.getSerialNumber()),
+                         e);
         }
     }
 
     /**
      * Clears the data of a given application.
-     * 
+     *
      * @param packageName
      *        - the package name of the given application
      * @throws CommandFailedException

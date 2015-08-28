@@ -26,12 +26,11 @@ import com.musala.atmosphere.commons.util.Pair;
 import com.musala.atmosphere.commons.webelement.action.WebElementAction;
 import com.musala.atmosphere.commons.webelement.action.WebElementWaitCondition;
 import com.musala.atmosphere.commons.webelement.selection.WebElementNotPresentException;
-import com.musala.atmosphere.commons.webelement.selection.WebElementSelectionCriterion;
 
 /**
  * Class responsible for initializing {@link ChromeDriver chrome driver} used for retrieving information for the
  * WebViews on the device screen.
- * 
+ *
  * @author filareta.yordanova
  *
  */
@@ -51,7 +50,7 @@ public class WebElementManager {
     /**
      * Creates new instance of the driver manager for a device with the given serial number using the instance of the
      * chrome driver already started as a service.
-     * 
+     *
      * @param service
      *        - instance of the chrome driver started as a service
      * @param deviceSerialNumber
@@ -65,7 +64,7 @@ public class WebElementManager {
     /**
      * Creates the suitable configuration using the package name of the application for this device and initializes the
      * instance of the driver used for retrieving information about WebViews present on the screen.
-     * 
+     *
      * @param packageName
      *        - package name of the application under test
      * @throws IOException
@@ -84,43 +83,34 @@ public class WebElementManager {
     }
 
     /**
-     * Finds a web element by the given {@link WebElementSelectionCriterion selection criterion}, matching the requested
-     * criterion value.
-     * 
-     * @param selectionCriterion
-     *        - the type of the criterion used for selection
-     * @param criterionValue
-     *        - value of the criterion used for matching
+     * Finds a web element by the given xpath query.
+     *
+     * @param xpathQuery
+     *        - the xpath query used for matching
      * @return {@link Map map} containing all attributes of the found element
      */
-    public Map<String, Object> findElement(WebElementSelectionCriterion selectionCriterion, String criterionValue) {
-        By criterion = findBy(selectionCriterion, criterionValue);
+    public Map<String, Object> findElement(String xpathQuery) {
         WebElement foundElement = null;
 
         try {
-            foundElement = driver.findElement(criterion);
+            foundElement = driver.findElement(By.xpath(xpathQuery));
         } catch (NoSuchElementException e) {
-            throw new WebElementNotPresentException(String.format("Web element for the requested search criterion  %s and value %s is not present on the screen!",
-                                                                  selectionCriterion,
-                                                                  criterionValue));
+            throw new WebElementNotPresentException(String.format("Web element for the requested query %s is not present on the screen!",
+                                                                  xpathQuery));
         }
 
         return foundElement != null ? getWebElementAttributes(foundElement) : null;
     }
 
     /**
-     * Finds a list of web elements by the given {@link WebElementSelectionCriterion selection criterion}, matching the
-     * requested criterion value.
-     * 
-     * @param selectionCriterion
-     *        - the type of the criterion used for selection
-     * @param criterionValue
-     *        - value of the criterion used for matching
+     * Finds a list of web elements by the given xpath query.
+     *
+     * @param xpathQuery
+     *        - the xpath query used for matching
      * @return list of {@link Map attributes} corresponding to the found elements
      */
-    public List<Map<String, Object>> findElements(WebElementSelectionCriterion selectionCriterion, String criterionValue) {
-        By criterion = findBy(selectionCriterion, criterionValue);
-        List<WebElement> webElements = driver.findElements(criterion);
+    public List<Map<String, Object>> findElements(String xpathQuery) {
+        List<WebElement> webElements = driver.findElements(By.xpath(xpathQuery));
 
         List<Map<String, Object>> foundElements = new ArrayList<Map<String, Object>>();
         for (WebElement element : webElements) {
@@ -132,140 +122,122 @@ public class WebElementManager {
 
     /**
      * Gets the value of a given CSS property.
-     * 
-     * @param selectionCriterion
-     *        - criterion by which the element will be selected
-     * @param criterionValue
-     *        - value of the criterion
+     *
+     * @param xpathQuery
+     *        - the xpath query used for matching
      * @param cssProperty
      *        - the given CSS property
      * @return String representing the value of the wanted property
      */
-    public String getCssValue(WebElementSelectionCriterion selectionCriterion, String criterionValue, String cssProperty) {
-        WebElement element = getWebElement(selectionCriterion, criterionValue);
+    public String getCssValue(String xpathQuery, String cssProperty) {
+        WebElement element = getWebElement(xpathQuery);
 
         return element.getCssValue(cssProperty);
     }
 
     /**
      * Taps on a web element.
-     * 
-     * @param selectionCriterion
-     *        - criterion by which the element will be selected
-     * @param criterionValue
-     *        - value of the criterion
+     *
+     * @param xpathQuery
+     *        - the xpath query used for matching
      */
-    private void tap(WebElementSelectionCriterion selectionCriterion, String criterionValue) {
-        WebElement element = getWebElement(selectionCriterion, criterionValue);
+    private void tap(String xpathQuery) {
+        WebElement element = getWebElement(xpathQuery);
         ((JavascriptExecutor) driver).executeScript("arguments[0].click();", element);
     }
 
     /**
-     * Checks if the element by the given criterion is displayed.
-     * 
-     * @param selectionCriterion
-     *        - criterion by which the element will be selected
-     * @param criterionValue
-     *        - value of the criterion
+     * Checks if the element by the xpath query is displayed.
+     *
+     * @param xpathQuery
+     *        - the xpath query used for matching
      * @return <code>true</code> if the element is displayed, <code>false</code> otherwise
      */
-    private boolean isDisplayed(WebElementSelectionCriterion selectionCriterion, String criterionValue) {
-        WebElement element = getWebElement(selectionCriterion, criterionValue);
+    private boolean isDisplayed(String xpathQuery) {
+        WebElement element = getWebElement(xpathQuery);
         return element.isDisplayed();
     }
 
     /**
-     * Checks if the element by the given criterion is selected.
-     * 
-     * @param selectionCriterion
-     *        - criterion by which the element will be selected
-     * @param criterionValue
-     *        - value of the criterion
+     * Checks if the element by the xpath query is selected.
+     *
+     * @param xpathQuery
+     *        - the xpath query used for matching
      * @return <code>true</code> if the element is selected, <code>false</code> otherwise
      */
-    private boolean isSelected(WebElementSelectionCriterion selectionCriterion, String criterionValue) {
-        WebElement element = getWebElement(selectionCriterion, criterionValue);
+    private boolean isSelected(String xpathQuery) {
+        WebElement element = getWebElement(xpathQuery);
         return element.isSelected();
     }
 
     /**
      * Gets the tag name of the element.
-     * 
-     * @param selectionCriterion
-     *        - criterion by which the element will be selected
-     * @param criterionValue
-     *        - value of the criterion
-     * @return string representing the tag name of the element
+     *
+     * @param xpathQuery
+     *        - the xpath query used for matching
+     * @return String representing the tag name of the element
      */
-    private String getTagName(WebElementSelectionCriterion selectionCriterion, String criterionValue) {
-        WebElement element = getWebElement(selectionCriterion, criterionValue);
+    private String getTagName(String xpathQuery) {
+        WebElement element = getWebElement(xpathQuery);
         return element.getTagName();
     }
 
     /**
      * Get the visible (i.e. not hidden by CSS) innerText of this element, including sub-elements, without any leading
      * or trailing whitespace.
-     * 
-     * @param selectionCriterion
-     *        - criterion by which the element will be selected
-     * @param criterionValue
-     *        - value of the criterion
+     *
+     * @param xpathQuery
+     *        - the xpath query used for matching
      * @return the inner text of this element
      */
-    private String getText(WebElementSelectionCriterion selectionCriterion, String criterionValue) {
-        WebElement element = getWebElement(selectionCriterion, criterionValue);
+    private String getText(String xpathQuery) {
+        WebElement element = getWebElement(xpathQuery);
         return element.getText();
     }
 
     /**
      * Gets the upper left corner location of the element relative to the WebView that contains the element.
-     * 
-     * @param selectionCriterion
-     *        - criterion by which the element will be selected
-     * @param criterionValue
-     *        - value of the criterion
+     *
+     * @param xpathQuery
+     *        - the xpath query used for matching
      * @return {@link Point} containing the relative position of the element
      */
-    private Point getRelativePosition(WebElementSelectionCriterion selectionCriterion, String criterionValue) {
-        WebElement element = getWebElement(selectionCriterion, criterionValue);
+    private Point getRelativePosition(String xpathQuery) {
+        WebElement element = getWebElement(xpathQuery);
         return new Point(element.getLocation().getX(), element.getLocation().getY());
     }
 
     /**
-     * Executes action on the web element selected by the given criterion.
-     * 
+     * Executes action on the web element selected by the xpath query.
+     *
      * @param webElementAction
      *        - type of the action that will be executed
-     * @param selectionCriterion
-     *        - criterion by which the element will be selected
-     * @param criterionValue
-     *        - value of the criterion
+     * @param xpathQuery
+     *        - the xpath query used for matching
      * @return {@link Object} containing the result of the executed action
      */
-    public Object executeAction(WebElementAction webElementAction,
-                                WebElementSelectionCriterion selectionCriterion,
-                                String criterionValue) {
+    public Object executeAction(WebElementAction webElementAction, String xpathQuery) {
         switch (webElementAction) {
             case IS_SELECTED:
-                return isSelected(selectionCriterion, criterionValue);
+                return isSelected(xpathQuery);
             case IS_DISPLAYED:
-                return isDisplayed(selectionCriterion, criterionValue);
+                return isDisplayed(xpathQuery);
             case GET_TAG_NAME:
-                return getTagName(selectionCriterion, criterionValue);
+                return getTagName(xpathQuery);
             case GET_SIZE:
-                return getSize(selectionCriterion, criterionValue);
+                return getSize(xpathQuery);
             case GET_TEXT:
-                return getText(selectionCriterion, criterionValue);
+                return getText(xpathQuery);
             case TAP:
-                tap(selectionCriterion, criterionValue);
+                tap(xpathQuery);
                 break;
             case FOCUS:
-                focus(selectionCriterion, criterionValue);
+                focus(xpathQuery);
                 break;
             case GET_POSITION:
-                return getRelativePosition(selectionCriterion, criterionValue);
+                return getRelativePosition(xpathQuery);
             case SUBMIT_FORM:
-                submitForm(selectionCriterion, criterionValue);
+                submitForm(xpathQuery);
                 break;
             default:
                 return null;
@@ -283,49 +255,18 @@ public class WebElementManager {
     }
 
     /**
-     * Gets a web element by the given criteria.
-     * 
-     * @param selectionCriterion
-     *        - criterion by which the element will be selected
-     * @param criterionValue
-     *        - value of the criterion
+     * Gets a web element by the given xpath query.
+     *
+     * @param xpathQuery
+     *        - the xpath query used for matching
      * @return the web element instance
      */
-    private WebElement getWebElement(WebElementSelectionCriterion selectionCriterion, String criterionValue) {
-        By criterion = findBy(selectionCriterion, criterionValue);
-        WebElement foundElement = null;
-
+    private WebElement getWebElement(String xpathQuery) {
         try {
-            foundElement = driver.findElement(criterion);
+            return driver.findElement(By.xpath(xpathQuery));
         } catch (NoSuchElementException e) {
-            throw new WebElementNotPresentException(String.format("The Web element for the requested search criterion  %s and value %s is no longer present on the screen!",
-                                                                  selectionCriterion,
-                                                                  criterionValue));
-        }
-
-        return foundElement;
-    }
-
-    private By findBy(WebElementSelectionCriterion selectionCriterion, String criterionValue) {
-        switch (selectionCriterion) {
-            case CLASS:
-                return By.className(criterionValue);
-            case TAG:
-                return By.tagName(criterionValue);
-            case XPATH:
-                return By.xpath(criterionValue);
-            case CSS_SELECTOR:
-                return By.cssSelector(criterionValue);
-            case LINK:
-                return By.linkText(criterionValue);
-            case PARTIAL_LINK:
-                return By.partialLinkText(criterionValue);
-            case ID:
-                return By.id(criterionValue);
-            case NAME:
-                return By.name(criterionValue);
-            default:
-                return By.id(criterionValue);
+            throw new WebElementNotPresentException(String.format("The Web element for the requested query is no longer present on the screen!",
+                                                                  xpathQuery));
         }
     }
 
@@ -348,54 +289,46 @@ public class WebElementManager {
     }
 
     /**
-     * Gets the size of a web element by the given criterion.
-     * 
-     * @param selectionCriterion
-     *        - criterion by which the element will be selected
-     * @param criterionValue
-     *        - value of the criterion
+     * Gets the size of a web element by the given xpath query.
+     *
+     * @param xpathQuery
+     *        - the xpath query used for matching
      * @return size of the web element
      */
-    private Pair<Integer, Integer> getSize(WebElementSelectionCriterion selectionCriterion, String criterionValue) {
-        WebElement element = getWebElement(selectionCriterion, criterionValue);
+    private Pair<Integer, Integer> getSize(String xpathQuery) {
+        WebElement element = getWebElement(xpathQuery);
         Dimension dimensions = element.getSize();
         Pair<Integer, Integer> size = new Pair<Integer, Integer>(dimensions.getWidth(), dimensions.getHeight());
         return size;
     }
 
     /**
-     * Focuses a web element by the given criterion.
-     * 
-     * @param selectionCriterion
-     *        - criterion by which the element will be selected
-     * @param criterionValue
-     *        - value of the criterion
+     * Focuses a web element by the given xpath query.
+     *
+     * @param xpathQuery
+     *        - the xpath query used for matching
      */
-    private void focus(WebElementSelectionCriterion selectionCriterion, String criterionValue) {
-        WebElement element = getWebElement(selectionCriterion, criterionValue);
+    private void focus(String xpathQuery) {
+        WebElement element = getWebElement(xpathQuery);
         ((JavascriptExecutor) driver).executeScript("arguments[0].focus();", element);
     }
 
     /**
-     * Submits the web element form by the given criterion.
-     * 
-     * @param selectionCriterion
-     *        - criterion by which the element will be selected
-     * @param criterionValue
-     *        - value of the criterion
+     * Submits the web element form by the given xpath query.
+     *
+     * @param xpathQuery
+     *        - the xpath query used for matching
      */
-    private void submitForm(WebElementSelectionCriterion selectionCriterion, String criterionValue) {
-        WebElement element = getWebElement(selectionCriterion, criterionValue);
+    private void submitForm(String xpathQuery) {
+        WebElement element = getWebElement(xpathQuery);
         element.submit();
     }
 
     /**
      * Waits for a web element to meet a given {@link WebElementWaitCondition}, with given timeout.
-     * 
-     * @param selectionCriterion
-     *        - {@link WebElementSelectionCriterion} by which the element will be selected
-     * @param criterionValue
-     *        - value of the criterion
+     *
+     * @param xpathQuery
+     *        - the xpath query used for matching
      * @param condition
      *        - {@link WebElementWaitCondition} that the web element needs to meet
      * @param timeout
@@ -403,13 +336,10 @@ public class WebElementManager {
      * @return <code>true</code> if the element meets the condition, before the end of the given timeout,
      *         <code>false</code> otherwise
      */
-    public boolean waitForCondition(WebElementSelectionCriterion selectionCriterion,
-                                    String criterionValue,
-                                    WebElementWaitCondition condition,
-                                    int timeout) {
+    public boolean waitForCondition(String xpathQuery, WebElementWaitCondition condition, int timeout) {
         switch (condition) {
             case ELEMENT_EXISTS:
-                return waitForElementExists(selectionCriterion, criterionValue, timeout);
+                return waitForElementExists(xpathQuery, timeout);
             default:
                 return false;
         }
@@ -417,26 +347,20 @@ public class WebElementManager {
 
     /**
      * Waits for the existence of a given web element with a given timeout.
-     * 
-     * @param selectionCriterion
-     *        - {@link WebElementSelectionCriterion} by which the element will be selected
-     * @param criterionValue
-     *        - value of the criterion
+     *
+     * @param xpathQuery
+     *        - the xpath query used for matching
      * @param timeout
      *        - the given timeout in milliseconds
      * @return <code>true</code> if the element is present in the screen, before the given timeout, <code>false</code>
      *         otherwise
      */
-    private boolean waitForElementExists(WebElementSelectionCriterion selectionCriterion,
-                                         String criterionValue,
-                                         int timeout) {
+    private boolean waitForElementExists(String xpathQuery, int timeout) {
         int timeoutInSeconds = timeout / 1000;
-
         WebDriverWait webDriverWait = new WebDriverWait(driver, timeoutInSeconds);
-        By locator = findBy(selectionCriterion, criterionValue);
 
         try {
-            webDriverWait.until(ExpectedConditions.presenceOfElementLocated(locator));
+            webDriverWait.until(ExpectedConditions.presenceOfElementLocated(By.xpath(xpathQuery)));
             return true;
         } catch (TimeoutException e) {
             return false;
