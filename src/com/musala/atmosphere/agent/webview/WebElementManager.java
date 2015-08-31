@@ -11,8 +11,10 @@ import org.openqa.selenium.By;
 import org.openqa.selenium.Dimension;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.NoSuchElementException;
+import org.openqa.selenium.SessionNotCreatedException;
 import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeDriverService;
@@ -21,11 +23,12 @@ import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
+import com.musala.atmosphere.commons.exceptions.AtmosphereConfigurationException;
 import com.musala.atmosphere.commons.geometry.Point;
 import com.musala.atmosphere.commons.util.Pair;
 import com.musala.atmosphere.commons.webelement.action.WebElementAction;
 import com.musala.atmosphere.commons.webelement.action.WebElementWaitCondition;
-import com.musala.atmosphere.commons.webelement.selection.WebElementNotPresentException;
+import com.musala.atmosphere.commons.webelement.exception.WebElementNotPresentException;
 
 /**
  * Class responsible for initializing {@link ChromeDriver chrome driver} used for retrieving information for the
@@ -79,7 +82,15 @@ public class WebElementManager {
         DesiredCapabilities capabilities = DesiredCapabilities.chrome();
         capabilities.setCapability(ChromeOptions.CAPABILITY, chromeOptions);
 
-        driver = new ChromeDriver(service, capabilities);
+        try {
+            driver = new ChromeDriver(service, capabilities);
+        } catch (SessionNotCreatedException e) {
+            throw new AtmosphereConfigurationException(String.format("Another instance of the WebView in %s you are trying to interact with might already be opened for debugging.",
+                                                                     packageName));
+        } catch (WebDriverException e) {
+            throw new AtmosphereConfigurationException(String.format("Applicaton with the provided package name %s may not contain a WebView or no WebView instance is present on the current screen.",
+                                                                     packageName));
+        }
     }
 
     /**
