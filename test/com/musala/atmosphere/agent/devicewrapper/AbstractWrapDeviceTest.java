@@ -15,6 +15,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.openqa.selenium.chrome.ChromeDriverService;
 
 import com.android.ddmlib.IDevice;
 import com.musala.atmosphere.agent.devicewrapper.util.BackgroundShellCommandExecutor;
@@ -56,8 +57,14 @@ public class AbstractWrapDeviceTest {
                 ExecutorService executor,
                 BackgroundShellCommandExecutor shellCommandExecutor,
                 ServiceCommunicator serviceCommunicator,
-                UIAutomatorCommunicator automatorCommunicator) throws RemoteException {
-            super(deviceToWrap, executor, shellCommandExecutor, serviceCommunicator, automatorCommunicator);
+                UIAutomatorCommunicator automatorCommunicator,
+                ChromeDriverService chromeDriverService) throws RemoteException {
+            super(deviceToWrap,
+                  executor,
+                  shellCommandExecutor,
+                  serviceCommunicator,
+                  automatorCommunicator,
+                  chromeDriverService);
 
         }
 

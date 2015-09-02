@@ -5,6 +5,7 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.concurrent.ExecutorService;
 
 import org.apache.log4j.Logger;
+import org.openqa.selenium.chrome.ChromeDriverService;
 
 import com.android.ddmlib.IDevice;
 import com.musala.atmosphere.agent.devicewrapper.util.BackgroundShellCommandExecutor;
@@ -61,8 +62,14 @@ public class RealWrapDevice extends AbstractWrapDevice {
             ExecutorService executor,
             BackgroundShellCommandExecutor shellCommandExecutor,
             ServiceCommunicator serviceCommunicator,
-            UIAutomatorCommunicator automatorCommunicator) throws RemoteException, NotPossibleForDeviceException {
-        super(deviceToWrap, executor, shellCommandExecutor, serviceCommunicator, automatorCommunicator);
+            UIAutomatorCommunicator automatorCommunicator,
+            ChromeDriverService chromeDriverService) throws RemoteException, NotPossibleForDeviceException {
+        super(deviceToWrap,
+              executor,
+              shellCommandExecutor,
+              serviceCommunicator,
+              automatorCommunicator,
+              chromeDriverService);
 
         if (deviceToWrap.isEmulator()) {
             throw new NotPossibleForDeviceException("Cannot create real wrap device for an emulator.");

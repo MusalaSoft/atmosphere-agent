@@ -20,6 +20,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
 import org.apache.log4j.Logger;
+import org.openqa.selenium.chrome.ChromeDriverService;
 
 import com.android.ddmlib.AdbCommandRejectedException;
 import com.android.ddmlib.CollectingOutputReceiver;
@@ -46,6 +47,7 @@ import com.musala.atmosphere.agent.devicewrapper.util.ondevicecomponent.ServiceC
 import com.musala.atmosphere.agent.devicewrapper.util.ondevicecomponent.UIAutomatorCommunicator;
 import com.musala.atmosphere.agent.exception.OnDeviceServiceTerminationException;
 import com.musala.atmosphere.agent.util.DeviceScreenResolutionParser;
+import com.musala.atmosphere.agent.webview.WebElementManager;
 import com.musala.atmosphere.commons.DeviceInformation;
 import com.musala.atmosphere.commons.PowerProperties;
 import com.musala.atmosphere.commons.RoutingAction;
@@ -64,6 +66,8 @@ import com.musala.atmosphere.commons.ui.UiElementDescriptor;
 import com.musala.atmosphere.commons.ui.selector.UiElementSelector;
 import com.musala.atmosphere.commons.ui.tree.AccessibilityElement;
 import com.musala.atmosphere.commons.util.Pair;
+import com.musala.atmosphere.commons.webelement.action.WebElementAction;
+import com.musala.atmosphere.commons.webelement.action.WebElementWaitCondition;
 
 public abstract class AbstractWrapDevice extends UnicastRemoteObject implements IWrapDevice {
 
@@ -151,6 +155,8 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 
     private final ImeManager imeManager;
 
+    private WebElementManager webElementManager;
+
     /**
      * Creates an abstract wrapper of the given {@link IDevice device}.
      *
@@ -171,17 +177,21 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
             ExecutorService executor,
             BackgroundShellCommandExecutor shellCommandExecutor,
             ServiceCommunicator serviceCommunicator,
-            UIAutomatorCommunicator automatorCommunicator) throws RemoteException {
+            UIAutomatorCommunicator automatorCommunicator,
+            ChromeDriverService chromeDriverService) throws RemoteException {
         // TODO: Use a dependency injection mechanism here.
         this.wrappedDevice = deviceToWrap;
         this.executor = executor;
         this.shellCommandExecutor = shellCommandExecutor;
         this.serviceCommunicator = serviceCommunicator;
         this.automatorCommunicator = automatorCommunicator;
+
         transferService = new FileTransferService(wrappedDevice);
         apkInstaller = new ApkInstaller(wrappedDevice);
         imeManager = new ImeManager(shellCommandExecutor);
         pullFileCompletionService = new ExecutorCompletionService<Boolean>(executor);
+
+        webElementManager = new WebElementManager(chromeDriverService, deviceToWrap.getSerialNumber());
     }
 
     @Override
@@ -195,7 +205,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
         Object returnValue = null;
 
         switch (action) {
-        // Shell command related
+            // Shell command related
             case EXECUTE_SHELL_COMMAND:
                 returnValue = shellCommandExecutor.execute((String) args[0]);
                 break;
@@ -436,6 +446,31 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
                 break;
             case UNSHAPE_DEVICE:
                 returnValue = serviceCommunicator.unshapeDevice();
+                break;
+
+            // WebView Related
+            case GET_WEB_VIEW:
+                webElementManager.initDriver((String) args[0]);
+                break;
+            case FIND_WEB_ELEMENT:
+                returnValue = webElementManager.findElement((String) args[0]);
+                break;
+            case FIND_WEB_ELEMENTS:
+                returnValue = webElementManager.findElements((String) args[0]);
+                break;
+            case CLOSE_CHROME_DRIVER:
+                webElementManager.closeDriver();
+                break;
+            case WEB_ELEMENT_ACTION:
+                returnValue = webElementManager.executeAction((WebElementAction) args[0], (String) args[1]);
+                break;
+            case GET_CSS_VALUE:
+                returnValue = webElementManager.getCssValue((String) args[0], (String) args[1]);
+                break;
+            case WAIT_FOR_WEB_ELEMENT:
+                returnValue = webElementManager.waitForCondition((String) args[0],
+                                                                 (WebElementWaitCondition) args[1],
+                                                                 (Integer) args[2]);
                 break;
         }
 
@@ -735,7 +770,8 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
                                                                                MERGED_RECORDS_DIR_NAME,
                                                                                File.separator,
                                                                                timestamp,
-                                                                               wrappedDevice.getSerialNumber()), "rw");
+                                                                               wrappedDevice.getSerialNumber()),
+                                                                 "rw");
         FileChannel fileChannel = randomAccessFile.getChannel();
         combinedMovieContainer.writeContainer(fileChannel);
 
@@ -812,13 +848,14 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
             combineVideoFiles(separatedVideosDirectoryPath);
         } catch (IOException e) {
             LOGGER.error(String.format("Failed to merge video records pulled from device with serial number %s.",
-                                       wrappedDevice.getSerialNumber()), e);
+                                       wrappedDevice.getSerialNumber()),
+                         e);
         }
     }
 
     /**
      * Clears the data of a given application.
-     * 
+     *
      * @param packageName
      *        - the package name of the given application
      * @throws CommandFailedException

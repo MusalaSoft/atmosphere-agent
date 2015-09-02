@@ -38,8 +38,6 @@ public class Agent {
 
     private AgentManager agentManager;
 
-    private DeviceManager deviceManager;
-
     private ConsoleControl agentConsole;
 
     private AgentState currentAgentState;
@@ -74,7 +72,6 @@ public class Agent {
             androidDebugBridgeManager.setAndroidDebugBridgePath(pathToAdb);
             androidDebugBridgeManager.startAndroidDebugBridge();
             agentManager = new AgentManager(agentRmiPort);
-            deviceManager = new DeviceManager(agentRmiPort);
 
             agentConsole = new ConsoleControl();
             startDate = new Date();
