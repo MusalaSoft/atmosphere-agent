@@ -29,8 +29,8 @@ public class UIAutomatorCommunicator extends DeviceCommunicator<UIAutomatorReque
     private static final Logger LOGGER = Logger.getLogger(UIAutomatorCommunicator.class);
 
     public UIAutomatorCommunicator(DeviceRequestSender<UIAutomatorRequest> requestSender,
-                                   BackgroundShellCommandExecutor commandExecutor,
-                                   String serialNumber) {
+            BackgroundShellCommandExecutor commandExecutor,
+            String serialNumber) {
         super(requestSender, commandExecutor, serialNumber);
     }
 
@@ -219,16 +219,16 @@ public class UIAutomatorCommunicator extends DeviceCommunicator<UIAutomatorReque
      */
     @SuppressWarnings("unchecked")
     public List<AccessibilityElement> getUiElements(UiElementSelector selector, Boolean visibleOnly)
-            throws CommandFailedException {
+        throws CommandFailedException {
         Object[] arguments = new Object[] {selector, visibleOnly};
 
         return (List<AccessibilityElement>) requestActionWithResponse(UIAutomatorRequest.GET_UI_ELEMENTS, arguments);
     }
 
     /**
-     * Sends a request for getting all {@link AccessibilityElement child UI elements} of the
-     * {@link AccessibilityElement element} passed as argument. Returned elements must match all properties contained in
-     * the given {@link UiElementSelector selector}.
+     * Sends a request for getting all {@link AccessibilityElement child UI elements} of the {@link AccessibilityElement
+     * element} passed as argument. Returned elements must match all properties contained in the given
+     * {@link UiElementSelector selector}.
      *
      * @param parentElement
      *        - {@link AccessibilityElement accessibility element} whose children will be traversed
@@ -251,7 +251,8 @@ public class UIAutomatorCommunicator extends DeviceCommunicator<UIAutomatorReque
                                                   Boolean visibleOnly) throws CommandFailedException {
         Object[] requestArguments = new Object[] {parentElement, selector, directChildrenOnly, visibleOnly};
 
-        return (List<AccessibilityElement>) requestActionWithResponse(UIAutomatorRequest.GET_CHILDREN, requestArguments);
+        return (List<AccessibilityElement>) requestActionWithResponse(UIAutomatorRequest.GET_CHILDREN,
+                                                                      requestArguments);
     }
 
     /**
@@ -272,6 +273,25 @@ public class UIAutomatorCommunicator extends DeviceCommunicator<UIAutomatorReque
     }
 
     /**
+     * Sends {@link UIAutomatorRequest request} for executing XPath queries on the screen hierarchy.
+     *
+     * @param xpathQuery
+     *        - XPath query to be executed
+     * @param visibleOnly
+     *        - if <code>true</code> only the visible nodes will be used; if <code>false</code> all nodes will be used
+     * @param localRoot
+     *        - local root from the screen hierarchy if the query will be executed relative to some
+     *        {@link AccessibilityElement element}
+     * @return {@link List list} of {@link AccessibilityElement elements} that matched the executed XPath query
+     */
+    public List<AccessibilityElement> executeXpathQuery(String xpathQuery,
+                                                        boolean visibleOnly,
+                                                        AccessibilityElement localRoot) {
+        // TODO Add logic for executing XPath queries.
+        return null;
+    }
+
+    /**
      * Requests the given {@link UIAutomatorRequest action} and returns the response.
      *
      * @param requestType
@@ -283,7 +303,7 @@ public class UIAutomatorCommunicator extends DeviceCommunicator<UIAutomatorReque
      *         if the request fails
      */
     private Object requestActionWithResponse(UIAutomatorRequest requestType, Object[] arguments)
-            throws CommandFailedException {
+        throws CommandFailedException {
         Request<UIAutomatorRequest> automatorRequest = new Request<UIAutomatorRequest>(requestType);
         automatorRequest.setArguments(arguments);
 
@@ -326,7 +346,8 @@ public class UIAutomatorCommunicator extends DeviceCommunicator<UIAutomatorReque
         try {
             processStarter.runInBackground(shellCommandExecutor);
         } catch (CommandFailedException e) {
-            String errorMessage = String.format("Starting ATMOSPHERE gesture player failed for %s.", deviceSerialNumber);
+            String errorMessage = String.format("Starting ATMOSPHERE gesture player failed for %s.",
+                                                deviceSerialNumber);
             throw new OnDeviceComponentStartingException(errorMessage, e);
         }
 
@@ -349,4 +370,5 @@ public class UIAutomatorCommunicator extends DeviceCommunicator<UIAutomatorReque
         Request<UIAutomatorRequest> validationRequest = new Request<UIAutomatorRequest>(UIAutomatorRequest.VALIDATION);
         validateRemoteServer(validationRequest);
     }
+
 }

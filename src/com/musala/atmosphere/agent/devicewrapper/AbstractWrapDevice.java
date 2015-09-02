@@ -195,7 +195,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
         Object returnValue = null;
 
         switch (action) {
-        // Shell command related
+            // Shell command related
             case EXECUTE_SHELL_COMMAND:
                 returnValue = shellCommandExecutor.execute((String) args[0]);
                 break;
@@ -280,6 +280,11 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
                                                                 (UiElementSelector) args[1],
                                                                 (Boolean) args[2],
                                                                 (Boolean) args[3]);
+
+            case EXECUTE_XPATH_QUERY:
+                returnValue = automatorCommunicator.executeXpathQuery((String) args[0],
+                                                                      (Boolean) args[1],
+                                                                      (AccessibilityElement) args[2]);
                 break;
             case CHECK_ELEMENT_PRESENCE:
                 returnValue = automatorCommunicator.isElementPresent((AccessibilityElement) args[0], (Boolean) args[1]);
@@ -735,7 +740,8 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
                                                                                MERGED_RECORDS_DIR_NAME,
                                                                                File.separator,
                                                                                timestamp,
-                                                                               wrappedDevice.getSerialNumber()), "rw");
+                                                                               wrappedDevice.getSerialNumber()),
+                                                                 "rw");
         FileChannel fileChannel = randomAccessFile.getChannel();
         combinedMovieContainer.writeContainer(fileChannel);
 
@@ -812,13 +818,14 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
             combineVideoFiles(separatedVideosDirectoryPath);
         } catch (IOException e) {
             LOGGER.error(String.format("Failed to merge video records pulled from device with serial number %s.",
-                                       wrappedDevice.getSerialNumber()), e);
+                                       wrappedDevice.getSerialNumber()),
+                         e);
         }
     }
 
     /**
      * Clears the data of a given application.
-     * 
+     *
      * @param packageName
      *        - the package name of the given application
      * @throws CommandFailedException
