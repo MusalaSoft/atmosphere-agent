@@ -31,7 +31,7 @@ public abstract class DeviceRequestSender<T extends RequestType> {
 
     private static final Logger LOGGER = Logger.getLogger(DeviceRequestSender.class);
 
-    private static final int REQUEST_RETRY_TIMEOUT = 3000;
+    private static final int REQUEST_RETRY_TIMEOUT = 7000;
 
     private static final String HOST_NAME = "localhost";
 
