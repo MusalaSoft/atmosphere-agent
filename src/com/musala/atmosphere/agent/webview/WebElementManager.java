@@ -12,7 +12,7 @@ import org.openqa.selenium.Dimension;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.SessionNotCreatedException;
-import org.openqa.selenium.TimeoutException;
+import org.openqa.selenium.StaleElementReferenceException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.WebElement;
@@ -20,8 +20,6 @@ import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeDriverService;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.remote.DesiredCapabilities;
-import org.openqa.selenium.support.ui.ExpectedConditions;
-import org.openqa.selenium.support.ui.WebDriverWait;
 
 import com.musala.atmosphere.commons.exceptions.AtmosphereConfigurationException;
 import com.musala.atmosphere.commons.geometry.Point;
@@ -38,6 +36,8 @@ import com.musala.atmosphere.commons.webelement.exception.WebElementNotPresentEx
  *
  */
 public class WebElementManager {
+    private static final long DEFAULT_WAIT_STEP = 100;
+
     private static final String USE_RUNNING_APPLICATION = "androidUseRunningApp";
 
     private static final String DEVICE_SERIAL_NUMBER = "androidDeviceSerial";
@@ -367,14 +367,22 @@ public class WebElementManager {
      *         otherwise
      */
     private boolean waitForElementExists(String xpathQuery, int timeout) {
-        int timeoutInSeconds = timeout / 1000;
-        WebDriverWait webDriverWait = new WebDriverWait(driver, timeoutInSeconds);
+        WebElement element = null;
 
-        try {
-            webDriverWait.until(ExpectedConditions.presenceOfElementLocated(By.xpath(xpathQuery)));
-            return true;
-        } catch (TimeoutException e) {
-            return false;
+        while (timeout > 0) {
+            try {
+                element = driver.findElement(By.xpath(xpathQuery));
+                getWebElementAttributes(element);
+                break;
+            } catch (NoSuchElementException | StaleElementReferenceException e) {
+                try {
+                    Thread.sleep(DEFAULT_WAIT_STEP);
+                    timeout -= DEFAULT_WAIT_STEP;
+                } catch (InterruptedException e1) {
+                }
+            }
         }
+
+        return element != null;
     }
 }
