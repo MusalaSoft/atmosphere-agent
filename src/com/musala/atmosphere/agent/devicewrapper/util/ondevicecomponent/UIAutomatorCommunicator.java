@@ -283,12 +283,17 @@ public class UIAutomatorCommunicator extends DeviceCommunicator<UIAutomatorReque
      *        - local root from the screen hierarchy if the query will be executed relative to some
      *        {@link AccessibilityElement element}
      * @return {@link List list} of {@link AccessibilityElement elements} that matched the executed XPath query
+     * @throws CommandFailedException
+     *         if request fails
      */
+    @SuppressWarnings("unchecked")
     public List<AccessibilityElement> executeXpathQuery(String xpathQuery,
                                                         boolean visibleOnly,
-                                                        AccessibilityElement localRoot) {
-        // TODO Add logic for executing XPath queries.
-        return null;
+                                                        AccessibilityElement localRoot) throws CommandFailedException {
+        Object[] arguments = new Object[] {xpathQuery, visibleOnly, localRoot};
+
+        return (List<AccessibilityElement>) requestActionWithResponse(UIAutomatorRequest.EXECUTE_XPATH_QUERY,
+                                                                      arguments);
     }
 
     /**
