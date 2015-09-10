@@ -472,6 +472,9 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
                                                                  (WebElementWaitCondition) args[1],
                                                                  (Integer) args[2]);
                 break;
+            case SHOW_AVAILABLE_DISK_SPACE:
+                returnValue = serviceCommunicator.showAvailableDiskSpace();
+                break;
         }
 
         return returnValue;
