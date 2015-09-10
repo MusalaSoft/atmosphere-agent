@@ -57,6 +57,8 @@ public class DeviceManager {
 
     private static final String CHROME_DRIVER_EXECUTABLE_PATH = AgentPropertiesLoader.getChromeDriverExecutablePath();
 
+    private static final String CURRENT_DIR = System.getProperty("user.dir");
+
     private static final int BOOT_VALIDATION_TIMEOUT = 120000;
 
     private static final int DEVICE_EXISTANCE_CHECK_TIMEOUT = 1000;
@@ -134,7 +136,9 @@ public class DeviceManager {
             }
 
             deviceManagerExecutor.releaseResources();
-            chromeDriverService = new ChromeDriverService.Builder().usingDriverExecutable(new File(CHROME_DRIVER_EXECUTABLE_PATH))
+
+            File chromeDriverExecutable = new File(CURRENT_DIR + File.separator + CHROME_DRIVER_EXECUTABLE_PATH);
+            chromeDriverService = new ChromeDriverService.Builder().usingDriverExecutable(chromeDriverExecutable)
                                                                    .usingAnyFreePort()
                                                                    .build();
             LOGGER.info("Device manager created successfully.");
