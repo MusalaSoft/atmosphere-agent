@@ -612,17 +612,17 @@ public class ServiceCommunicator extends DeviceCommunicator<ServiceRequest> {
 
     /**
      * Sends request to the service for getting device's free space.
-     * 
-     * @return device's free disk space
+     *
+     * @return device's free disk space in megabytes
      * @throws CommandFailedException
      *         if sending request for getting free space fails
      */
-    public Double showAvailableDiskSpace() throws CommandFailedException {
-        Request<ServiceRequest> showFreeSpace = new Request<ServiceRequest>(ServiceRequest.SHOW_AVAILABLE_DISK_SPACE);
+    public Long getAvailableDiskSpace() throws CommandFailedException {
+        Request<ServiceRequest> getFreeSpaceRequest = new Request<ServiceRequest>(ServiceRequest.GET_AVAILABLE_DISK_SPACE);
         try {
-            return (Double) requestSender.request(showFreeSpace);
+            return (Long) requestSender.request(getFreeSpaceRequest);
         } catch (ClassNotFoundException | IOException | CommandFailedException e) {
-            throw new CommandFailedException(String.format("Checking free disks space for device %s failed",
+            throw new CommandFailedException(String.format("Checking free disk space for device %s failed",
                                                            deviceSerialNumber),
                                              e);
         }
