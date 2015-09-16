@@ -280,11 +280,14 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
                                                                 (UiElementSelector) args[1],
                                                                 (Boolean) args[2],
                                                                 (Boolean) args[3]);
-
+                break;
+            case EXECUTE_XPATH_QUERY_ON_LOCAL_ROOT:
+                returnValue = automatorCommunicator.executeXpathQueryOnLocalRoot((String) args[0],
+                                                                                 (Boolean) args[1],
+                                                                                 (AccessibilityElement) args[2]);
+                break;
             case EXECUTE_XPATH_QUERY:
-                returnValue = automatorCommunicator.executeXpathQuery((String) args[0],
-                                                                      (Boolean) args[1],
-                                                                      (AccessibilityElement) args[2]);
+                returnValue = automatorCommunicator.executeXpathQuery((String) args[0], (Boolean) args[1]);
                 break;
             case CHECK_ELEMENT_PRESENCE:
                 returnValue = automatorCommunicator.isElementPresent((AccessibilityElement) args[0], (Boolean) args[1]);

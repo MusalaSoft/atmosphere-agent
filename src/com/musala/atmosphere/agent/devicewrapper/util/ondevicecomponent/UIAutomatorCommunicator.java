@@ -273,26 +273,47 @@ public class UIAutomatorCommunicator extends DeviceCommunicator<UIAutomatorReque
     }
 
     /**
-     * Sends {@link UIAutomatorRequest request} for executing XPath queries on the screen hierarchy.
+     * Sends an {@link UIAutomatorRequest UI automator request} for executing XPath queries on the screen hierarchy.
+     *
+     * @param xpathQuery
+     *        - XPath query to be executed
+     * @param visibleOnly
+     *        - if <code>true</code> only the visible nodes will be used; if <code>false</code> all nodes will be used
+     * @return {@link List list} of {@link AccessibilityElement elements} that matched the executed XPath query
+     * @throws CommandFailedException
+     *         if request fails
+     */
+    @SuppressWarnings("unchecked")
+    public List<AccessibilityElement> executeXpathQuery(String xpathQuery, Boolean visibleOnly)
+        throws CommandFailedException {
+        Object[] arguments = new Object[] {xpathQuery, visibleOnly};
+
+        return (List<AccessibilityElement>) requestActionWithResponse(UIAutomatorRequest.EXECUTE_XPATH_QUERY,
+                                                                      arguments);
+    }
+
+    /**
+     * Sends an {@link UIAutomatorRequest UI automator request} for executing XPath queries on the screen hierarchy by a
+     * given local root.
      *
      * @param xpathQuery
      *        - XPath query to be executed
      * @param visibleOnly
      *        - if <code>true</code> only the visible nodes will be used; if <code>false</code> all nodes will be used
      * @param localRoot
-     *        - local root from the screen hierarchy if the query will be executed relative to some
-     *        {@link AccessibilityElement element}
+     *        - local root relative to some {@link AccessibilityElement element} from which the query will be executed
      * @return {@link List list} of {@link AccessibilityElement elements} that matched the executed XPath query
      * @throws CommandFailedException
      *         if request fails
      */
     @SuppressWarnings("unchecked")
-    public List<AccessibilityElement> executeXpathQuery(String xpathQuery,
-                                                        boolean visibleOnly,
-                                                        AccessibilityElement localRoot) throws CommandFailedException {
+    public List<AccessibilityElement> executeXpathQueryOnLocalRoot(String xpathQuery,
+                                                                   boolean visibleOnly,
+                                                                   AccessibilityElement localRoot)
+                                                                       throws CommandFailedException {
         Object[] arguments = new Object[] {xpathQuery, visibleOnly, localRoot};
 
-        return (List<AccessibilityElement>) requestActionWithResponse(UIAutomatorRequest.EXECUTE_XPATH_QUERY,
+        return (List<AccessibilityElement>) requestActionWithResponse(UIAutomatorRequest.EXECUTE_XPATH_QUERY_ON_LOCAL_ROOT,
                                                                       arguments);
     }
 
