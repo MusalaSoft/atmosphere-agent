@@ -48,9 +48,9 @@ import com.musala.atmosphere.commons.sa.exceptions.TimeoutReachedException;
 
 /**
  * Manages wrapping, unwrapping, register and unregister devices. Keeps track of all connected devices.
- * 
+ *
  * @author yordan.petrov
- * 
+ *
  */
 public class DeviceManager {
     private static final Logger LOGGER = Logger.getLogger(DeviceManager.class.getCanonicalName());
@@ -147,7 +147,7 @@ public class DeviceManager {
 
     /**
      * Gets list of all connected {@link IDevice}.
-     * 
+     *
      * @return list of all connected {@link IDevice}.
      */
     public List<IDevice> getDevicesList() {
@@ -159,7 +159,7 @@ public class DeviceManager {
 
     /**
      * Gets the unique identifier of the current Agent.
-     * 
+     *
      * @return Unique identifier for the current Agent.
      */
     public String getAgentId() {
@@ -168,7 +168,7 @@ public class DeviceManager {
 
     /**
      * Gets a list of all published and available device wrapper RMI string identifiers on the current Agent.
-     * 
+     *
      * @return List of the DeviceInformation objects, one for every available device on the current Agent.
      * @throws RemoteException
      */
@@ -189,7 +189,7 @@ public class DeviceManager {
     /**
      * Registers a newly connected device on this AgentManager (adds it to the internal list of devices and creates a
      * wrapper for it in the RMI registry). Gets invoked by the DeviceChangeListener.
-     * 
+     *
      * @param connectedDevice
      *        the newly connected device.
      * @return the RMI binding ID of the newly bound wrapper.
@@ -232,7 +232,7 @@ public class DeviceManager {
     /**
      * Unregisters a disconnected device on this AgentManager (removes it from the internal list of devices and unbinds
      * it's wrapper from the RMI registry). Gets invoked by the DeviceChangeListener.
-     * 
+     *
      * @param disconnectedDevice
      *        the disconnected device.
      * @return The RMI binding ID of the unbound device.
@@ -259,7 +259,7 @@ public class DeviceManager {
 
     /**
      * Creates a wrapper for a device with specific serial number.
-     * 
+     *
      * @param device
      *        that will be wrapped.
      * @return RMI binding ID for the newly created wrapper.
@@ -341,7 +341,7 @@ public class DeviceManager {
     /**
      * Returns a unique identifier for this device, which will be used as a publishing string for the wrapper of the
      * device in RMI.
-     * 
+     *
      * @param device
      *        which we want to get unique identifier for.
      * @return unique identifier for the device.
@@ -354,7 +354,7 @@ public class DeviceManager {
     /**
      * Returns a unique identifier for this device, which will be used as a publishing string for the wrapper of the
      * device in RMI.
-     * 
+     *
      * @param deviceSerialNumber
      *        serial numver of the device we want to get unique identifier for.
      * @return unique identifier for the device.
@@ -368,7 +368,7 @@ public class DeviceManager {
 
     /**
      * Unbinds a device wrapper from the RMI registry.
-     * 
+     *
      * @param device
      *        the device with the wrapper to be removed.
      * @return the RMI binding ID of the unbound wrapper.
@@ -398,7 +398,7 @@ public class DeviceManager {
 
     /**
      * Returns an IDevice by it's specified serial number.
-     * 
+     *
      * @param serialNumber
      *        Serial number of the wanted IDevice.
      * @return The IDevice.
@@ -415,7 +415,7 @@ public class DeviceManager {
 
     /**
      * Waits until a device with given serial number is present on the agent or the timeout is reached.
-     * 
+     *
      * @param serialNumber
      *        - the serial number of the device.
      * @param timeout
@@ -443,7 +443,7 @@ public class DeviceManager {
 
     /**
      * Checks if any device is present on the agent (current machine).
-     * 
+     *
      * @return true if a device is present, false otherwise.
      */
     public boolean isAnyDevicePresent() {
@@ -452,7 +452,7 @@ public class DeviceManager {
 
     /**
      * Gets the first available device that is present on the agent (current machine).
-     * 
+     *
      * @return the first available device wrapper ({@link IWrapDevice} interface).
      * @throws RemoteException
      * @throws NotBoundException
@@ -469,7 +469,7 @@ public class DeviceManager {
 
     /**
      * Gets the first available emulator device that is present on the agent (current machine).
-     * 
+     *
      * @return the first available emulator wrapper ({@link IWrapDevice} interface).
      * @throws RemoteException
      * @throws NotBoundException
@@ -491,7 +491,7 @@ public class DeviceManager {
 
     /**
      * Stops the chrome driver started as a service.
-     * 
+     *
      */
     public void stopChromeDriverService() {
         chromeDriverService.stop();
@@ -499,7 +499,7 @@ public class DeviceManager {
 
     /**
      * Gets the wrapper of a device with the given Id.
-     * 
+     *
      * @param wrapperId
      *        - id of the wrapper we want to get.
      * @return {@link IWrapDevice} of a device containing given id.

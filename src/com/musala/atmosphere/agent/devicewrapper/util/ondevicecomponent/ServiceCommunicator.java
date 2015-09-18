@@ -610,6 +610,24 @@ public class ServiceCommunicator extends DeviceCommunicator<ServiceRequest> {
         }
     }
 
+    /**
+     * Sends request to the service for getting device's free space.
+     *
+     * @return device's free disk space in megabytes
+     * @throws CommandFailedException
+     *         if sending request for getting free space fails
+     */
+    public Long getAvailableDiskSpace() throws CommandFailedException {
+        Request<ServiceRequest> getFreeSpaceRequest = new Request<ServiceRequest>(ServiceRequest.GET_AVAILABLE_DISK_SPACE);
+        try {
+            return (Long) requestSender.request(getFreeSpaceRequest);
+        } catch (ClassNotFoundException | IOException | CommandFailedException e) {
+            throw new CommandFailedException(String.format("Checking free disk space for device %s failed",
+                                                           deviceSerialNumber),
+                                             e);
+        }
+    }
+
     @Override
     public void stopComponent() {
         // TODO: Use socket requests here. Refactor the service to use dispatchers like the UI automator bridge.
