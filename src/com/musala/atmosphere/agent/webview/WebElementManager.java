@@ -203,7 +203,7 @@ public class WebElementManager {
      */
     private String getText(String xpathQuery) {
         WebElement element = getWebElement(xpathQuery);
-        return element.getText();
+        return element.getAttribute("textContent");
     }
 
     /**
