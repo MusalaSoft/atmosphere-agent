@@ -15,6 +15,7 @@ import com.musala.atmosphere.commons.exceptions.CommandFailedException;
 import com.musala.atmosphere.commons.gesture.Gesture;
 import com.musala.atmosphere.commons.gesture.Timeline;
 import com.musala.atmosphere.commons.ui.UiElementDescriptor;
+import com.musala.atmosphere.commons.ui.UiElementPropertiesContainer;
 import com.musala.atmosphere.commons.ui.selector.UiElementSelector;
 import com.musala.atmosphere.commons.ui.tree.AccessibilityElement;
 import com.musala.atmosphere.commons.util.structure.tree.Tree;
@@ -48,13 +49,33 @@ public class UIAutomatorCommunicator extends DeviceCommunicator<UIAutomatorReque
         requestAction(UIAutomatorRequest.PLAY_GESTURE, arguments);
     }
 
-    public void clearField(UiElementDescriptor descriptor) throws CommandFailedException {
-        Object[] arguments = new Object[] {descriptor};
+    /**
+     * Starts a process on the UiAutomatorBridge that clears an EditText field containing the given properties.
+     * 
+     * @param propertiesContainer
+     *        - the properties by which the UI element will be selected
+     * @throws CommandFailedException
+     *         if the request fails
+     */
+    @Deprecated
+    public void clearField(UiElementPropertiesContainer propertiesContainer) throws CommandFailedException {
+        Object[] arguments = new Object[] {propertiesContainer};
         requestAction(UIAutomatorRequest.CLEAR_FIELD, arguments);
     }
 
-    public void swipeElement(UiElementDescriptor descriptor, SwipeDirection direction) throws CommandFailedException {
-        Object[] arguments = new Object[] {descriptor, direction};
+    /**
+     * Starts a process on the UiAutomatorBridge that executes a swipe gesture by given direction.
+     * 
+     * @param propertiesContainer
+     *        - the properties container of the UI element
+     * @param direction
+     *        - determine swipe direction
+     * @throws CommandFailedException
+     *         if the request fails
+     */
+    public void swipeElement(UiElementDescriptor propertiesContainer, SwipeDirection direction)
+        throws CommandFailedException {
+        Object[] arguments = new Object[] {propertiesContainer, direction};
         requestAction(UIAutomatorRequest.ELEMENT_SWIPE, arguments);
     }
 
@@ -64,8 +85,8 @@ public class UIAutomatorCommunicator extends DeviceCommunicator<UIAutomatorReque
      *
      * @param scrollDirection
      *        determine scrolling direction
-     * @param viewDescriptor
-     *        descriptor of the scrollable view
+     * @param propertiesContainer
+     *        - the properties container of the scrollable view
      * @param maxSwipes
      *        maximum swipes to perform a scroll action
      * @param maxSteps
@@ -76,11 +97,11 @@ public class UIAutomatorCommunicator extends DeviceCommunicator<UIAutomatorReque
      * @throws CommandFailedException
      */
     public boolean scrollToDirection(ScrollDirection scrollDirection,
-                                     UiElementDescriptor viewDescriptor,
+                                     UiElementPropertiesContainer propertiesContainer,
                                      Integer maxSwipes,
                                      Integer maxSteps,
                                      Boolean isVertical) throws CommandFailedException {
-        Object[] arguments = new Object[] {scrollDirection, viewDescriptor, maxSwipes, maxSteps, isVertical};
+        Object[] arguments = new Object[] {scrollDirection, propertiesContainer, maxSwipes, maxSteps, isVertical};
 
         return (boolean) requestActionWithResponse(UIAutomatorRequest.SCROLL_TO_DIRECTION, arguments);
     }
@@ -89,8 +110,8 @@ public class UIAutomatorCommunicator extends DeviceCommunicator<UIAutomatorReque
      * Starts a process on the UIAutomatorBridge that waits for a UI element to appear on the screen with a given
      * timeout.
      *
-     * @param descriptor
-     *        - the descriptor of the UI element
+     * @param propertiesContainer
+     *        - the properties container of the expected UI element
      * @param timeout
      *        - the given timeout
      * @return - returns <code>true</code> if the element exists or <code>false</code> if there isn't such element on
@@ -98,8 +119,9 @@ public class UIAutomatorCommunicator extends DeviceCommunicator<UIAutomatorReque
      *
      * @throws CommandFailedException
      */
-    public boolean waitForExists(UiElementDescriptor descriptor, Integer timeout) throws CommandFailedException {
-        Object[] arguments = new Object[] {descriptor, timeout};
+    public boolean waitForExists(UiElementPropertiesContainer propertiesContainer, Integer timeout)
+        throws CommandFailedException {
+        Object[] arguments = new Object[] {propertiesContainer, timeout};
 
         return (boolean) requestActionWithResponse(UIAutomatorRequest.WAIT_FOR_EXISTS, arguments);
     }
@@ -108,8 +130,8 @@ public class UIAutomatorCommunicator extends DeviceCommunicator<UIAutomatorReque
      * Starts a process on the UIAutomatorBridge that waits for a UI element to disappear on the screen with a given
      * timeout.
      *
-     * @param descriptor
-     *        - the descriptor of the UI element
+     * @param propertiesContainer
+     *        - the properties container of the UI element
      * @param timeout
      *        - the given timeout.
      * @return <code>true</code> if the element disappears or <code>false</code> if there is such element on the screen
@@ -117,8 +139,9 @@ public class UIAutomatorCommunicator extends DeviceCommunicator<UIAutomatorReque
      *
      * @throws CommandFailedException
      */
-    public boolean waitUntilGone(UiElementDescriptor descriptor, Integer timeout) throws CommandFailedException {
-        Object[] arguments = new Object[] {descriptor, timeout};
+    public boolean waitUntilGone(UiElementPropertiesContainer propertiesContainer, Integer timeout)
+        throws CommandFailedException {
+        Object[] arguments = new Object[] {propertiesContainer, timeout};
 
         return (boolean) requestActionWithResponse(UIAutomatorRequest.WAIT_UNTIL_GONE, arguments);
     }

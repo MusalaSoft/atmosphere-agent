@@ -61,6 +61,7 @@ import com.musala.atmosphere.commons.exceptions.CommandFailedException;
 import com.musala.atmosphere.commons.gesture.Gesture;
 import com.musala.atmosphere.commons.sa.IWrapDevice;
 import com.musala.atmosphere.commons.ui.UiElementDescriptor;
+import com.musala.atmosphere.commons.ui.UiElementPropertiesContainer;
 import com.musala.atmosphere.commons.ui.selector.UiElementSelector;
 import com.musala.atmosphere.commons.ui.tree.AccessibilityElement;
 import com.musala.atmosphere.commons.util.Pair;
@@ -324,10 +325,12 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 
             // Misc functionalities
             case WAIT_FOR_EXISTS:
-                returnValue = automatorCommunicator.waitForExists((UiElementDescriptor) args[0], (Integer) args[1]);
+                returnValue = automatorCommunicator.waitForExists((UiElementPropertiesContainer) args[0],
+                                                                  (Integer) args[1]);
                 break;
             case WAIT_UNTIL_GONE:
-                returnValue = automatorCommunicator.waitUntilGone((UiElementDescriptor) args[0], (Integer) args[1]);
+                returnValue = automatorCommunicator.waitUntilGone((UiElementPropertiesContainer) args[0],
+                                                                  (Integer) args[1]);
                 break;
             case WAIT_FOR_WINDOW_UPDATE:
                 returnValue = automatorCommunicator.waitForWindowUpdate((String) args[0], (int) args[1]);
@@ -342,7 +345,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
                 automatorCommunicator.playGesture((Gesture) args[0]);
                 break;
             case CLEAR_FIELD:
-                automatorCommunicator.clearField((UiElementDescriptor) args[0]);
+                automatorCommunicator.clearField((UiElementPropertiesContainer) args[0]);
                 break;
             case ELEMENT_SWIPE:
                 automatorCommunicator.swipeElement((UiElementDescriptor) args[0], (SwipeDirection) args[1]);
@@ -424,7 +427,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
             // Scrollable View related
             case SCROLL_TO_DIRECTION:
                 returnValue = automatorCommunicator.scrollToDirection((ScrollDirection) args[0],
-                                                                      (UiElementDescriptor) args[1],
+                                                                      (UiElementPropertiesContainer) args[1],
                                                                       (Integer) args[2],
                                                                       (Integer) args[3],
                                                                       (Boolean) args[4]);
