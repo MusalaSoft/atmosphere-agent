@@ -15,6 +15,7 @@ import com.musala.atmosphere.commons.exceptions.CommandFailedException;
 import com.musala.atmosphere.commons.gesture.Gesture;
 import com.musala.atmosphere.commons.gesture.Timeline;
 import com.musala.atmosphere.commons.ui.UiElementDescriptor;
+import com.musala.atmosphere.commons.ui.UiElementPropertiesContainer;
 import com.musala.atmosphere.commons.ui.selector.UiElementSelector;
 import com.musala.atmosphere.commons.ui.tree.AccessibilityElement;
 import com.musala.atmosphere.commons.util.structure.tree.Tree;
@@ -29,8 +30,8 @@ public class UIAutomatorCommunicator extends DeviceCommunicator<UIAutomatorReque
     private static final Logger LOGGER = Logger.getLogger(UIAutomatorCommunicator.class);
 
     public UIAutomatorCommunicator(DeviceRequestSender<UIAutomatorRequest> requestSender,
-                                   BackgroundShellCommandExecutor commandExecutor,
-                                   String serialNumber) {
+            BackgroundShellCommandExecutor commandExecutor,
+            String serialNumber) {
         super(requestSender, commandExecutor, serialNumber);
     }
 
@@ -48,13 +49,33 @@ public class UIAutomatorCommunicator extends DeviceCommunicator<UIAutomatorReque
         requestAction(UIAutomatorRequest.PLAY_GESTURE, arguments);
     }
 
-    public void clearField(UiElementDescriptor descriptor) throws CommandFailedException {
-        Object[] arguments = new Object[] {descriptor};
+    /**
+     * Starts a process on the UiAutomatorBridge that clears an EditText field containing the given properties.
+     * 
+     * @param propertiesContainer
+     *        - the properties by which the UI element will be selected
+     * @throws CommandFailedException
+     *         if the request fails
+     */
+    @Deprecated
+    public void clearField(UiElementPropertiesContainer propertiesContainer) throws CommandFailedException {
+        Object[] arguments = new Object[] {propertiesContainer};
         requestAction(UIAutomatorRequest.CLEAR_FIELD, arguments);
     }
 
-    public void swipeElement(UiElementDescriptor descriptor, SwipeDirection direction) throws CommandFailedException {
-        Object[] arguments = new Object[] {descriptor, direction};
+    /**
+     * Starts a process on the UiAutomatorBridge that executes a swipe gesture by given direction.
+     * 
+     * @param propertiesContainer
+     *        - the properties container of the UI element
+     * @param direction
+     *        - determine swipe direction
+     * @throws CommandFailedException
+     *         if the request fails
+     */
+    public void swipeElement(UiElementDescriptor propertiesContainer, SwipeDirection direction)
+        throws CommandFailedException {
+        Object[] arguments = new Object[] {propertiesContainer, direction};
         requestAction(UIAutomatorRequest.ELEMENT_SWIPE, arguments);
     }
 
@@ -64,8 +85,8 @@ public class UIAutomatorCommunicator extends DeviceCommunicator<UIAutomatorReque
      *
      * @param scrollDirection
      *        determine scrolling direction
-     * @param viewDescriptor
-     *        descriptor of the scrollable view
+     * @param propertiesContainer
+     *        - the properties container of the scrollable view
      * @param maxSwipes
      *        maximum swipes to perform a scroll action
      * @param maxSteps
@@ -76,11 +97,11 @@ public class UIAutomatorCommunicator extends DeviceCommunicator<UIAutomatorReque
      * @throws CommandFailedException
      */
     public boolean scrollToDirection(ScrollDirection scrollDirection,
-                                     UiElementDescriptor viewDescriptor,
+                                     UiElementPropertiesContainer propertiesContainer,
                                      Integer maxSwipes,
                                      Integer maxSteps,
                                      Boolean isVertical) throws CommandFailedException {
-        Object[] arguments = new Object[] {scrollDirection, viewDescriptor, maxSwipes, maxSteps, isVertical};
+        Object[] arguments = new Object[] {scrollDirection, propertiesContainer, maxSwipes, maxSteps, isVertical};
 
         return (boolean) requestActionWithResponse(UIAutomatorRequest.SCROLL_TO_DIRECTION, arguments);
     }
@@ -89,8 +110,8 @@ public class UIAutomatorCommunicator extends DeviceCommunicator<UIAutomatorReque
      * Starts a process on the UIAutomatorBridge that waits for a UI element to appear on the screen with a given
      * timeout.
      *
-     * @param descriptor
-     *        - the descriptor of the UI element
+     * @param propertiesContainer
+     *        - the properties container of the expected UI element
      * @param timeout
      *        - the given timeout
      * @return - returns <code>true</code> if the element exists or <code>false</code> if there isn't such element on
@@ -98,8 +119,9 @@ public class UIAutomatorCommunicator extends DeviceCommunicator<UIAutomatorReque
      *
      * @throws CommandFailedException
      */
-    public boolean waitForExists(UiElementDescriptor descriptor, Integer timeout) throws CommandFailedException {
-        Object[] arguments = new Object[] {descriptor, timeout};
+    public boolean waitForExists(UiElementPropertiesContainer propertiesContainer, Integer timeout)
+        throws CommandFailedException {
+        Object[] arguments = new Object[] {propertiesContainer, timeout};
 
         return (boolean) requestActionWithResponse(UIAutomatorRequest.WAIT_FOR_EXISTS, arguments);
     }
@@ -108,8 +130,8 @@ public class UIAutomatorCommunicator extends DeviceCommunicator<UIAutomatorReque
      * Starts a process on the UIAutomatorBridge that waits for a UI element to disappear on the screen with a given
      * timeout.
      *
-     * @param descriptor
-     *        - the descriptor of the UI element
+     * @param propertiesContainer
+     *        - the properties container of the UI element
      * @param timeout
      *        - the given timeout.
      * @return <code>true</code> if the element disappears or <code>false</code> if there is such element on the screen
@@ -117,8 +139,9 @@ public class UIAutomatorCommunicator extends DeviceCommunicator<UIAutomatorReque
      *
      * @throws CommandFailedException
      */
-    public boolean waitUntilGone(UiElementDescriptor descriptor, Integer timeout) throws CommandFailedException {
-        Object[] arguments = new Object[] {descriptor, timeout};
+    public boolean waitUntilGone(UiElementPropertiesContainer propertiesContainer, Integer timeout)
+        throws CommandFailedException {
+        Object[] arguments = new Object[] {propertiesContainer, timeout};
 
         return (boolean) requestActionWithResponse(UIAutomatorRequest.WAIT_UNTIL_GONE, arguments);
     }
@@ -219,16 +242,16 @@ public class UIAutomatorCommunicator extends DeviceCommunicator<UIAutomatorReque
      */
     @SuppressWarnings("unchecked")
     public List<AccessibilityElement> getUiElements(UiElementSelector selector, Boolean visibleOnly)
-            throws CommandFailedException {
+        throws CommandFailedException {
         Object[] arguments = new Object[] {selector, visibleOnly};
 
         return (List<AccessibilityElement>) requestActionWithResponse(UIAutomatorRequest.GET_UI_ELEMENTS, arguments);
     }
 
     /**
-     * Sends a request for getting all {@link AccessibilityElement child UI elements} of the
-     * {@link AccessibilityElement element} passed as argument. Returned elements must match all properties contained in
-     * the given {@link UiElementSelector selector}.
+     * Sends a request for getting all {@link AccessibilityElement child UI elements} of the {@link AccessibilityElement
+     * element} passed as argument. Returned elements must match all properties contained in the given
+     * {@link UiElementSelector selector}.
      *
      * @param parentElement
      *        - {@link AccessibilityElement accessibility element} whose children will be traversed
@@ -251,7 +274,8 @@ public class UIAutomatorCommunicator extends DeviceCommunicator<UIAutomatorReque
                                                   Boolean visibleOnly) throws CommandFailedException {
         Object[] requestArguments = new Object[] {parentElement, selector, directChildrenOnly, visibleOnly};
 
-        return (List<AccessibilityElement>) requestActionWithResponse(UIAutomatorRequest.GET_CHILDREN, requestArguments);
+        return (List<AccessibilityElement>) requestActionWithResponse(UIAutomatorRequest.GET_CHILDREN,
+                                                                      requestArguments);
     }
 
     /**
@@ -272,6 +296,51 @@ public class UIAutomatorCommunicator extends DeviceCommunicator<UIAutomatorReque
     }
 
     /**
+     * Sends an {@link UIAutomatorRequest UI automator request} for executing XPath queries on the screen hierarchy.
+     *
+     * @param xpathQuery
+     *        - XPath query to be executed
+     * @param visibleOnly
+     *        - if <code>true</code> only the visible nodes will be used; if <code>false</code> all nodes will be used
+     * @return {@link List list} of {@link AccessibilityElement elements} that matched the executed XPath query
+     * @throws CommandFailedException
+     *         if request fails
+     */
+    @SuppressWarnings("unchecked")
+    public List<AccessibilityElement> executeXpathQuery(String xpathQuery, Boolean visibleOnly)
+        throws CommandFailedException {
+        Object[] arguments = new Object[] {xpathQuery, visibleOnly};
+
+        return (List<AccessibilityElement>) requestActionWithResponse(UIAutomatorRequest.EXECUTE_XPATH_QUERY,
+                                                                      arguments);
+    }
+
+    /**
+     * Sends an {@link UIAutomatorRequest UI automator request} for executing XPath queries on the screen hierarchy by a
+     * given local root.
+     *
+     * @param xpathQuery
+     *        - XPath query to be executed
+     * @param visibleOnly
+     *        - if <code>true</code> only the visible nodes will be used; if <code>false</code> all nodes will be used
+     * @param localRoot
+     *        - local root relative to some {@link AccessibilityElement element} from which the query will be executed
+     * @return {@link List list} of {@link AccessibilityElement elements} that matched the executed XPath query
+     * @throws CommandFailedException
+     *         if request fails
+     */
+    @SuppressWarnings("unchecked")
+    public List<AccessibilityElement> executeXpathQueryOnLocalRoot(String xpathQuery,
+                                                                   boolean visibleOnly,
+                                                                   AccessibilityElement localRoot)
+                                                                       throws CommandFailedException {
+        Object[] arguments = new Object[] {xpathQuery, visibleOnly, localRoot};
+
+        return (List<AccessibilityElement>) requestActionWithResponse(UIAutomatorRequest.EXECUTE_XPATH_QUERY_ON_LOCAL_ROOT,
+                                                                      arguments);
+    }
+
+    /**
      * Requests the given {@link UIAutomatorRequest action} and returns the response.
      *
      * @param requestType
@@ -283,7 +352,7 @@ public class UIAutomatorCommunicator extends DeviceCommunicator<UIAutomatorReque
      *         if the request fails
      */
     private Object requestActionWithResponse(UIAutomatorRequest requestType, Object[] arguments)
-            throws CommandFailedException {
+        throws CommandFailedException {
         Request<UIAutomatorRequest> automatorRequest = new Request<UIAutomatorRequest>(requestType);
         automatorRequest.setArguments(arguments);
 
@@ -326,7 +395,8 @@ public class UIAutomatorCommunicator extends DeviceCommunicator<UIAutomatorReque
         try {
             processStarter.runInBackground(shellCommandExecutor);
         } catch (CommandFailedException e) {
-            String errorMessage = String.format("Starting ATMOSPHERE gesture player failed for %s.", deviceSerialNumber);
+            String errorMessage = String.format("Starting ATMOSPHERE gesture player failed for %s.",
+                                                deviceSerialNumber);
             throw new OnDeviceComponentStartingException(errorMessage, e);
         }
 
@@ -349,4 +419,5 @@ public class UIAutomatorCommunicator extends DeviceCommunicator<UIAutomatorReque
         Request<UIAutomatorRequest> validationRequest = new Request<UIAutomatorRequest>(UIAutomatorRequest.VALIDATION);
         validateRemoteServer(validationRequest);
     }
+
 }
