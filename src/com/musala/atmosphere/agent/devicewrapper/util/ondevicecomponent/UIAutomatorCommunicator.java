@@ -14,7 +14,6 @@ import com.musala.atmosphere.commons.beans.SwipeDirection;
 import com.musala.atmosphere.commons.exceptions.CommandFailedException;
 import com.musala.atmosphere.commons.gesture.Gesture;
 import com.musala.atmosphere.commons.gesture.Timeline;
-import com.musala.atmosphere.commons.ui.UiElementDescriptor;
 import com.musala.atmosphere.commons.ui.UiElementPropertiesContainer;
 import com.musala.atmosphere.commons.ui.selector.UiElementSelector;
 import com.musala.atmosphere.commons.ui.tree.AccessibilityElement;
@@ -73,7 +72,7 @@ public class UIAutomatorCommunicator extends DeviceCommunicator<UIAutomatorReque
      * @throws CommandFailedException
      *         if the request fails
      */
-    public void swipeElement(UiElementDescriptor propertiesContainer, SwipeDirection direction)
+    public void swipeElement(UiElementPropertiesContainer propertiesContainer, SwipeDirection direction)
         throws CommandFailedException {
         Object[] arguments = new Object[] {propertiesContainer, direction};
         requestAction(UIAutomatorRequest.ELEMENT_SWIPE, arguments);

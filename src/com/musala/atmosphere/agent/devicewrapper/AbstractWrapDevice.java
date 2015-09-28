@@ -62,7 +62,6 @@ import com.musala.atmosphere.commons.beans.SwipeDirection;
 import com.musala.atmosphere.commons.exceptions.CommandFailedException;
 import com.musala.atmosphere.commons.gesture.Gesture;
 import com.musala.atmosphere.commons.sa.IWrapDevice;
-import com.musala.atmosphere.commons.ui.UiElementDescriptor;
 import com.musala.atmosphere.commons.ui.UiElementPropertiesContainer;
 import com.musala.atmosphere.commons.ui.selector.UiElementSelector;
 import com.musala.atmosphere.commons.ui.tree.AccessibilityElement;
@@ -358,7 +357,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
                 automatorCommunicator.clearField((UiElementPropertiesContainer) args[0]);
                 break;
             case ELEMENT_SWIPE:
-                automatorCommunicator.swipeElement((UiElementDescriptor) args[0], (SwipeDirection) args[1]);
+                automatorCommunicator.swipeElement((UiElementPropertiesContainer) args[0], (SwipeDirection) args[1]);
                 break;
             case START_APP:
                 returnValue = serviceCommunicator.startApplication(args);
