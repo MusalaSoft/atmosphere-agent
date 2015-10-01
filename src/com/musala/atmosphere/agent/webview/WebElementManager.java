@@ -247,9 +247,6 @@ public class WebElementManager {
                 break;
             case GET_POSITION:
                 return getRelativePosition(xpathQuery);
-            case SUBMIT_FORM:
-                submitForm(xpathQuery);
-                break;
             default:
                 return null;
         }
@@ -322,17 +319,6 @@ public class WebElementManager {
     private void focus(String xpathQuery) {
         WebElement element = getWebElement(xpathQuery);
         ((JavascriptExecutor) driver).executeScript("arguments[0].focus();", element);
-    }
-
-    /**
-     * Submits the web element form by the given xpath query.
-     *
-     * @param xpathQuery
-     *        - the xpath query used for matching
-     */
-    private void submitForm(String xpathQuery) {
-        WebElement element = getWebElement(xpathQuery);
-        element.submit();
     }
 
     /**
