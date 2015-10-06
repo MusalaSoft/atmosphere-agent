@@ -169,19 +169,21 @@ public class WebElementManager {
     private boolean isDisplayed(String xpathQuery) {
         WebElement element = getWebElement(xpathQuery);
 
-        if (element.getAttribute("type").equals(HIDDEN_ELEMENT)) {
+        if (HIDDEN_ELEMENT.equals(element.getAttribute("type"))) {
             return false;
         }
 
-        if (element.getCssValue("display").equals("none")) {
+        String hiddentElementDisplayValue = "none";
+        if (hiddentElementDisplayValue.equals(element.getCssValue("display"))) {
             return false;
         }
 
-        if (element.getCssValue("visibility").equals(HIDDEN_ELEMENT)) {
+        if (HIDDEN_ELEMENT.equals(element.getCssValue("visibility"))) {
             return false;
         }
 
-        if (element.getCssValue("opacity").equals("0")) {
+        String hiddentElementOpacityValue = "0";
+        if (hiddentElementOpacityValue.equals(element.getCssValue("opacity"))) {
             return false;
         }
 
