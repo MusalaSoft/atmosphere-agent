@@ -628,6 +628,25 @@ public class ServiceCommunicator extends DeviceCommunicator<ServiceRequest> {
         }
     }
 
+    /**
+     * Sends request to the service for getting the device external storage absolute path, stored in system environment.
+     *
+     * @return device external storage absolute path
+     * @throws CommandFailedException
+     *         if sending request for getting external storage absolute path fails
+     */
+    public String getExternalStorage() throws CommandFailedException {
+        Request<ServiceRequest> externalStorageRequest = new Request<ServiceRequest>(ServiceRequest.GET_EXTERNAL_STORAGE);
+
+        try {
+            return (String) requestSender.request(externalStorageRequest);
+        } catch (ClassNotFoundException | IOException | CommandFailedException e) {
+            throw new CommandFailedException(String.format("Getting external storage for device %s failed",
+                                                           deviceSerialNumber),
+                                             e);
+        }
+    }
+
     @Override
     public void stopComponent() {
         // TODO: Use socket requests here. Refactor the service to use dispatchers like the UI automator bridge.

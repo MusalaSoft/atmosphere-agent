@@ -113,17 +113,13 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 
     private static final String STOP_SCREENRECORD_SCRIPT_NAME = "stop_screenrecord.sh";
 
-    private static final String START_SCREEN_RECORD_COMMAND = String.format("sh %s/%s",
+    private static final String START_SCREEN_RECORD_COMMAND = String.format("sh %s/%s ",
                                                                             SCREEN_RECORD_COMPONENT_PATH,
                                                                             START_SCREENRECORD_SCRIPT_NAME);
 
-    private static final String STOP_SCREEN_RECORD_COMMAND = String.format("sh %s/%s",
+    private static final String STOP_SCREEN_RECORD_COMMAND = String.format("sh %s/%s ",
                                                                            SCREEN_RECORD_COMPONENT_PATH,
                                                                            STOP_SCREENRECORD_SCRIPT_NAME);
-
-    private static final String SCREEN_RECORDS_REMOTE_PATH = String.format("%s/%s",
-                                                                           SCREEN_RECORD_COMPONENT_PATH,
-                                                                           RECORDS_DIRECTORY_NAME);
 
     private static final String SCREEN_RECORDS_LOCAL_DIR = System.getProperty("user.dir");
 
@@ -792,12 +788,18 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
         randomAccessFile.close();
     }
 
-    private void startScreenRecording() {
-        shellCommandExecutor.executeInBackground(START_SCREEN_RECORD_COMMAND);
+    private void startScreenRecording() throws CommandFailedException {
+        String externalStorage = serviceCommunicator.getExternalStorage();
+        String recordsParentDir = externalStorage != null ? externalStorage : SCREEN_RECORD_COMPONENT_PATH;
+
+        shellCommandExecutor.executeInBackground(START_SCREEN_RECORD_COMMAND + recordsParentDir);
     }
 
     private void stopScreenRecording() throws CommandFailedException {
-        String output = shellCommandExecutor.execute(STOP_SCREEN_RECORD_COMMAND);
+        String externalStorage = serviceCommunicator.getExternalStorage();
+        String recordsParentDir = externalStorage != null ? externalStorage : SCREEN_RECORD_COMPONENT_PATH;
+
+        String output = shellCommandExecutor.execute(STOP_SCREEN_RECORD_COMMAND + recordsParentDir);
 
         if (output.trim().length() <= 0) {
             return;
@@ -829,11 +831,15 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
         }
 
         for (String filename : screenRecordFilenames) {
-            String currentRecordRemotePath = String.format("%s/%s", SCREEN_RECORDS_REMOTE_PATH, filename);
+            String currentRecordRemotePath = String.format("%s/%s/%s",
+                                                           recordsParentDir,
+                                                           RECORDS_DIRECTORY_NAME,
+                                                           filename);
             String currentRecordLocalPath = String.format("%s%s%s",
                                                           separatedVideosDirectoryPath,
                                                           File.separator,
                                                           filename);
+
             pullFile(currentRecordRemotePath, currentRecordLocalPath);
         }
 
