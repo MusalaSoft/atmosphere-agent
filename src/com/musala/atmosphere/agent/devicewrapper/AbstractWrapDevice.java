@@ -106,7 +106,9 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 
     private static final String FIRST_SCREEN_RECORD_NAME = "1.mp4";
 
-    private static final String SCREEN_RECORD_COMPONENT_PATH = "/data/local/tmp";
+    private static final String FALLBACK_COMPONENT_PATH = "/data/local/tmp";
+
+    private static final String DEVICE_LOG_FILE_NAME = "device.log";
 
     private static final String RECORDS_DIRECTORY_NAME = "AtmosphereScreenRecords";
 
@@ -115,11 +117,11 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
     private static final String STOP_SCREENRECORD_SCRIPT_NAME = "stop_screenrecord.sh";
 
     private static final String START_SCREEN_RECORD_COMMAND = String.format("sh %s/%s ",
-                                                                            SCREEN_RECORD_COMPONENT_PATH,
+                                                                            FALLBACK_COMPONENT_PATH,
                                                                             START_SCREENRECORD_SCRIPT_NAME);
 
     private static final String STOP_SCREEN_RECORD_COMMAND = String.format("sh %s/%s ",
-                                                                           SCREEN_RECORD_COMPONENT_PATH,
+                                                                           FALLBACK_COMPONENT_PATH,
                                                                            STOP_SCREENRECORD_SCRIPT_NAME);
 
     private static final String SCREEN_RECORDS_LOCAL_DIR = System.getProperty("user.dir");
@@ -133,6 +135,8 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
     private static final String DEVICE_TYPE = "tablet";
 
     private static final String CLEAR_APP_DATA_COMMAND = "pm clear";
+
+    private static final String GET_DEVICE_LOGCAT = "logcat -d > ";
 
     private ExecutorService executor;
 
@@ -304,6 +308,9 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
                 break;
             case CHECK_ELEMENT_PRESENCE:
                 returnValue = automatorCommunicator.isElementPresent((AccessibilityElement) args[0], (Boolean) args[1]);
+                break;
+            case GET_DEVICE_LOGCAT:
+                getDeviceLogcat();
                 break;
 
             // Setters
@@ -491,6 +498,28 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
         }
 
         return returnValue;
+    }
+
+    /**
+     * Stores the device logcat into a local file.
+     *
+     * @throws CommandFailedException
+     *         if logcat command fails
+     */
+    private void getDeviceLogcat() throws CommandFailedException {
+        // TODO: Transfer file to Client -> another task exists
+        String externalStorage = serviceCommunicator.getExternalStorage();
+        String remoteLogParentDir = externalStorage != null ? externalStorage : FALLBACK_COMPONENT_PATH;
+        String remoteLogDir = String.format("%s/%s", remoteLogParentDir, DEVICE_LOG_FILE_NAME);
+
+        shellCommandExecutor.execute(GET_DEVICE_LOGCAT + remoteLogDir);
+        try {
+            wrappedDevice.pullFile(remoteLogDir, DEVICE_LOG_FILE_NAME);
+        } catch (SyncException | IOException | AdbCommandRejectedException | TimeoutException e) {
+            String errorMessage = String.format("Getting log for device %s failed.", wrappedDevice.getSerialNumber());
+            LOGGER.error(errorMessage, e);
+            throw new CommandFailedException(errorMessage, e);
+        }
     }
 
     /**
@@ -797,7 +826,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 
     private void startScreenRecording(int timeLimit) throws CommandFailedException {
         String externalStorage = serviceCommunicator.getExternalStorage();
-        String recordsParentDir = externalStorage != null ? externalStorage : SCREEN_RECORD_COMPONENT_PATH;
+        String recordsParentDir = externalStorage != null ? externalStorage : FALLBACK_COMPONENT_PATH;
 
         int timeLimitInSeconds = timeLimit * 60;
         String screenRecordCommand = String.format("%s%s %d",
@@ -810,7 +839,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 
     private void stopScreenRecording() throws CommandFailedException {
         String externalStorage = serviceCommunicator.getExternalStorage();
-        String recordsParentDir = externalStorage != null ? externalStorage : SCREEN_RECORD_COMPONENT_PATH;
+        String recordsParentDir = externalStorage != null ? externalStorage : FALLBACK_COMPONENT_PATH;
 
         String output = shellCommandExecutor.execute(STOP_SCREEN_RECORD_COMMAND + recordsParentDir);
 
