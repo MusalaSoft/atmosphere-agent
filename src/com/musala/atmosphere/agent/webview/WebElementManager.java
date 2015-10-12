@@ -44,6 +44,8 @@ public class WebElementManager {
 
     private static final String APPLICATION_PACKAGE_NAME = "androidPackage";
 
+    private static final String HIDDEN_ELEMENT = "hidden";
+
     private ChromeDriverService service;
 
     private WebDriver driver;
@@ -166,7 +168,31 @@ public class WebElementManager {
      */
     private boolean isDisplayed(String xpathQuery) {
         WebElement element = getWebElement(xpathQuery);
-        return element.isDisplayed();
+
+        if (HIDDEN_ELEMENT.equals(element.getAttribute("type"))) {
+            return false;
+        }
+
+        String hiddentElementDisplayValue = "none";
+        if (hiddentElementDisplayValue.equals(element.getCssValue("display"))) {
+            return false;
+        }
+
+        if (HIDDEN_ELEMENT.equals(element.getCssValue("visibility"))) {
+            return false;
+        }
+
+        String hiddentElementOpacityValue = "0";
+        if (hiddentElementOpacityValue.equals(element.getCssValue("opacity"))) {
+            return false;
+        }
+
+        Dimension elementSize = element.getSize();
+        if (elementSize.getHeight() <= 0 || elementSize.getWidth() <= 0) {
+            return false;
+        }
+
+        return true;
     }
 
     /**
