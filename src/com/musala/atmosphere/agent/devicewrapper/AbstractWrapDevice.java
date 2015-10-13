@@ -310,7 +310,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
                 returnValue = automatorCommunicator.isElementPresent((AccessibilityElement) args[0], (Boolean) args[1]);
                 break;
             case GET_DEVICE_LOGCAT:
-                getDeviceLogcat();
+                returnValue = getDeviceLogcat();
                 break;
 
             // Setters
@@ -501,20 +501,29 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
     }
 
     /**
-     * Stores the device logcat into a local file.
+     * Gets the information retrieved from the device LogCat as a sequence of bytes.
      *
+     * @return array of bytes containing the information retrieved from the device LogCat
      * @throws CommandFailedException
-     *         if logcat command fails
+     *         if LogCat command fails
      */
-    private void getDeviceLogcat() throws CommandFailedException {
-        // TODO: Transfer file to Client -> another task exists
+    private byte[] getDeviceLogcat() throws CommandFailedException {
         String externalStorage = serviceCommunicator.getExternalStorage();
         String remoteLogParentDir = externalStorage != null ? externalStorage : FALLBACK_COMPONENT_PATH;
         String remoteLogDir = String.format("%s/%s", remoteLogParentDir, DEVICE_LOG_FILE_NAME);
 
         shellCommandExecutor.execute(GET_DEVICE_LOGCAT + remoteLogDir);
+
         try {
             wrappedDevice.pullFile(remoteLogDir, DEVICE_LOG_FILE_NAME);
+            File localLogFile = new File(DEVICE_LOG_FILE_NAME);
+            long fileLenght = localLogFile.length();
+            byte[] logData = new byte[(int) fileLenght];
+            FileInputStream fileStream = new FileInputStream(localLogFile);
+            fileStream.read(logData);
+            fileStream.close();
+
+            return logData;
         } catch (SyncException | IOException | AdbCommandRejectedException | TimeoutException e) {
             String errorMessage = String.format("Getting log for device %s failed.", wrappedDevice.getSerialNumber());
             LOGGER.error(errorMessage, e);
