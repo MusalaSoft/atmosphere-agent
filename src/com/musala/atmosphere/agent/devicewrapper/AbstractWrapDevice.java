@@ -136,7 +136,9 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 
     private static final String CLEAR_APP_DATA_COMMAND = "pm clear";
 
-    private static final String GET_DEVICE_LOGCAT = "logcat -d > ";
+    private static final String GET_DEVICE_LOGCAT = "logcat -d -f ";
+
+    private static final String REMOVE_COMMAND = "rm ";
 
     private ExecutorService executor;
 
@@ -310,7 +312,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
                 returnValue = automatorCommunicator.isElementPresent((AccessibilityElement) args[0], (Boolean) args[1]);
                 break;
             case GET_DEVICE_LOGCAT:
-                returnValue = getDeviceLogcat();
+                returnValue = getDeviceLogcat((String) args[0]);
                 break;
 
             // Setters
@@ -501,18 +503,20 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
     }
 
     /**
-     * Gets the information retrieved from the device LogCat as a sequence of bytes.
+     * Gets the information retrieved from the device LogCat as a sequence of bytes applying the given filter.
      *
+     * @param logFilter
+     *        - String representing the filter to be applied when retrieving the log
      * @return array of bytes containing the information retrieved from the device LogCat
      * @throws CommandFailedException
      *         if LogCat command fails
      */
-    private byte[] getDeviceLogcat() throws CommandFailedException {
+    private byte[] getDeviceLogcat(String logFilter) throws CommandFailedException {
         String externalStorage = serviceCommunicator.getExternalStorage();
         String remoteLogParentDir = externalStorage != null ? externalStorage : FALLBACK_COMPONENT_PATH;
         String remoteLogDir = String.format("%s/%s", remoteLogParentDir, DEVICE_LOG_FILE_NAME);
 
-        shellCommandExecutor.execute(GET_DEVICE_LOGCAT + remoteLogDir);
+        shellCommandExecutor.execute(GET_DEVICE_LOGCAT + remoteLogDir + logFilter);
 
         try {
             wrappedDevice.pullFile(remoteLogDir, DEVICE_LOG_FILE_NAME);
@@ -522,6 +526,8 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
             FileInputStream fileStream = new FileInputStream(localLogFile);
             fileStream.read(logData);
             fileStream.close();
+
+            shellCommandExecutor.execute(REMOVE_COMMAND + remoteLogDir);
 
             return logData;
         } catch (SyncException | IOException | AdbCommandRejectedException | TimeoutException e) {
