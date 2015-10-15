@@ -440,7 +440,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 
             // Screen recording related
             case START_RECORDING:
-                startScreenRecording();
+                startScreenRecording((Integer) args[0]);
                 break;
             case STOP_RECORDING:
                 stopScreenRecording();
@@ -788,11 +788,17 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
         randomAccessFile.close();
     }
 
-    private void startScreenRecording() throws CommandFailedException {
+    private void startScreenRecording(int timeLimit) throws CommandFailedException {
         String externalStorage = serviceCommunicator.getExternalStorage();
         String recordsParentDir = externalStorage != null ? externalStorage : SCREEN_RECORD_COMPONENT_PATH;
 
-        shellCommandExecutor.executeInBackground(START_SCREEN_RECORD_COMMAND + recordsParentDir);
+        int timeLimitInSeconds = timeLimit * 60;
+        String screenRecordCommand = String.format("%s%s %d",
+                                                   START_SCREEN_RECORD_COMMAND,
+                                                   recordsParentDir,
+                                                   timeLimitInSeconds);
+
+        shellCommandExecutor.executeInBackground(screenRecordCommand);
     }
 
     private void stopScreenRecording() throws CommandFailedException {
