@@ -15,6 +15,7 @@ import com.musala.atmosphere.agent.devicewrapper.util.ExtendedEmulatorConsole;
 import com.musala.atmosphere.agent.devicewrapper.util.ondevicecomponent.ServiceCommunicator;
 import com.musala.atmosphere.agent.devicewrapper.util.ondevicecomponent.UIAutomatorCommunicator;
 import com.musala.atmosphere.agent.exception.EmulatorConnectionFailedException;
+import com.musala.atmosphere.agent.util.FileRecycler;
 import com.musala.atmosphere.commons.PowerProperties;
 import com.musala.atmosphere.commons.SmsMessage;
 import com.musala.atmosphere.commons.beans.BatteryLevel;
@@ -53,6 +54,8 @@ public class EmulatorWrapDevice extends AbstractWrapDevice {
      *        - a communicator to the service component on the device
      * @param automatorCommunicator
      *        - a communicator to the UI automator component on the device
+     * @param fileRecycler
+     *        - responsible for removing obsolete files
      * @throws RemoteException
      *         required when implementing {@link UnicastRemoteObject}
      */
@@ -61,13 +64,15 @@ public class EmulatorWrapDevice extends AbstractWrapDevice {
             BackgroundShellCommandExecutor shellCommandExecutor,
             ServiceCommunicator serviceCommunicator,
             UIAutomatorCommunicator automatorCommunicator,
-            ChromeDriverService chromeDriverService) throws NotPossibleForDeviceException, RemoteException {
+            ChromeDriverService chromeDriverService,
+            FileRecycler fileRecycler) throws NotPossibleForDeviceException, RemoteException {
         super(deviceToWrap,
               executor,
               shellCommandExecutor,
               serviceCommunicator,
               automatorCommunicator,
-              chromeDriverService);
+              chromeDriverService,
+              fileRecycler);
 
         if (!deviceToWrap.isEmulator()) {
             throw new NotPossibleForDeviceException("Cannot create emulator wrap device for a real, physical device.");

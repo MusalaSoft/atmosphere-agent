@@ -28,6 +28,7 @@ import com.android.ddmlib.Log;
 import com.musala.atmosphere.agent.util.AgentPropertiesLoader;
 import com.musala.atmosphere.agent.util.FakeDeviceShellAnswer;
 import com.musala.atmosphere.agent.util.FakeOnDeviceComponentAnswer;
+import com.musala.atmosphere.agent.util.FileRecycler;
 import com.musala.atmosphere.commons.DeviceInformation;
 import com.musala.atmosphere.commons.RoutingAction;
 import com.musala.atmosphere.commons.sa.EmulatorParameters;
@@ -41,6 +42,8 @@ public class AgentManagerTest {
 
     private static final int RMI_PORT = AgentPropertiesLoader.getAgentRmiPort();
 
+    private static FileRecycler fileRecycler;
+
     @BeforeClass
     public static void setUp() throws Exception {
         DdmPreferences.setLogLevel("warn");
@@ -51,8 +54,10 @@ public class AgentManagerTest {
         androidDebugBridgeManager.setAndroidDebugBridgePath(pathToAdb);
         androidDebugBridgeManager.startAndroidDebugBridge();
 
-        agentManager = new AgentManager(RMI_PORT);
-        deviceManager = new DeviceManager(RMI_PORT);
+        fileRecycler = mock(FileRecycler.class);
+
+        agentManager = new AgentManager(RMI_PORT, fileRecycler);
+        deviceManager = new DeviceManager(RMI_PORT, fileRecycler);
     }
 
     @AfterClass
@@ -94,20 +99,19 @@ public class AgentManagerTest {
         FakeOnDeviceComponentAnswer onDeviceAnswer = new FakeOnDeviceComponentAnswer();
         FakeDeviceShellAnswer shellAnswer = new FakeDeviceShellAnswer();
         Mockito.doAnswer(onDeviceAnswer).when(mockDevice).createForward(anyInt(), anyInt());
-        Mockito.doAnswer(shellAnswer)
-               .when(mockDevice)
-               .executeShellCommand(Matchers.anyString(), Matchers.any(IShellOutputReceiver.class));
-        Mockito.doAnswer(shellAnswer)
-               .when(mockDevice)
-               .executeShellCommand(Matchers.anyString(), Matchers.any(IShellOutputReceiver.class), anyInt());
+        Mockito.doAnswer(shellAnswer).when(mockDevice).executeShellCommand(Matchers.anyString(),
+                                                                           Matchers.any(IShellOutputReceiver.class));
+        Mockito.doAnswer(shellAnswer).when(mockDevice).executeShellCommand(Matchers.anyString(),
+                                                                           Matchers.any(IShellOutputReceiver.class),
+                                                                           anyInt());
 
         deviceManager.registerDevice(mockDevice);
 
         Registry agentRegistry = LocateRegistry.getRegistry("localhost", RMI_PORT);
         IWrapDevice device = (IWrapDevice) agentRegistry.lookup(mockDeviceSerialNumber);
 
-        //TODO getting device information fails for the not mocked data such as Ram and Camera.
-        //It is because the service socket server is stopped after it has been validated. It should be fixed. 
+        // TODO getting device information fails for the not mocked data such as Ram and Camera.
+        // It is because the service socket server is stopped after it has been validated. It should be fixed.
         DeviceInformation info = (DeviceInformation) device.route(RoutingAction.GET_DEVICE_INFORMATION);
         assertEquals("Mock device creation / .getDeviceInformation() data mismatch. (serial number)",
                      info.getSerialNumber(),

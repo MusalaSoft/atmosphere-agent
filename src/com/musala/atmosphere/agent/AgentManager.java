@@ -18,6 +18,7 @@ import org.apache.log4j.Logger;
 import com.android.ddmlib.AndroidDebugBridge;
 import com.musala.atmosphere.agent.exception.IllegalPortException;
 import com.musala.atmosphere.agent.util.AgentIdCalculator;
+import com.musala.atmosphere.agent.util.FileRecycler;
 import com.musala.atmosphere.agent.util.SystemSpecificationLoader;
 import com.musala.atmosphere.commons.exceptions.CommandFailedException;
 import com.musala.atmosphere.commons.sa.EmulatorParameters;
@@ -74,7 +75,7 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager {
      * @throws RemoteException
      * @throws ADBridgeFailException
      */
-    public AgentManager(int rmiPort) throws RemoteException {
+    public AgentManager(int rmiPort, FileRecycler fileRecycler) throws RemoteException {
         systemSpecificationLoader = new SystemSpecificationLoader();
         systemSpecificationLoader.getSpecification();
         androidDebugBridgeManager = new AndroidDebugBridgeManager();
@@ -98,7 +99,7 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager {
         rmiRegistry.rebind(RmiStringConstants.AGENT_EVENT_RECEIVER.toString(), agentEventReceiver);
 
         rmiRegistryPort = rmiPort;
-        deviceManager = new DeviceManager(rmiPort);
+        deviceManager = new DeviceManager(rmiPort, fileRecycler);
 
         LOGGER.info("AgentManager created successfully.");
     }

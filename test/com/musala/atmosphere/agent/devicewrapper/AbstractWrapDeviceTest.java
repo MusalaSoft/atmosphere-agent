@@ -21,6 +21,7 @@ import com.android.ddmlib.IDevice;
 import com.musala.atmosphere.agent.devicewrapper.util.BackgroundShellCommandExecutor;
 import com.musala.atmosphere.agent.devicewrapper.util.ondevicecomponent.ServiceCommunicator;
 import com.musala.atmosphere.agent.devicewrapper.util.ondevicecomponent.UIAutomatorCommunicator;
+import com.musala.atmosphere.agent.util.FileRecycler;
 import com.musala.atmosphere.commons.ConnectionType;
 import com.musala.atmosphere.commons.PowerProperties;
 import com.musala.atmosphere.commons.RoutingAction;
@@ -58,13 +59,15 @@ public class AbstractWrapDeviceTest {
                 BackgroundShellCommandExecutor shellCommandExecutor,
                 ServiceCommunicator serviceCommunicator,
                 UIAutomatorCommunicator automatorCommunicator,
-                ChromeDriverService chromeDriverService) throws RemoteException {
+                ChromeDriverService chromeDriverService,
+                FileRecycler fileRecycler) throws RemoteException {
             super(deviceToWrap,
                   executor,
                   shellCommandExecutor,
                   serviceCommunicator,
                   automatorCommunicator,
-                  chromeDriverService);
+                  chromeDriverService,
+                  fileRecycler);
 
         }
 
@@ -164,7 +167,10 @@ public class AbstractWrapDeviceTest {
         Mockito.doReturn(expectedProximity).when(serviceCommunicator).getProximity();
 
         float actualProximity = (float) testWrapDevice.route(RoutingAction.GET_DEVICE_PROXIMITY);
-        assertEquals("The expected device proximity did not match the actual.", expectedProximity, actualProximity, 0.1);
+        assertEquals("The expected device proximity did not match the actual.",
+                     expectedProximity,
+                     actualProximity,
+                     0.1);
     }
 
     @Test

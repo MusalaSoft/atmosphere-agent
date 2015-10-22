@@ -6,6 +6,9 @@ import java.rmi.RemoteException;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
 
@@ -16,6 +19,7 @@ import com.musala.atmosphere.agent.commandline.AgentCommandLine;
 import com.musala.atmosphere.agent.state.AgentState;
 import com.musala.atmosphere.agent.state.DisconnectedAgent;
 import com.musala.atmosphere.agent.util.AgentPropertiesLoader;
+import com.musala.atmosphere.agent.util.FileRecycler;
 import com.musala.atmosphere.commons.exceptions.ArgumentParseException;
 import com.musala.atmosphere.commons.exceptions.CommandLineParseException;
 import com.musala.atmosphere.commons.exceptions.OptionNotPresentException;
@@ -34,6 +38,10 @@ public class Agent {
 
     private static final int SYSTEM_EXIT_CODE_ERROR = -1;
 
+    private static final int FILE_RECYCLER_DELAY = 5;
+
+    private static final int FILE_RECYCLER_INITIAL_DELAY = 0;
+
     private AndroidDebugBridgeManager androidDebugBridgeManager;
 
     private AgentManager agentManager;
@@ -47,6 +55,10 @@ public class Agent {
     private Date startDate;
 
     private boolean isRunning;
+
+    private ScheduledExecutorService scheduldedExecutorService;
+
+    private FileRecycler fileRecycler;
 
     /**
      * Creates an Agent component bound on the specified in <i>agent.properties</i> file port.
@@ -71,7 +83,16 @@ public class Agent {
             androidDebugBridgeManager = new AndroidDebugBridgeManager();
             androidDebugBridgeManager.setAndroidDebugBridgePath(pathToAdb);
             androidDebugBridgeManager.startAndroidDebugBridge();
-            agentManager = new AgentManager(agentRmiPort);
+
+            scheduldedExecutorService = Executors.newSingleThreadScheduledExecutor();
+            fileRecycler = new FileRecycler();
+
+            scheduldedExecutorService.scheduleWithFixedDelay(fileRecycler,
+                                                             FILE_RECYCLER_INITIAL_DELAY,
+                                                             FILE_RECYCLER_DELAY,
+                                                             TimeUnit.SECONDS);
+
+            agentManager = new AgentManager(agentRmiPort, fileRecycler);
 
             agentConsole = new ConsoleControl();
             startDate = new Date();
@@ -159,6 +180,8 @@ public class Agent {
      * Stops the agent and releases all allocated resources.
      */
     public void stop() {
+        scheduldedExecutorService.shutdown();
+
         if (isRunning) {
             agentManager.close();
             isRunning = false;

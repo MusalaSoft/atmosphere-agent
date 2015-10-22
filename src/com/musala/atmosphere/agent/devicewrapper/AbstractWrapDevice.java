@@ -47,6 +47,7 @@ import com.musala.atmosphere.agent.devicewrapper.util.ondevicecomponent.ServiceC
 import com.musala.atmosphere.agent.devicewrapper.util.ondevicecomponent.UIAutomatorCommunicator;
 import com.musala.atmosphere.agent.exception.OnDeviceServiceTerminationException;
 import com.musala.atmosphere.agent.util.DeviceScreenResolutionParser;
+import com.musala.atmosphere.agent.util.FileRecycler;
 import com.musala.atmosphere.agent.webview.WebElementManager;
 import com.musala.atmosphere.commons.DeviceInformation;
 import com.musala.atmosphere.commons.PowerProperties;
@@ -147,6 +148,8 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 
     protected final IDevice wrappedDevice;
 
+    protected FileRecycler fileRecycler;
+
     private final ApkInstaller apkInstaller;
 
     private final ImeManager imeManager;
@@ -166,6 +169,8 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
      *        - a communicator to the service component on the device
      * @param automatorCommunicator
      *        - a communicator to the UI automator component on the device
+     * @param fileRecycler
+     *        - responsible for removing obsolete files
      * @throws RemoteException
      *         - required when implementing {@link UnicastRemoteObject}
      */
@@ -174,13 +179,15 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
             BackgroundShellCommandExecutor shellCommandExecutor,
             ServiceCommunicator serviceCommunicator,
             UIAutomatorCommunicator automatorCommunicator,
-            ChromeDriverService chromeDriverService) throws RemoteException {
+            ChromeDriverService chromeDriverService,
+            FileRecycler fileRecycler) throws RemoteException {
         // TODO: Use a dependency injection mechanism here.
         this.wrappedDevice = deviceToWrap;
         this.executor = executor;
         this.shellCommandExecutor = shellCommandExecutor;
         this.serviceCommunicator = serviceCommunicator;
         this.automatorCommunicator = automatorCommunicator;
+        this.fileRecycler = fileRecycler;
 
         transferService = new FileTransferService(wrappedDevice);
         apkInstaller = new ApkInstaller(wrappedDevice);
@@ -871,6 +878,10 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 
         try {
             combineVideoFiles(separatedVideosDirectoryPath);
+
+            // TODO: Since we don't know when the FileRecycler will remove the files, there is a chance to not remove
+            // some of the recorded files, due to Agent.stop(). Find a way to handle this problem.
+            fileRecycler.addFile(separatedVideosDirectoryPath);
         } catch (IOException e) {
             LOGGER.error(String.format("Failed to merge video records pulled from device with serial number %s.",
                                        wrappedDevice.getSerialNumber()),

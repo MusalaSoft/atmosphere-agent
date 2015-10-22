@@ -35,6 +35,7 @@ import com.musala.atmosphere.agent.exception.OnDeviceComponentInitializationExce
 import com.musala.atmosphere.agent.exception.OnDeviceComponentStartingException;
 import com.musala.atmosphere.agent.util.AgentIdCalculator;
 import com.musala.atmosphere.agent.util.AgentPropertiesLoader;
+import com.musala.atmosphere.agent.util.FileRecycler;
 import com.musala.atmosphere.commons.DeviceInformation;
 import com.musala.atmosphere.commons.ad.service.ConnectionConstants;
 import com.musala.atmosphere.commons.exceptions.CommandFailedException;
@@ -83,10 +84,12 @@ public class DeviceManager {
 
     private ChromeDriverService chromeDriverService;
 
+    private FileRecycler fileRecycler;
+
     public DeviceManager() {
     }
 
-    public DeviceManager(int rmiPort) throws RemoteException {
+    public DeviceManager(int rmiPort, FileRecycler fileRecycler) throws RemoteException {
         if (androidDebugBridgeManager == null) {
             rmiRegistryPort = rmiPort;
             androidDebugBridgeManager = new AndroidDebugBridgeManager();
@@ -141,6 +144,7 @@ public class DeviceManager {
             chromeDriverService = new ChromeDriverService.Builder().usingDriverExecutable(chromeDriverExecutable)
                                                                    .usingAnyFreePort()
                                                                    .build();
+            this.fileRecycler = fileRecycler;
             LOGGER.info("Device manager created successfully.");
         }
     }
@@ -317,14 +321,16 @@ public class DeviceManager {
                                                        shellCommandExecutor,
                                                        serviceCommunicator,
                                                        automatorCommunicator,
-                                                       chromeDriverService);
+                                                       chromeDriverService,
+                                                       fileRecycler);
             } else {
                 deviceWrapper = new RealWrapDevice(device,
                                                    executor,
                                                    shellCommandExecutor,
                                                    serviceCommunicator,
                                                    automatorCommunicator,
-                                                   chromeDriverService);
+                                                   chromeDriverService,
+                                                   fileRecycler);
             }
         } catch (NotPossibleForDeviceException e) {
             // Not really possible as we have just checked.
