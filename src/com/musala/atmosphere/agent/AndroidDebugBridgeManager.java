@@ -7,15 +7,16 @@ import java.util.List;
 import org.apache.log4j.Logger;
 
 import com.android.ddmlib.AndroidDebugBridge;
+import com.android.ddmlib.DdmPreferences;
 import com.android.ddmlib.IDevice;
 import com.musala.atmosphere.agent.util.AgentPropertiesLoader;
 import com.musala.atmosphere.commons.sa.exceptions.ADBridgeFailException;
 
 /**
  * Manages the connection to the {@link AndroidDebugBridge}, sets listeners and gets a list of connected devices.
- * 
+ *
  * @author yordan.petrov
- * 
+ *
  */
 public class AndroidDebugBridgeManager {
     private final static Logger LOGGER = Logger.getLogger(AndroidDebugBridgeManager.class.getCanonicalName());
@@ -28,7 +29,7 @@ public class AndroidDebugBridgeManager {
 
     /**
      * Sets the path to {@link AndroidDebugBridge}.
-     * 
+     *
      * @param adbPath
      *        - the path to {@link AndroidDebugBridge} to be set.
      */
@@ -39,7 +40,7 @@ public class AndroidDebugBridgeManager {
     /**
      * Initializes a connection to the {@link AndroidDebugBridge}. Make sure You have called
      * {@link #setAndroidDebugBridgePath(String)} first.
-     * 
+     *
      * @throws ADBridgeFailException
      */
     public void startAndroidDebugBridge() throws ADBridgeFailException {
@@ -50,6 +51,7 @@ public class AndroidDebugBridgeManager {
             androidDebugBridge = AndroidDebugBridge.createBridge(adbPath, false /*
                                                                                  * force new bridge, no need for that
                                                                                  */);
+            DdmPreferences.setTimeOut(AgentPropertiesLoader.getAdbConnectionTimeout());
         } catch (IllegalStateException e) {
             LOGGER.fatal(errorMessage, e);
             throw new ADBridgeFailException(errorMessage, e);
@@ -62,7 +64,7 @@ public class AndroidDebugBridgeManager {
 
     /**
      * Removes the previous {@link DeviceChangeListener} and sets the given one.
-     * 
+     *
      * @param deviceChangeListener
      *        - the new {@link DeviceChangeListener} to be set.
      * @throws RemoteException
@@ -83,7 +85,7 @@ public class AndroidDebugBridgeManager {
     /**
      * Gets the {@link AndroidDebugBridge} instance used by the {@link AndroidDebugBridgeManager}. Make sure you have
      * called {@link #startAndroidDebugBridge()} first.
-     * 
+     *
      * @return the {@link AndroidDebugBridge} instance used by the {@link AndroidDebugBridgeManager}.
      */
     public AndroidDebugBridge getAndroidDebugBridge() {
@@ -92,7 +94,7 @@ public class AndroidDebugBridgeManager {
 
     /**
      * Gets the initial devices list (IDevices). Make sure you have called {@link #startAndroidDebugBridge()} first.
-     * 
+     *
      * @return List of IDevices
      * @throws ADBridgeFailException
      */
