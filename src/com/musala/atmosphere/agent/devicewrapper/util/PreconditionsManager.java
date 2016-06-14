@@ -21,9 +21,9 @@ import com.musala.atmosphere.commons.sa.exceptions.DeviceBootTimeoutReachedExcep
 
 /**
  * Takes care of automatic on-device component setup and verification.
- * 
+ *
  * @author yordan.petrov
- * 
+ *
  */
 public class PreconditionsManager {
     private static final String IS_BOOT_ANIMATION_RUNNING_COMMAND = "getprop init.svc.bootanim";
@@ -91,7 +91,7 @@ public class PreconditionsManager {
 
     /**
      * Checks whether the boot animation has stopped running on the device.
-     * 
+     *
      * @return true if the boot animation has stopped running, false if not.
      * @throws CommandFailedException
      */
@@ -102,7 +102,7 @@ public class PreconditionsManager {
 
     /**
      * Waits for the device to complete its boot process if it is in boot process.
-     * 
+     *
      * @throws CommandFailedException
      * @throws DeviceBootTimeoutReachedException
      */
@@ -138,7 +138,7 @@ public class PreconditionsManager {
 
     /**
      * Checks whether a give APK is installed on the device.
-     * 
+     *
      * @param packageName
      *        - the package name of the APK.
      * @return true if it's installed; false if not.
@@ -160,7 +160,7 @@ public class PreconditionsManager {
 
     /**
      * Checks whether the Atmosphere Service is installed on the device.
-     * 
+     *
      * @return true if it's installed; false if not.
      */
     private boolean isServiceInstalled() {
@@ -169,7 +169,7 @@ public class PreconditionsManager {
 
     /**
      * Checks whether the Atmosphere IME is installed on the device.
-     * 
+     *
      * @return true if it's installed; false if not.
      */
     private boolean isImeInstalled() {
@@ -178,7 +178,7 @@ public class PreconditionsManager {
 
     /**
      * Checks whether a file or folder is existing on the device by a given path.
-     * 
+     *
      * @param path
      *        - path to check in for the file or folder.
      * @return true if the file or folder is existing; false if not.
@@ -200,7 +200,7 @@ public class PreconditionsManager {
 
     /**
      * Checks whether the Atmosphere UI Automator Bridge is installed on the device.
-     * 
+     *
      * @return true if it's installed; false if not.
      */
     private boolean isUiAutomatorBridgeInstalled() {
@@ -209,18 +209,8 @@ public class PreconditionsManager {
     }
 
     /**
-     * Checks whether the Atmosphere UI Automator Bridge Libs is installed on the device.
-     * 
-     * @return true if it's installed; false if not.
-     */
-    private boolean isUiAutomatorBridgeLibsInstalled() {
-        String uiAutomatorBridgeLibsPath = TEMP_PATH.concat(OnDeviceComponent.UI_AUTOMATOR_BRIDGE_LIBS.getFileName());
-        return isFileOrFolderExistingOnDevice(uiAutomatorBridgeLibsPath);
-    }
-
-    /**
      * Sets the Atmosphere IME as the default input method on the device.
-     * 
+     *
      * @return true if setting it was successful; false if not.
      */
     private boolean setAtmosphereIme() {
@@ -240,7 +230,7 @@ public class PreconditionsManager {
 
     /**
      * Gets the installed status of all on-device components on the device.
-     * 
+     *
      * @return map representing component-installed status relation.
      */
     private Map<OnDeviceComponent, Boolean> getCurrentComponentInstalledStatus() {
@@ -248,13 +238,12 @@ public class PreconditionsManager {
         componentInstalledStatus.put(OnDeviceComponent.SERVICE, isServiceInstalled());
         componentInstalledStatus.put(OnDeviceComponent.IME, isImeInstalled());
         componentInstalledStatus.put(OnDeviceComponent.UI_AUTOMATOR_BRIDGE, isUiAutomatorBridgeInstalled());
-        componentInstalledStatus.put(OnDeviceComponent.UI_AUTOMATOR_BRIDGE_LIBS, isUiAutomatorBridgeLibsInstalled());
         return componentInstalledStatus;
     }
 
     /**
      * Pushes a component file to the temp folder of the device.
-     * 
+     *
      * @param onDeviceComponent
      *        - the component that should be pushed.
      */
@@ -297,13 +286,6 @@ public class PreconditionsManager {
     }
 
     /**
-     * Installs the Atmosphere UI Automator Bridge Libs on the device.
-     */
-    private void installUiAutomatorBridgeLibs() {
-        pushComponentFileToTemp(OnDeviceComponent.UI_AUTOMATOR_BRIDGE_LIBS);
-    }
-
-    /**
      * Pushes the screen recording scripts to the temp folder of the device.
      */
     private void pushScreenrecordScripts() {
@@ -313,7 +295,7 @@ public class PreconditionsManager {
 
     /**
      * Checks whether all on-device components are installed on the device.
-     * 
+     *
      * @param currentComponentInstalledStatus
      *        - map object representing component-installed status relation.
      */
@@ -332,7 +314,7 @@ public class PreconditionsManager {
 
     /**
      * Installs the missing on-device components.
-     * 
+     *
      * @param currentComponentInstalledStatus
      *        - map object representing component-installed status relation.
      */
@@ -352,10 +334,6 @@ public class PreconditionsManager {
 
         if (!currentComponentInstalledStatus.get(OnDeviceComponent.UI_AUTOMATOR_BRIDGE)) {
             installUiAutomatorBridge();
-            areAnyComponentsInstalled = true;
-        }
-        if (!currentComponentInstalledStatus.get(OnDeviceComponent.UI_AUTOMATOR_BRIDGE_LIBS)) {
-            installUiAutomatorBridgeLibs();
             areAnyComponentsInstalled = true;
         }
 
@@ -380,7 +358,6 @@ public class PreconditionsManager {
         setAtmosphereIme();
 
         installUiAutomatorBridge();
-        installUiAutomatorBridgeLibs();
 
         pushScreenrecordScripts();
 
@@ -394,7 +371,7 @@ public class PreconditionsManager {
     /**
      * Takes care of automatic on-device component setup and verification. Make sure the device has booted calling
      * {@link #waitForDeviceToBoot(long)}.
-     * 
+     *
      * @throws CommandFailedException
      */
     public void manageOnDeviceComponents() {

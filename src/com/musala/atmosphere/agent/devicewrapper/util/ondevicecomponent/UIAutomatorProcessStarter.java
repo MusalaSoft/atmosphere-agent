@@ -15,13 +15,14 @@ import org.apache.log4j.Logger;
 import com.musala.atmosphere.agent.devicewrapper.util.BackgroundShellCommandExecutor;
 import com.musala.atmosphere.agent.devicewrapper.util.FileTransferService;
 import com.musala.atmosphere.agent.devicewrapper.util.ShellCommandExecutor;
+import com.musala.atmosphere.agent.util.OnDeviceComponent;
 import com.musala.atmosphere.commons.exceptions.CommandFailedException;
 
 /**
  * Utility class responsible for starting UIAutomator worker processes.
- * 
+ *
  * @author georgi.gaydarov
- * 
+ *
  */
 public class UIAutomatorProcessStarter {
     private static final Logger LOGGER = Logger.getLogger(UIAutomatorProcessStarter.class.getCanonicalName());
@@ -29,11 +30,7 @@ public class UIAutomatorProcessStarter {
     @Deprecated
     private static final String LOCAL_REQUEST_FILE_NAME_FORMAT = "request%d.ser";
 
-    private static final String ENTRY_POINT_CLASS = "com.musala.atmosphere.uiautomator.ActionDispatcher";
-
-    private static final String AUTOMATOR_JAR_NAME = "AtmosphereUIAutomatorBridge.jar";
-
-    private static final String[] EXTERNAL_LIBRARY_NAMES = {"AtmosphereUIAutomatorBridgeLibs.jar"};
+    private static final String[] EXTERNAL_LIBRARY_NAMES = {};
 
     private Map<String, String> attachmentsKeys;
 
@@ -80,7 +77,7 @@ public class UIAutomatorProcessStarter {
 
     /**
      * Starts a UIAutomator process with the previously specified parameters.
-     * 
+     *
      * @param executor
      *        - the device {@link ShellCommandExecutor} instance to be used for UIAutomator starting
      * @param service
@@ -100,7 +97,7 @@ public class UIAutomatorProcessStarter {
 
     /**
      * Starts a UIAutomator process with the previously specified parameters.
-     * 
+     *
      * @param executor
      *        - the device {@link ShellCommandExecutor} instance to be used for UIAutomator starting
      * @param service
@@ -117,7 +114,7 @@ public class UIAutomatorProcessStarter {
 
     /**
      * Starts a UIAutomator process with the previously specified parameters.
-     * 
+     *
      * @param executor
      *        - the device {@link ShellCommandExecutor} instance to be used for UIAutomator starting
      * @throws CommandFailedException
@@ -140,13 +137,13 @@ public class UIAutomatorProcessStarter {
     private String buildCommand() {
         StringBuilder builder = new StringBuilder();
         builder.append("uiautomator runtest ");
-        builder.append(AUTOMATOR_JAR_NAME);
+        builder.append(OnDeviceComponent.UI_AUTOMATOR_BRIDGE.getFileName());
         for (String lib : EXTERNAL_LIBRARY_NAMES) {
             builder.append(" ");
             builder.append(lib);
         }
         builder.append(" -c ");
-        builder.append(ENTRY_POINT_CLASS);
+        builder.append(OnDeviceComponent.UI_AUTOMATOR_BRIDGE.getPackageName());
 
         for (Map.Entry<String, String> entry : params.entrySet()) {
             builder.append(" -e ");

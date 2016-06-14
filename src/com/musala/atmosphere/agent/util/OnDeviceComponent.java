@@ -2,17 +2,21 @@ package com.musala.atmosphere.agent.util;
 
 /**
  * Contains information for all on-device components.
- * 
+ *
  * @author yordan.petrov
- * 
+ *
  */
 public enum OnDeviceComponent {
-    SERVICE("Atmosphere Service", "AtmosphereService-release.apk", "com.musala.atmosphere.service", null),
-    UI_AUTOMATOR_BRIDGE("Atmosphere UiAutomator Bridge", "AtmosphereUIAutomatorBridge.jar", null, null),
-    UI_AUTOMATOR_BRIDGE_LIBS("Atmosphere UiAutomator Bridge Libraries", "AtmosphereUIAutomatorBridgeLibs.jar", null, null),
-    IME("Atmosphere Input Method Engine", "AtmosphereIME-release.apk", "com.musala.atmosphere.ime", "com.musala.atmosphere.ime/.AtmosphereIME"),
-    START_SCREENRECORD_SCRIPT("Start Screenrecord Script", "start_screenrecord.sh", null, null),
-    STOP_SCREENRECORD_SCRIPT("Stop Screenrecord Script", "stop_screenrecord.sh", null, null);
+    SERVICE(
+            "Atmosphere Service", "atmosphere-service.apk", "com.musala.atmosphere.service", null),
+    UI_AUTOMATOR_BRIDGE(
+            "Atmosphere UiAutomator Bridge", "atmosphere-uiautomator-bridge.jar", "com.musala.atmosphere.uiautomator.ActionDispatcher", null),
+    IME(
+            "Atmosphere Input Method Engine", "atmosphere-ime.apk", "com.musala.atmosphere.ime", "com.musala.atmosphere.ime/.AtmosphereIME"),
+    START_SCREENRECORD_SCRIPT(
+            "Start Screenrecord Script", "start_screenrecord.sh", null, null),
+    STOP_SCREENRECORD_SCRIPT(
+            "Stop Screenrecord Script", "stop_screenrecord.sh", null, null);
 
     private OnDeviceComponent(String humanReadableName, String fileName, String packageName, String imeId) {
         this.humanReadableName = humanReadableName;

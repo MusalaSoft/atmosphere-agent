@@ -1,0 +1,104 @@
+apply plugin: 'java'
+apply plugin: 'maven-publish'
+apply plugin: 'application'
+
+version = '0.0.1'
+mainClassName = 'com.musala.atmosphere.agent.Agent'
+
+jar {
+    manifest {
+        attributes 'Implementation-Title': 'Atmosphere Agent',
+                   'Implementation-Version': version,
+                   'Main-Class': mainClassName
+    }
+}
+
+run {
+    standardInput = System.in
+}
+
+repositories {
+    mavenCentral()
+    mavenLocal()
+    maven {
+        url 'http://www.terracotta.org/download/reflector/releases/'
+    }
+}
+
+configurations {
+    onDeviceComponents
+}
+
+dependencies {
+    compile 'com.musala.atmosphere:atmosphere-sa-commons:0.0.1'
+    compile 'com.musala.atmosphere:atmosphere-ad-commons:0.0.1'
+    compile 'commons-logging:commons-logging:1.2'
+    compile 'commons-cli:commons-cli:1.2'
+    compile 'commons-io:commons-io:2.4'
+    compile 'commons-codec:commons-codec:1.8'
+    compile 'com.android.tools.ddms:ddmlib:22.0'
+    compile 'org.hyperic:sigar:1.6.2'
+    compile 'com.googlecode.mp4parser:isoparser:1.0.6'
+    compile fileTree(dir: 'natives/', include: '*.so')
+    compile fileTree(dir: 'natives/', include: '*.sl')
+    compile fileTree(dir: 'natives/', include: '*.dll')
+    compile fileTree(dir: 'natives/', include: '*.lib')
+    compile fileTree(dir: 'natives/', include: '*.dylib')
+    compile 'gov.nist.math:scimark:2.0'
+    compile 'org.seleniumhq.selenium:selenium-java:2.47.1'
+
+    onDeviceComponents 'com.musala.atmosphere:atmosphere-ime:0.0.1'
+    onDeviceComponents 'com.musala.atmosphere:atmosphere-service:0.0.1'
+    onDeviceComponents 'com.musala.atmosphere:atmosphere-uiautomator-bridge:0.0.1'
+
+    testCompile 'org.mockito:mockito-all:1.9.5'
+    testCompile 'junit:junit:4.12'
+}
+
+task copyOnDeviceComponents(type: Copy) {
+    into 'onDeviceComponents'
+    from configurations.onDeviceComponents
+    // exclude version
+    rename { fileName -> fileName.replaceAll(/-\d+(\.\d+)+/, '') }
+}
+
+build.dependsOn copyOnDeviceComponents
+
+sourceSets {
+    main.java.srcDir 'src'
+    main.resources.srcDir 'resources'
+    main.resources.include 'agent.properties'
+    main.resources.include 'onDeviceComponents/*'
+
+    test.java.srcDir 'test'
+}
+
+publishing {
+    publications {
+        atmosphereAgent(MavenPublication) {
+            groupId 'com.musala.atmosphere'
+            artifactId 'atmosphere-agent'
+            version version
+
+            from components.java
+        }
+    }
+
+    repositories {
+        mavenLocal()
+    }
+}
+
+tasks.withType(Test) {
+    scanForTestClasses = false
+    include "**/*Test.class"
+}
+
+// Sigar native libraries
+run {
+    systemProperty 'java.library.path', file('natives')
+}
+
+test {
+    systemProperty 'java.library.path', file('natives')
+}
