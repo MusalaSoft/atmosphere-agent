@@ -67,6 +67,8 @@ sourceSets {
     test.java.srcDir 'test'
 }
 
+task testJar(type: Jar)
+
 publishing {
     publications {
         atmosphereAgent(MavenPublication) {
@@ -75,6 +77,18 @@ publishing {
             version version
 
             from components.java
+        }
+        atmosphereAgentTests(MavenPublication) {
+            groupId 'com.musala.atmosphere'
+            artifactId 'atmosphere-agent'
+            version version
+
+            from components.java
+
+            artifact testJar {
+                classifier "tests"
+                from sourceSets.test.output
+            }
         }
     }
 
