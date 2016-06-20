@@ -39,11 +39,7 @@ dependencies {
     compile 'com.android.tools.ddms:ddmlib:22.0'
     compile 'org.hyperic:sigar:1.6.2'
     compile 'com.googlecode.mp4parser:isoparser:1.0.6'
-    compile fileTree(dir: 'natives/', include: '*.so')
-    compile fileTree(dir: 'natives/', include: '*.sl')
-    compile fileTree(dir: 'natives/', include: '*.dll')
-    compile fileTree(dir: 'natives/', include: '*.lib')
-    compile fileTree(dir: 'natives/', include: '*.dylib')
+    compile fileTree(dir: 'natives/', include: '*.*')
     compile 'gov.nist.math:scimark:2.0'
     compile 'org.seleniumhq.selenium:selenium-java:2.47.1'
 
@@ -67,8 +63,6 @@ build.dependsOn copyOnDeviceComponents
 sourceSets {
     main.java.srcDir 'src'
     main.resources.srcDir 'resources'
-    main.resources.include 'agent.properties'
-    main.resources.include 'onDeviceComponents/*'
 
     test.java.srcDir 'test'
 }
