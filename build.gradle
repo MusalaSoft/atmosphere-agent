@@ -60,13 +60,6 @@ task copyOnDeviceComponents(type: Copy) {
 
 build.dependsOn copyOnDeviceComponents
 
-sourceSets {
-    main.java.srcDir 'src'
-    main.resources.srcDir 'resources'
-
-    test.java.srcDir 'test'
-}
-
 task testJar(type: Jar)
 
 publishing {
@@ -105,6 +98,10 @@ tasks.withType(Test) {
 // Sigar native libraries
 run {
     systemProperty 'java.library.path', file('natives')
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '2.13'
 }
 
 test {
