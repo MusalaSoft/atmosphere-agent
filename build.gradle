@@ -30,8 +30,8 @@ configurations {
 }
 
 dependencies {
-    compile 'com.musala.atmosphere:atmosphere-sa-commons:0.0.1'
-    compile 'com.musala.atmosphere:atmosphere-ad-commons:0.0.1'
+    compile 'com.musala.atmosphere:atmosphere-server-agent-lib:0.0.1'
+    compile 'com.musala.atmosphere:atmosphere-agent-device-lib:0.0.1'
     compile 'commons-logging:commons-logging:1.2'
     compile 'commons-cli:commons-cli:1.2'
     compile 'commons-io:commons-io:2.4'
