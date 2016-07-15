@@ -6,6 +6,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.RandomAccessFile;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.nio.channels.FileChannel;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
@@ -48,7 +50,9 @@ import com.musala.atmosphere.agent.devicewrapper.util.ImeManager;
 import com.musala.atmosphere.agent.devicewrapper.util.ShellCommandExecutor;
 import com.musala.atmosphere.agent.devicewrapper.util.ondevicecomponent.ServiceCommunicator;
 import com.musala.atmosphere.agent.devicewrapper.util.ondevicecomponent.UIAutomatorCommunicator;
+import com.musala.atmosphere.agent.entity.HardwareButtonEntity;
 import com.musala.atmosphere.agent.exception.OnDeviceServiceTerminationException;
+import com.musala.atmosphere.agent.exception.UnresolvedEntityTypeException;
 import com.musala.atmosphere.agent.util.DeviceScreenResolutionParser;
 import com.musala.atmosphere.agent.util.FileRecycler;
 import com.musala.atmosphere.agent.util.FtpFileTransferService;
@@ -166,6 +170,8 @@ public abstract class AbstractWrapDevice implements IWrapDevice {
     private Buffer<String, Pair<Integer, String>> logcatBuffer;
 
     private FtpFileTransferService ftpFileTransferService;
+
+    private HardwareButtonEntity hardwareButtonEntity;
 
     /**
      * Creates an abstract wrapper of the given {@link IDevice device}.
@@ -453,6 +459,9 @@ public abstract class AbstractWrapDevice implements IWrapDevice {
                 break;
             case STOP_BACKGROUND_PROCESS:
                 serviceCommunicator.stopBackgroundProcess(args);
+                break;
+            case PRESS_HARDWARE_BUTTON:
+                returnValue = hardwareButtonEntity.pressButton((int) args[0]);
                 break;
 
             // Call related
@@ -792,7 +801,29 @@ public abstract class AbstractWrapDevice implements IWrapDevice {
             LOGGER.warn("Parsing shell response failed when attempting to get device screen size.");
         }
 
+        try {
+            setupDeviceEntities(deviceInformation);
+        } catch (UnresolvedEntityTypeException e) {
+            LOGGER.warn(e.getMessage());
+
+            return null;
+        }
+
         return deviceInformation;
+    }
+
+    private void setupDeviceEntities(DeviceInformation deviceInformation) {
+        try {
+            Constructor<?> hardwareButtonEntityConstructor = HardwareButtonEntity.class.getDeclaredConstructor(ShellCommandExecutor.class);
+            hardwareButtonEntityConstructor.setAccessible(true);
+            HardwareButtonEntity hardwareButtonEntity = (HardwareButtonEntity) hardwareButtonEntityConstructor.newInstance(new Object[] {
+                    shellCommandExecutor});
+            this.hardwareButtonEntity = hardwareButtonEntity;
+        } catch (NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException
+                | IllegalArgumentException | InvocationTargetException e) {
+            throw new UnresolvedEntityTypeException("Failed to find the correct set of entities implementations matching the given device information.",
+                                                    e);
+        }
     }
 
     /**
