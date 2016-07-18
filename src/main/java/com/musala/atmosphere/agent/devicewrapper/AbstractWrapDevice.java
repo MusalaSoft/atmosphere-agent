@@ -51,6 +51,7 @@ import com.musala.atmosphere.agent.devicewrapper.util.ShellCommandExecutor;
 import com.musala.atmosphere.agent.devicewrapper.util.ondevicecomponent.ServiceCommunicator;
 import com.musala.atmosphere.agent.devicewrapper.util.ondevicecomponent.UIAutomatorCommunicator;
 import com.musala.atmosphere.agent.entity.HardwareButtonEntity;
+import com.musala.atmosphere.agent.entity.ImeEntity;
 import com.musala.atmosphere.agent.exception.OnDeviceServiceTerminationException;
 import com.musala.atmosphere.agent.exception.UnresolvedEntityTypeException;
 import com.musala.atmosphere.agent.util.DeviceScreenResolutionParser;
@@ -172,6 +173,8 @@ public abstract class AbstractWrapDevice implements IWrapDevice {
     private FtpFileTransferService ftpFileTransferService;
 
     private HardwareButtonEntity hardwareButtonEntity;
+
+    private ImeEntity imeEntity;
 
     /**
      * Creates an abstract wrapper of the given {@link IDevice device}.
@@ -553,6 +556,26 @@ public abstract class AbstractWrapDevice implements IWrapDevice {
             case GET_AVAILABLE_DISK_SPACE:
                 returnValue = serviceCommunicator.getAvailableDiskSpace();
                 break;
+
+            // IME related
+            case IME_INPUT_TEXT:
+                returnValue = imeEntity.inputText((String) args[0], (Long) args[1]);
+                break;
+            case IME_SELECT_ALL_TEXT:
+                returnValue = imeEntity.selectAllText();
+                break;
+            case IME_CLEAR_TEXT:
+                returnValue = imeEntity.clearText();
+                break;
+            case IME_COPY_TEXT:
+                returnValue = imeEntity.copyText();
+                break;
+            case IME_CUT_TEXT:
+                returnValue = imeEntity.cutText();
+                break;
+            case IME_PASTE_TEXT:
+                returnValue = imeEntity.pasteText();
+                break;
         }
 
         return returnValue;
@@ -819,6 +842,11 @@ public abstract class AbstractWrapDevice implements IWrapDevice {
             HardwareButtonEntity hardwareButtonEntity = (HardwareButtonEntity) hardwareButtonEntityConstructor.newInstance(new Object[] {
                     shellCommandExecutor});
             this.hardwareButtonEntity = hardwareButtonEntity;
+
+            Constructor<?> imeEntityConstructor = ImeEntity.class.getDeclaredConstructor(ServiceCommunicator.class);
+            imeEntityConstructor.setAccessible(true);
+            ImeEntity imeEntity = (ImeEntity) imeEntityConstructor.newInstance(new Object[] {serviceCommunicator});
+            this.imeEntity = imeEntity;
         } catch (NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException
                 | IllegalArgumentException | InvocationTargetException e) {
             throw new UnresolvedEntityTypeException("Failed to find the correct set of entities implementations matching the given device information.",
