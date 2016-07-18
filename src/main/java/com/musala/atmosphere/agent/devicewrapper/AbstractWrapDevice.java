@@ -50,6 +50,7 @@ import com.musala.atmosphere.agent.devicewrapper.util.ImeManager;
 import com.musala.atmosphere.agent.devicewrapper.util.ShellCommandExecutor;
 import com.musala.atmosphere.agent.devicewrapper.util.ondevicecomponent.ServiceCommunicator;
 import com.musala.atmosphere.agent.devicewrapper.util.ondevicecomponent.UIAutomatorCommunicator;
+import com.musala.atmosphere.agent.entity.DeviceSettingsEntity;
 import com.musala.atmosphere.agent.entity.GestureEntity;
 import com.musala.atmosphere.agent.entity.HardwareButtonEntity;
 import com.musala.atmosphere.agent.entity.ImeEntity;
@@ -62,6 +63,7 @@ import com.musala.atmosphere.agent.webview.WebElementManager;
 import com.musala.atmosphere.commons.DeviceInformation;
 import com.musala.atmosphere.commons.PowerProperties;
 import com.musala.atmosphere.commons.RoutingAction;
+import com.musala.atmosphere.commons.ScreenOrientation;
 import com.musala.atmosphere.commons.ScrollDirection;
 import com.musala.atmosphere.commons.SmsMessage;
 import com.musala.atmosphere.commons.beans.DeviceAcceleration;
@@ -179,6 +181,8 @@ public abstract class AbstractWrapDevice implements IWrapDevice {
     private ImeEntity imeEntity;
 
     private GestureEntity gestureEntity;
+
+    private DeviceSettingsEntity settingsEntity;
 
     /**
      * Creates an abstract wrapper of the given {@link IDevice device}.
@@ -351,6 +355,20 @@ public abstract class AbstractWrapDevice implements IWrapDevice {
             case STOP_LOGCAT:
                 stopLogcat((String) args[0]);
                 break;
+
+            case GET_SCREEN_ORIENTATION:
+                returnValue = settingsEntity.getScreenOrientation();
+                break;
+            case IS_AUTO_ROTATION_ON:
+                returnValue = settingsEntity.isAutoRotationOn();
+                break;
+            case GET_AIRPLANE_MODE:
+                returnValue = settingsEntity.getAirplaneMode();
+                break;
+            case GET_SCREEN_OFF_TIMEOUT:
+                returnValue = settingsEntity.getScreenOffTimeout();
+                break;
+
             // Setters
             case SET_POWER_PROPERTIES:
                 setPowerProperties((PowerProperties) args[0]);
@@ -378,6 +396,23 @@ public abstract class AbstractWrapDevice implements IWrapDevice {
                 break;
             case SET_KEYGUARD:
                 serviceCommunicator.setKeyguard(args);
+                break;
+            case SET_SCREEN_ORIENTATION:
+                returnValue = settingsEntity.setScreenOrientation((ScreenOrientation) args[0]);
+                break;
+            case SET_SCREEN_AUTO_ROTATION:
+                boolean setting = (boolean) args[0];
+                if (setting) {
+                    returnValue = settingsEntity.enableScreenAutoRotation();
+                } else {
+                    returnValue = settingsEntity.disableScreenAutoRotation();
+                }
+                break;
+            case SET_AIRPLANE_MODE:
+                returnValue = settingsEntity.setAirplaneMode((boolean) args[0]);
+                break;
+            case SET_SCREEN_OFF_TIMEOUT:
+                returnValue = settingsEntity.setScreenOffTimeout((long) args[0]);
                 break;
 
             // Misc functionalities
@@ -887,6 +922,13 @@ public abstract class AbstractWrapDevice implements IWrapDevice {
                     automatorCommunicator
             });
             this.gestureEntity = gestureEntity;
+
+            Constructor<?> settingsEntitiyConstructor = DeviceSettingsEntity.class.getDeclaredConstructor(ShellCommandExecutor.class,
+                                                                                                          DeviceInformation.class);
+            settingsEntitiyConstructor.setAccessible(true);
+            DeviceSettingsEntity settingsEntity = (DeviceSettingsEntity) settingsEntitiyConstructor.newInstance(new Object[] {
+                    shellCommandExecutor, deviceInformation});
+            this.settingsEntity = settingsEntity;
         } catch (NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException
                 | IllegalArgumentException | InvocationTargetException e) {
             throw new UnresolvedEntityTypeException("Failed to find the correct set of entities implementations matching the given device information.",
