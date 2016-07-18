@@ -50,6 +50,7 @@ import com.musala.atmosphere.agent.devicewrapper.util.ImeManager;
 import com.musala.atmosphere.agent.devicewrapper.util.ShellCommandExecutor;
 import com.musala.atmosphere.agent.devicewrapper.util.ondevicecomponent.ServiceCommunicator;
 import com.musala.atmosphere.agent.devicewrapper.util.ondevicecomponent.UIAutomatorCommunicator;
+import com.musala.atmosphere.agent.entity.GestureEntity;
 import com.musala.atmosphere.agent.entity.HardwareButtonEntity;
 import com.musala.atmosphere.agent.entity.ImeEntity;
 import com.musala.atmosphere.agent.exception.OnDeviceServiceTerminationException;
@@ -70,6 +71,7 @@ import com.musala.atmosphere.commons.beans.MobileDataState;
 import com.musala.atmosphere.commons.beans.PhoneNumber;
 import com.musala.atmosphere.commons.beans.SwipeDirection;
 import com.musala.atmosphere.commons.exceptions.CommandFailedException;
+import com.musala.atmosphere.commons.geometry.Point;
 import com.musala.atmosphere.commons.gesture.Gesture;
 import com.musala.atmosphere.commons.ui.UiElementPropertiesContainer;
 import com.musala.atmosphere.commons.ui.selector.UiElementSelector;
@@ -175,6 +177,8 @@ public abstract class AbstractWrapDevice implements IWrapDevice {
     private HardwareButtonEntity hardwareButtonEntity;
 
     private ImeEntity imeEntity;
+
+    private GestureEntity gestureEntity;
 
     /**
      * Creates an abstract wrapper of the given {@link IDevice device}.
@@ -576,6 +580,29 @@ public abstract class AbstractWrapDevice implements IWrapDevice {
             case IME_PASTE_TEXT:
                 returnValue = imeEntity.pasteText();
                 break;
+
+            // Gesture related
+            case GESTURE_TAP:
+                returnValue = gestureEntity.tapScreenLocation((Point) args[0]);
+                break;
+            case GESTURE_LONG_PRESS:
+                returnValue = gestureEntity.longPress((Point) args[0], (Integer) args[1]);
+                break;
+            case GESTURE_DOUBLE_TAP:
+                returnValue = gestureEntity.doubleTap((Point) args[0]);
+                break;
+            case GESTURE_PINCH_IN:
+                returnValue = gestureEntity.pinchIn((Point) args[0], (Point) args[1]);
+                break;
+            case GESTURE_PINCH_OUT:
+                returnValue = gestureEntity.pinchOut((Point) args[0], (Point) args[1]);
+                break;
+            case GESTURE_SWIPE:
+                returnValue = gestureEntity.swipe((Point) args[0], (SwipeDirection) args[1]);
+                break;
+            case GESTURE_DRAG:
+                returnValue = gestureEntity.drag((Point) args[0], (Point) args[1]);
+                break;
         }
 
         return returnValue;
@@ -847,6 +874,19 @@ public abstract class AbstractWrapDevice implements IWrapDevice {
             imeEntityConstructor.setAccessible(true);
             ImeEntity imeEntity = (ImeEntity) imeEntityConstructor.newInstance(new Object[] {serviceCommunicator});
             this.imeEntity = imeEntity;
+
+            Constructor<?> gestureEntityConstructor = GestureEntity.class.getDeclaredConstructor(ShellCommandExecutor.class,
+                                                                                                  ServiceCommunicator.class,
+                                                                                                  DeviceInformation.class,
+                                                                                                  UIAutomatorCommunicator.class);
+            gestureEntityConstructor.setAccessible(true);
+            GestureEntity gestureEntity = (GestureEntity) gestureEntityConstructor.newInstance(new Object[] {
+                    shellCommandExecutor,
+                    serviceCommunicator,
+                    deviceInformation,
+                    automatorCommunicator
+            });
+            this.gestureEntity = gestureEntity;
         } catch (NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException
                 | IllegalArgumentException | InvocationTargetException e) {
             throw new UnresolvedEntityTypeException("Failed to find the correct set of entities implementations matching the given device information.",
