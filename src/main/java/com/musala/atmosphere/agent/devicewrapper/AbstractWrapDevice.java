@@ -53,6 +53,7 @@ import com.musala.atmosphere.agent.devicewrapper.util.ondevicecomponent.UIAutoma
 import com.musala.atmosphere.agent.entity.DeviceSettingsEntity;
 import com.musala.atmosphere.agent.entity.GestureEntity;
 import com.musala.atmosphere.agent.entity.HardwareButtonEntity;
+import com.musala.atmosphere.agent.entity.ImageEntity;
 import com.musala.atmosphere.agent.entity.ImeEntity;
 import com.musala.atmosphere.agent.exception.OnDeviceServiceTerminationException;
 import com.musala.atmosphere.agent.exception.UnresolvedEntityTypeException;
@@ -184,6 +185,8 @@ public abstract class AbstractWrapDevice implements IWrapDevice {
 
     private DeviceSettingsEntity settingsEntity;
 
+    private ImageEntity imageEntity;
+
     /**
      * Creates an abstract wrapper of the given {@link IDevice device}.
      *
@@ -275,7 +278,7 @@ public abstract class AbstractWrapDevice implements IWrapDevice {
                 returnValue = getDeviceInformation();
                 break;
             case GET_SCREENSHOT:
-                returnValue = getScreenshot();
+                returnValue = imageEntity.getScreenshot();
                 break;
             case GET_UI_XML_DUMP:
                 returnValue = getUiXml();
@@ -929,6 +932,15 @@ public abstract class AbstractWrapDevice implements IWrapDevice {
             DeviceSettingsEntity settingsEntity = (DeviceSettingsEntity) settingsEntitiyConstructor.newInstance(new Object[] {
                     shellCommandExecutor, deviceInformation});
             this.settingsEntity = settingsEntity;
+
+            Constructor<?> imageEntityConstructor = ImageEntity.class.getDeclaredConstructor(ShellCommandExecutor.class,
+                                                                                             IDevice.class);
+            imageEntityConstructor.setAccessible(true);
+            ImageEntity imageEntity = (ImageEntity) imageEntityConstructor.newInstance(new Object[] {
+                    shellCommandExecutor,
+                    wrappedDevice
+            });
+            this.imageEntity = imageEntity;
         } catch (NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException
                 | IllegalArgumentException | InvocationTargetException e) {
             throw new UnresolvedEntityTypeException("Failed to find the correct set of entities implementations matching the given device information.",
