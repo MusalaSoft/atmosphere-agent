@@ -51,7 +51,9 @@ import com.musala.atmosphere.agent.devicewrapper.util.ShellCommandExecutor;
 import com.musala.atmosphere.agent.devicewrapper.util.ondevicecomponent.ServiceCommunicator;
 import com.musala.atmosphere.agent.devicewrapper.util.ondevicecomponent.UIAutomatorCommunicator;
 import com.musala.atmosphere.agent.entity.DeviceSettingsEntity;
+import com.musala.atmosphere.agent.entity.EntityTypeResolver;
 import com.musala.atmosphere.agent.entity.GestureEntity;
+import com.musala.atmosphere.agent.entity.GpsLocationEntity;
 import com.musala.atmosphere.agent.entity.HardwareButtonEntity;
 import com.musala.atmosphere.agent.entity.ImageEntity;
 import com.musala.atmosphere.agent.entity.ImeEntity;
@@ -186,6 +188,8 @@ public abstract class AbstractWrapDevice implements IWrapDevice {
     private DeviceSettingsEntity settingsEntity;
 
     private ImageEntity imageEntity;
+
+    private GpsLocationEntity gpsLocationEntity;
 
     /**
      * Creates an abstract wrapper of the given {@link IDevice device}.
@@ -488,10 +492,16 @@ public abstract class AbstractWrapDevice implements IWrapDevice {
                 returnValue = serviceCommunicator.isLocked();
                 break;
             case OPEN_LOCATION_SETTINGS:
-                serviceCommunicator.openLocationSettings();
+                gpsLocationEntity.openLocationSettings();
                 break;
             case IS_GPS_LOCATION_ENABLED:
-                returnValue = serviceCommunicator.isGpsLocationEnabled();
+                returnValue = gpsLocationEntity.isGpsLocationEnabled();
+                break;
+            case ENABLE_GPS_LOCATION:
+                returnValue = gpsLocationEntity.enableGpsLocation();
+                break;
+            case DISABLE_GPS_LOCATION:
+                returnValue = gpsLocationEntity.disableGpsLocation();
                 break;
             case SHOW_TAP_LOCATION:
                 serviceCommunicator.showTapLocation(args);
@@ -901,6 +911,8 @@ public abstract class AbstractWrapDevice implements IWrapDevice {
     }
 
     private void setupDeviceEntities(DeviceInformation deviceInformation) {
+        EntityTypeResolver typeResolver = new EntityTypeResolver(deviceInformation);
+
         try {
             Constructor<?> hardwareButtonEntityConstructor = HardwareButtonEntity.class.getDeclaredConstructor(ShellCommandExecutor.class);
             hardwareButtonEntityConstructor.setAccessible(true);
@@ -941,6 +953,20 @@ public abstract class AbstractWrapDevice implements IWrapDevice {
                     wrappedDevice
             });
             this.imageEntity = imageEntity;
+
+            Class<?> locationEntityClass = typeResolver.getEntityClass(GpsLocationEntity.class);
+            Constructor<?> locationEntityConstructor = locationEntityClass.getDeclaredConstructor(ServiceCommunicator.class,
+                                                                                                  UIAutomatorCommunicator.class,
+                                                                                                  HardwareButtonEntity.class,
+                                                                                                  GestureEntity.class);
+            locationEntityConstructor.setAccessible(true);
+            GpsLocationEntity locationEntity = ((GpsLocationEntity) locationEntityConstructor.newInstance(new Object[] {
+                    serviceCommunicator,
+                    automatorCommunicator,
+                    hardwareButtonEntity,
+                    gestureEntity
+            }));
+            this.gpsLocationEntity = locationEntity;
         } catch (NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException
                 | IllegalArgumentException | InvocationTargetException e) {
             throw new UnresolvedEntityTypeException("Failed to find the correct set of entities implementations matching the given device information.",
