@@ -2,11 +2,12 @@ package com.musala.atmosphere.agent.devicewrapper.util;
 
 /**
  * An enum listing all possible emulator console commands along with their properties
- * 
+ *
  * @author boris.strandjev
  */
 public enum EmulatorCommand {
     PING("help\r\n", "Ping"),
+    AUTHENTICATE("auth %s\r\n", "Authenticate"),
     SET_BATTERY_LEVEL("power capacity %s\r\n", "Set battery level"),
     SET_BATTERY_STATE("power status %s\r\n", "Set battery state"),
     SET_POWER_STATE("power ac %s\r\n", "Set power state"),
