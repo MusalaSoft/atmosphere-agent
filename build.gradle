@@ -42,6 +42,8 @@ dependencies {
     compile fileTree(dir: 'natives/', include: '*.*')
     compile 'gov.nist.math:scimark:2.0'
     compile 'org.seleniumhq.selenium:selenium-java:2.47.1'
+	runtime 'org.apache.httpcomponents:httpclient:4.4.1'
+	runtime 'org.apache.httpcomponents:httpcore:4.4.4'
 
     onDeviceComponents 'com.musala.atmosphere:atmosphere-ime:0.0.1'
     onDeviceComponents 'com.musala.atmosphere:atmosphere-service:0.0.1'
