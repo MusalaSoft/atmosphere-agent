@@ -17,9 +17,9 @@ import com.musala.atmosphere.commons.exceptions.CommandFailedException;
 
 /**
  * Class responsible for APK file transfer and installation on a device.
- * 
+ *
  * @author georgi.gaydarov
- * 
+ *
  */
 public class ApkInstaller {
     private static final Logger LOGGER = Logger.getLogger(ApkInstaller.class.getCanonicalName());
@@ -49,7 +49,7 @@ public class ApkInstaller {
 
     /**
      * Creates an APK installer instance for a specified {@link IDevice}.
-     * 
+     *
      * @param forDevice
      *        - the device that this instance will install to.
      */
@@ -61,7 +61,7 @@ public class ApkInstaller {
      * Creates a new .apk file that will be installed on the current device. Use {@link #appendToAPK(byte[], int)
      * appendToAPK(byte[])} and {@link #buildAndInstallAPK() buildAndInstallAPK()} to transfer the file. If another file
      * is being transfered, it will be discarded.
-     * 
+     *
      * @throws CommandFailedException
      */
     public void initAPKInstall() throws CommandFailedException {
@@ -84,7 +84,7 @@ public class ApkInstaller {
     /**
      * Appends bytes to the .apk file that is currently being built. Use {@link #buildAndInstallAPK()} to install the
      * transfered .apk file or {@link #discardAPK()} to discard all transfered data.
-     * 
+     *
      * @param bytes
      *        - Byte array to append to the .apk file that is being built.
      * @param length
@@ -104,7 +104,7 @@ public class ApkInstaller {
 
     /**
      * Builds the transfered .apk file, uploads and then installs it on the current device.
-     * 
+     *
      * @throws CommandFailedException
      */
     public void buildAndInstallAPK(boolean shouldForceInstall) throws CommandFailedException {
@@ -118,14 +118,8 @@ public class ApkInstaller {
             tempApkFileOutputStream = null;
             String absolutePathToApk = tempApkFile.getAbsolutePath();
 
-            String installResult = device.installPackage(absolutePathToApk, shouldForceInstall);
+            device.installPackage(absolutePathToApk, shouldForceInstall);
             discardAPK();
-
-            if (installResult != null) {
-                LOGGER.error("PacketManager installation returned error code '" + installResult + "'.");
-                throw new CommandFailedException("PacketManager installation returned error code '" + installResult
-                        + "'.");
-            }
         } catch (InstallException | IOException e) {
             LOGGER.error("Installing apk failed.", e);
             throw new CommandFailedException("Installing .apk file failed.", e);

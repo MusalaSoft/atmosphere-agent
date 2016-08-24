@@ -32,18 +32,20 @@ import com.musala.atmosphere.commons.util.Pair;
 
 /**
  * Device wrapper for emulators. Implements methods in an emulator-specific way.
- * 
+ *
  * @author georgi.gaydarov
- * 
+ *
  */
 public class EmulatorWrapDevice extends AbstractWrapDevice {
     private static final long serialVersionUID = -112607818622127351L;
 
     private final static Logger LOGGER = Logger.getLogger(EmulatorWrapDevice.class.getCanonicalName());
 
+    private final static int SET_MAGNETIC_FIELD_MAXIMUM_API_LEVEL_SUPPORT = 18;
+
     /**
      * Creates an wrapper of the given emulator {@link IDevice device}.
-     * 
+     *
      * @param deviceToWrap
      *        - device to be wrapped
      * @param executor
@@ -87,8 +89,9 @@ public class EmulatorWrapDevice extends AbstractWrapDevice {
 
             ExtendedEmulatorConsole emulatorConsole = prepareEmulatorConsole();
 
-            emulatorConsole.setMagneticField(new DeviceMagneticField(50.0f, 50.0f, 50.0f));
-
+            if(deviceToWrap.getVersion().getApiLevel() <= SET_MAGNETIC_FIELD_MAXIMUM_API_LEVEL_SUPPORT){
+                emulatorConsole.setMagneticField(new DeviceMagneticField(50.0f, 50.0f, 50.0f));
+            }
         } catch (CommandFailedException e) {
 
             LOGGER.warn("Connection to emulator console failed.", e);

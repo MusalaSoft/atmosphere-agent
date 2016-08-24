@@ -2,8 +2,12 @@ package com.musala.atmosphere.agent.devicewrapper.commandexecutor;
 
 import static org.junit.Assert.assertEquals;
 
+import java.io.File;
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.Test;
 
@@ -15,11 +19,13 @@ import com.android.ddmlib.IDevice;
 import com.android.ddmlib.IShellOutputReceiver;
 import com.android.ddmlib.InstallException;
 import com.android.ddmlib.RawImage;
+import com.android.ddmlib.ScreenRecorderOptions;
 import com.android.ddmlib.ShellCommandUnresponsiveException;
 import com.android.ddmlib.SyncException;
 import com.android.ddmlib.SyncService;
 import com.android.ddmlib.TimeoutException;
 import com.android.ddmlib.log.LogReceiver;
+import com.android.sdklib.AndroidVersion;
 import com.musala.atmosphere.agent.devicewrapper.util.ShellCommandExecutor;
 import com.musala.atmosphere.agent.util.AgentPropertiesLoader;
 
@@ -220,18 +226,6 @@ public class ShellCommandExecutorTest {
         }
 
         @Override
-        public String installPackage(String arg0, boolean arg1, String... arg2) throws InstallException {
-            // TODO Auto-generated method stub
-            return null;
-        }
-
-        @Override
-        public String installRemotePackage(String arg0, boolean arg1, String... arg2) throws InstallException {
-            // TODO Auto-generated method stub
-            return null;
-        }
-
-        @Override
         public boolean isBootLoader() {
             // TODO Auto-generated method stub
             return false;
@@ -332,6 +326,145 @@ public class ShellCommandExecutorTest {
 
         @Override
         public String uninstallPackage(String arg0) throws InstallException {
+            // TODO Auto-generated method stub
+            return null;
+        }
+
+        @Override
+        public void executeShellCommand(String command,
+                                        IShellOutputReceiver receiver,
+                                        long maxTimeToOutputResponse,
+                                        TimeUnit maxTimeUnits)
+            throws TimeoutException,
+                AdbCommandRejectedException,
+                ShellCommandUnresponsiveException,
+                IOException {
+            // TODO Auto-generated method stub
+
+        }
+
+        @Override
+        public Future<String> getSystemProperty(String name) {
+            // TODO Auto-generated method stub
+            return null;
+        }
+
+        @Override
+        public boolean supportsFeature(Feature feature) {
+            // TODO Auto-generated method stub
+            return false;
+        }
+
+        @Override
+        public boolean supportsFeature(HardwareFeature feature) {
+            // TODO Auto-generated method stub
+            return false;
+        }
+
+        @Override
+        public RawImage getScreenshot(long timeout, TimeUnit unit)
+            throws TimeoutException,
+                AdbCommandRejectedException,
+                IOException {
+            // TODO Auto-generated method stub
+            return null;
+        }
+
+        @Override
+        public void startScreenRecorder(String remoteFilePath,
+                                        ScreenRecorderOptions options,
+                                        IShellOutputReceiver receiver)
+            throws TimeoutException,
+                AdbCommandRejectedException,
+                IOException,
+                ShellCommandUnresponsiveException {
+            // TODO Auto-generated method stub
+
+        }
+
+        @Override
+        public void installPackage(String packageFilePath, boolean reinstall, String... extraArgs)
+            throws InstallException {
+            // TODO Auto-generated method stub
+
+        }
+
+        @Override
+        public void installPackages(List<File> apks,
+                                    boolean reinstall,
+                                    List<String> installOptions,
+                                    long timeout,
+                                    TimeUnit timeoutUnit)
+            throws InstallException {
+            // TODO Auto-generated method stub
+
+        }
+
+        @Override
+        public void installRemotePackage(String remoteFilePath, boolean reinstall, String... extraArgs)
+            throws InstallException {
+            // TODO Auto-generated method stub
+
+        }
+
+        @Override
+        public boolean root()
+            throws TimeoutException,
+                AdbCommandRejectedException,
+                IOException,
+                ShellCommandUnresponsiveException {
+            // TODO Auto-generated method stub
+            return false;
+        }
+
+        @Override
+        public boolean isRoot()
+            throws TimeoutException,
+                AdbCommandRejectedException,
+                IOException,
+                ShellCommandUnresponsiveException {
+            // TODO Auto-generated method stub
+            return false;
+        }
+
+        @Override
+        public Future<Integer> getBattery() {
+            // TODO Auto-generated method stub
+            return null;
+        }
+
+        @Override
+        public Future<Integer> getBattery(long freshnessTime, TimeUnit timeUnit) {
+            // TODO Auto-generated method stub
+            return null;
+        }
+
+        @Override
+        public List<String> getAbis() {
+            // TODO Auto-generated method stub
+            return null;
+        }
+
+        @Override
+        public int getDensity() {
+            // TODO Auto-generated method stub
+            return 0;
+        }
+
+        @Override
+        public String getLanguage() {
+            // TODO Auto-generated method stub
+            return null;
+        }
+
+        @Override
+        public String getRegion() {
+            // TODO Auto-generated method stub
+            return null;
+        }
+
+        @Override
+        public AndroidVersion getVersion() {
             // TODO Auto-generated method stub
             return null;
         }

@@ -59,7 +59,7 @@ public class ExtendedEmulatorConsole {
     /**
      * Socket read/write buffer.
      */
-    private final byte[] buffer = new byte[1024];
+    private final byte[] buffer = new byte[10240];
 
     private SocketChannel socketChannel;
 

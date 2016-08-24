@@ -13,7 +13,6 @@ import org.apache.log4j.Logger;
 
 import com.android.ddmlib.AndroidDebugBridge;
 import com.android.ddmlib.AndroidDebugBridge.IDeviceChangeListener;
-import com.android.ddmlib.EmulatorConsole;
 import com.android.ddmlib.IDevice;
 import com.musala.atmosphere.agent.devicewrapper.util.PreconditionsManager;
 import com.musala.atmosphere.agent.util.AndroidToolCommandBuilder;
@@ -28,9 +27,9 @@ import com.musala.atmosphere.commons.sa.exceptions.TimeoutReachedException;
 
 /**
  * Manages creating, closing and erasing emulators.
- * 
+ *
  * @author georgi.gaydarov
- * 
+ *
  */
 public class EmulatorManager implements IDeviceChangeListener {
     private final static Logger LOGGER = Logger.getLogger(EmulatorManager.class.getCanonicalName());
@@ -79,7 +78,7 @@ public class EmulatorManager implements IDeviceChangeListener {
 
     /**
      * Returns the device list obtained from Android Debug Bridge.
-     * 
+     *
      * @return the device list obtained from Android Debug Bridge.
      */
     private List<IDevice> getDeviceList() {
@@ -91,7 +90,7 @@ public class EmulatorManager implements IDeviceChangeListener {
 
     /**
      * Returns an emulator device with the given serial number.
-     * 
+     *
      * @param serialNumber
      *        - serial number of the device.
      * @return an emulator device with the given serial number.
@@ -117,8 +116,7 @@ public class EmulatorManager implements IDeviceChangeListener {
     @Override
     public void deviceConnected(IDevice connectedDevice) {
         if (connectedDevice.isEmulator()) {
-            EmulatorConsole emulatorConsole = EmulatorConsole.getConsole(connectedDevice);
-            String emulatorName = emulatorConsole.getAvdName();
+            String emulatorName = connectedDevice.getAvdName();
 
             synchronized (this) {
                 connectedEmulatorsList.put(emulatorName, connectedDevice);
@@ -148,7 +146,7 @@ public class EmulatorManager implements IDeviceChangeListener {
 
     /**
      * Returns a new unique emulator name.
-     * 
+     *
      * @return a new unique emulator name.
      */
     private String getNewEmulatorName() {
@@ -159,7 +157,7 @@ public class EmulatorManager implements IDeviceChangeListener {
 
     /**
      * Creates and starts a new emulator device fulfilling the desired device parameters.
-     * 
+     *
      * @param desiredDeviceParameters
      *        - desired device parameters.
      * @return the name of the created emulator.
@@ -180,7 +178,7 @@ public class EmulatorManager implements IDeviceChangeListener {
 
     /**
      * Creates and emulator profile with the given name and device parameters.
-     * 
+     *
      * @param emulatorName
      *        - the name of the emulator device.
      * @param desiredDeviceParameters
@@ -200,7 +198,7 @@ public class EmulatorManager implements IDeviceChangeListener {
 
     /**
      * Starts and emulator device with the given name and device parameters.
-     * 
+     *
      * @param emulatorName
      *        - the name of the emulator device. Also the name of its profile.
      * @param desiredDeviceParameters
@@ -223,14 +221,11 @@ public class EmulatorManager implements IDeviceChangeListener {
 
     /**
      * Closes a running emulator device.
-     * 
+     *
      * @param emulatorDevice
      *        - running emulator device.
      */
     private void closeEmulator(IDevice emulatorDevice) {
-        EmulatorConsole emulatorConsole = EmulatorConsole.getConsole(emulatorDevice);
-        emulatorConsole.kill();
-
         String emulatorName = emulatorDevice.getAvdName();
         // wait for the emulator to exit
         Process emulatorProcess = startedEmulatorsProcess.remove(emulatorName);
@@ -246,7 +241,7 @@ public class EmulatorManager implements IDeviceChangeListener {
 
     /**
      * Erases an emulator device profile.
-     * 
+     *
      * @param emulatorDevice
      *        - existing emulator device.
      * @throws IOException
@@ -261,7 +256,7 @@ public class EmulatorManager implements IDeviceChangeListener {
 
     /**
      * Closes and erases a running emulator device.
-     * 
+     *
      * @param serialNumber
      *        - serial number of the emulator device.
      * @throws IOException
@@ -282,7 +277,7 @@ public class EmulatorManager implements IDeviceChangeListener {
 
     /**
      * Checks whether any emulator device is present on the agent.
-     * 
+     *
      * @return true if an emulator device is found on the agent, false if not.
      */
     public boolean isAnyEmulatorPresent() {
@@ -291,7 +286,7 @@ public class EmulatorManager implements IDeviceChangeListener {
 
     /**
      * Waits until an emulator device with given AVD name is present on the agent or the timeout is reached.
-     * 
+     *
      * @param emulatorName
      *        - the AVD name of the emulator.
      * @param timeout
@@ -318,7 +313,7 @@ public class EmulatorManager implements IDeviceChangeListener {
 
     /**
      * Gets the serial number of an emulator with given AVD name.
-     * 
+     *
      * @param emulatorName
      *        - the AVD name of the emulator.
      * @return the serial number of the emulator.
@@ -335,7 +330,7 @@ public class EmulatorManager implements IDeviceChangeListener {
     /**
      * Waits until an emulator device with given AVD name boots or the timeout is reached. Make sure you have called
      * {@link #waitForEmulatorExists(String, long)} first.
-     * 
+     *
      * @param emulatorName
      *        - the AVD name of the emulator.
      * @param timeout
