@@ -71,3 +71,6 @@ gradle-app.setting
 ## Project files
 *.apk
 *.jar
+chromedriver/
+*VideoRecords/
+ScreenRecords/
