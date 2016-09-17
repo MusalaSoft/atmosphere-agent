@@ -50,7 +50,7 @@ public class UIAutomatorCommunicator extends DeviceCommunicator<UIAutomatorReque
 
     /**
      * Starts a process on the UiAutomatorBridge that clears an EditText field containing the given properties.
-     * 
+     *
      * @param propertiesContainer
      *        - the properties by which the UI element will be selected
      * @throws CommandFailedException
@@ -64,7 +64,7 @@ public class UIAutomatorCommunicator extends DeviceCommunicator<UIAutomatorReque
 
     /**
      * Starts a process on the UiAutomatorBridge that executes a swipe gesture by given direction.
-     * 
+     *
      * @param propertiesContainer
      *        - the properties container of the UI element
      * @param direction
@@ -358,7 +358,7 @@ public class UIAutomatorCommunicator extends DeviceCommunicator<UIAutomatorReque
         try {
             return requestSender.request(automatorRequest);
         } catch (ClassNotFoundException | IOException e) {
-            String messageFormat = "Failed request %.";
+            String messageFormat = "Failed request %s.";
             String message = String.format(messageFormat, requestType.toString());
             LOGGER.error(message, e);
             throw new CommandFailedException(message, e);

@@ -28,7 +28,7 @@ public class DisconnectedAgent extends AgentState {
     }
 
     @Override
-    public void executeServerAdressCommand(AgentCommand commandForExecution) {
+    public void executeServerAddressCommand(AgentCommand commandForExecution) {
         try {
             validateAndVerifyCommand(AgentConsoleCommands.AGENT_SERVER_ADDRESS, commandForExecution);
 

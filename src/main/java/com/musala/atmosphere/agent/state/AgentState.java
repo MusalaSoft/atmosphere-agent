@@ -16,9 +16,9 @@ import com.musala.atmosphere.commons.sa.ConsoleControl;
 
 /**
  * Common abstract class for each agent state.
- * 
+ *
  * @author nikola.taushanov
- * 
+ *
  */
 public abstract class AgentState {
     private static final Logger LOGGER = Logger.getLogger(AgentState.class);
@@ -39,7 +39,7 @@ public abstract class AgentState {
 
     /**
      * Executes the passed {@link AgentCommand command} and changes
-     * 
+     *
      * @param commandForExecution
      */
     public void executeCommand(AgentCommand commandForExecution) {
@@ -63,7 +63,7 @@ public abstract class AgentState {
                     executePerformanceCommand(commandForExecution);
                     break;
                 case AGENT_SERVER_ADDRESS:
-                    executeServerAdressCommand(commandForExecution);
+                    executeServerAddressCommand(commandForExecution);
                     break;
                 case AGENT_UPTIME:
                     executeUptimeCommand(commandForExecution);
@@ -78,7 +78,7 @@ public abstract class AgentState {
 
     /**
      * Prints information about all available commands that can be executed on the agent, through the agent console.
-     * 
+     *
      * @param commandForExecution
      */
     public void executeHelpCommand(AgentCommand commandForExecution) {
@@ -97,7 +97,7 @@ public abstract class AgentState {
 
     /**
      * Prints the time for which the {@link Agent agent} has been running.
-     * 
+     *
      * @param commandForExecution
      */
     public void executeUptimeCommand(AgentCommand commandForExecution) {
@@ -120,7 +120,7 @@ public abstract class AgentState {
 
     /**
      * Tests the hardware possibilities of the agent for supporting emulators.
-     * 
+     *
      * @param commandForExecution
      *        - should be {@link AgentConsoleCommands#AGENT_PERFORMANCE}
      */
@@ -139,7 +139,7 @@ public abstract class AgentState {
 
     /**
      * Stops the agent and releases all allocated resources.
-     * 
+     *
      * @param commandForExecution
      *        - it should be an {@link AgentConsoleCommands#AGENT_EXIT exit } command.
      */
@@ -157,7 +157,7 @@ public abstract class AgentState {
     /**
      * Prints information about the connected devices to this agent on its console. The information consists of number
      * of attached devices and their device wrapper identifiers.
-     * 
+     *
      * @param commandForExecution
      */
     public void executeDevicesCommand(AgentCommand commandForExecution) {
@@ -180,18 +180,18 @@ public abstract class AgentState {
 
     /**
      * Prints on the console the server address to which the local agent is connected.
-     * 
+     *
      * @param commandForExecution
      *        - it should be an {@link AgentConsoleCommands#AGENT_SERVER_ADDRESS server address} command.
      */
-    public abstract void executeServerAdressCommand(AgentCommand commandForExecution);
+    public abstract void executeServerAddressCommand(AgentCommand commandForExecution);
 
     /**
      * Tries to connect the agent to a server, located on the address, specified in the passed command. If the agent is
      * already connected to a server, the new connect command is rejected and not executed.
-     * 
+     *
      * @param commandForExecution
-     *        it should be an {@link AgentConsoleCommands#AGENT_CONNECT connect } command.
+     *        it should be a {@link AgentConsoleCommands#AGENT_CONNECT connect} command.
      */
     public abstract void executeConnectCommand(AgentCommand commandForExecution);
 
@@ -202,12 +202,12 @@ public abstract class AgentState {
      * This method is used to validate that when method for executing a command of some type is invoked, the passed
      * command for execution's type is valid command of the expected type, otherwise an {@link IllegalArgumentException}
      * is thrown.
-     * 
+     *
      * @param expectedCommandType
      *        - the expected type of command for execution.
      * @param actualCommandForExecution
      *        - the actual command for execution.
-     * 
+     *
      * @throws IllegalArgumentException
      *         - if the expected command type differs from the command's or the number of parameters is not acceptable.
      */
