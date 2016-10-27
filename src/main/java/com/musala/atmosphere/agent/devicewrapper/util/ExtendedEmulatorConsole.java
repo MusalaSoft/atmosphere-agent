@@ -157,7 +157,8 @@ public class ExtendedEmulatorConsole {
         }
 
         if (!authenticate()) {
-            throw new EmulatorConnectionFailedException("Could not authenticate correctly with the emulator.");
+            throw new EmulatorConnectionFailedException("Could not authenticate correctly with the emulator."
+                                                        + " Is the emulator system image updated to the latest version via SDK Manager?");
         }
 
         // And finally, if everything is OK, put this instance in the singleton map
@@ -202,7 +203,8 @@ public class ExtendedEmulatorConsole {
             br = new BufferedReader(new FileReader(authFile));
             authToken = br.readLine();
         } catch (IOException e) {
-            return false;
+            // If the file does not exist, this is probably a version of an emulator that does not require authentication.
+            return true;
         } finally {
             if (br != null) {
                 try { br.close(); } catch (IOException e) {}
