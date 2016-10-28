@@ -1,6 +1,6 @@
 package com.musala.atmosphere.agent;
 
-import java.io.File;
+import java.io.IOException;
 import java.rmi.AccessException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
@@ -34,7 +34,6 @@ import com.musala.atmosphere.agent.exception.OnDeviceComponentCommunicationExcep
 import com.musala.atmosphere.agent.exception.OnDeviceComponentInitializationException;
 import com.musala.atmosphere.agent.exception.OnDeviceComponentStartingException;
 import com.musala.atmosphere.agent.util.AgentIdCalculator;
-import com.musala.atmosphere.agent.util.AgentPropertiesLoader;
 import com.musala.atmosphere.agent.util.FileRecycler;
 import com.musala.atmosphere.commons.DeviceInformation;
 import com.musala.atmosphere.commons.ad.service.ConnectionConstants;
@@ -47,6 +46,8 @@ import com.musala.atmosphere.commons.sa.exceptions.DeviceNotFoundException;
 import com.musala.atmosphere.commons.sa.exceptions.NotPossibleForDeviceException;
 import com.musala.atmosphere.commons.sa.exceptions.TimeoutReachedException;
 
+import io.github.bonigarcia.wdm.ChromeDriverManager;
+
 /**
  * Manages wrapping, unwrapping, register and unregister devices. Keeps track of all connected devices.
  *
@@ -55,8 +56,6 @@ import com.musala.atmosphere.commons.sa.exceptions.TimeoutReachedException;
  */
 public class DeviceManager {
     private static final Logger LOGGER = Logger.getLogger(DeviceManager.class.getCanonicalName());
-
-    private static final String CHROME_DRIVER_EXECUTABLE_PATH = AgentPropertiesLoader.getChromeDriverExecutablePath();
 
     private static final String CURRENT_DIR = System.getProperty("user.dir");
 
@@ -80,7 +79,7 @@ public class DeviceManager {
 
     private static int rmiRegistryPort;
 
-    private static volatile Map<String, IDevice> connectedDevicesList = new HashMap<String, IDevice>();
+    private static volatile Map<String, IDevice> connectedDevicesList = new HashMap<>();
 
     private ChromeDriverService chromeDriverService;
 
@@ -140,10 +139,16 @@ public class DeviceManager {
 
             deviceManagerExecutor.releaseResources();
 
-            File chromeDriverExecutable = new File(CURRENT_DIR + File.separator + CHROME_DRIVER_EXECUTABLE_PATH);
-            chromeDriverService = new ChromeDriverService.Builder().usingDriverExecutable(chromeDriverExecutable)
-                                                                   .usingAnyFreePort()
-                                                                   .build();
+            ChromeDriverManager.getInstance().setup();
+            chromeDriverService = ChromeDriverService.createDefaultService();
+            try {
+                chromeDriverService.start();
+            } catch (IOException e) {
+                String startChromeDriverServiceFailedMessage = String.format("Starting %s failed.",
+                                                                             ChromeDriverService.class.getName());
+                LOGGER.error(startChromeDriverServiceFailedMessage, e);
+            }
+
             this.fileRecycler = fileRecycler;
             LOGGER.info("Device manager created successfully.");
         }
@@ -156,7 +161,7 @@ public class DeviceManager {
      */
     public List<IDevice> getDevicesList() {
         Collection<IDevice> connectedDevices = connectedDevicesList.values();
-        List<IDevice> deviceList = new LinkedList<IDevice>();
+        List<IDevice> deviceList = new LinkedList<>();
         deviceList.addAll(connectedDevices);
         return deviceList;
     }

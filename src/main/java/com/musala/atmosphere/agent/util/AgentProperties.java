@@ -19,8 +19,7 @@ public enum AgentProperties {
     ON_DEVICE_COMPONENT_CONNECTION_RETRY_LIMIT("ondevicecomponent.connection.retry.limit"),
     DEVICE_AUTOMATIC_SETUP("device.automatic.setup"),
     ON_DEVICE_COMPONENT_FILES_PATH("ondevicecomponent.files.path"),
-    SDK_DIR("sdk.dir"),
-    CHROME_DRIVER_EXECUTABLE_PATH("chromedriver.executable.path");
+    SDK_DIR("sdk.dir");
 
     private String value;
 

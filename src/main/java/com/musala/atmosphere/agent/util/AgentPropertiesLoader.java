@@ -6,9 +6,9 @@ import com.musala.atmosphere.commons.util.PropertiesLoader;
 
 /**
  * Reads properties from the Agent properties config file.
- * 
+ *
  * @author valyo.yolovski
- * 
+ *
  */
 
 public class AgentPropertiesLoader {
@@ -25,7 +25,7 @@ public class AgentPropertiesLoader {
     /**
      * Returns the desired property from the config file in String type. If there is no user config file, default values
      * are returned.
-     * 
+     *
      * @param property
      *        - the Agent property to be returned.
      * @return the desired agent property value. Returns String properties only!
@@ -40,7 +40,7 @@ public class AgentPropertiesLoader {
     /**
      * Returns the directory of the SDK. Loads the property from the Agent's configuration file. If such property is not
      * available uses ANDROID_HOME in the environment variables.
-     * 
+     *
      * @return the directory of the SDK
      */
     private static String getSdkDir() {
@@ -55,7 +55,7 @@ public class AgentPropertiesLoader {
 
     /**
      * Returns the path to ADB from the config file.
-     * 
+     *
      * @return - the path to the Android Debug Bridge.
      */
     public static String getAdbPath() {
@@ -64,7 +64,7 @@ public class AgentPropertiesLoader {
 
     /**
      * Returns the timeout for connecting with the Android Debug Bridge from the config file.
-     * 
+     *
      * @return - int, the timeout in miliseconds.
      */
     public static int getAdbConnectionTimeout() {
@@ -75,7 +75,7 @@ public class AgentPropertiesLoader {
 
     /**
      * Returns the Agent RMI port from the config file.
-     * 
+     *
      * @return - the port on which the Agent is published in RMI.
      */
     public static int getAgentRmiPort() {
@@ -86,7 +86,7 @@ public class AgentPropertiesLoader {
 
     /**
      * Returns the timeout for the creation of the emulator form the config file.
-     * 
+     *
      * @return
      */
     public static int getEmulatorCreationWaitTimeout() {
@@ -97,7 +97,7 @@ public class AgentPropertiesLoader {
 
     /**
      * Returns the path to the Android SDK tools directory from the config file.
-     * 
+     *
      * @return
      */
     public static String getAndroidSdkToolsDirPath() {
@@ -106,7 +106,7 @@ public class AgentPropertiesLoader {
 
     /**
      * Returns the path of the emulator executable file from the config file.
-     * 
+     *
      * @return - the name of the emulator executable.
      */
     public static String getEmulatorExecutable() {
@@ -116,7 +116,7 @@ public class AgentPropertiesLoader {
 
     /**
      * Returns the path of the android executable file from the config file.
-     * 
+     *
      * @return - the name of the android executable.
      */
     public static String getAndroidExecutable() {
@@ -126,7 +126,7 @@ public class AgentPropertiesLoader {
 
     /**
      * Returns the {@link AbiType} set in the config file.
-     * 
+     *
      * @return the {@link AbiType} set in the config file.
      */
     public static AbiType getEmulatorAbiType() {
@@ -137,7 +137,7 @@ public class AgentPropertiesLoader {
 
     /**
      * Returns the timeout for command execution.
-     * 
+     *
      * @return - int, the timeout for command execution.
      */
     public static int getCommandExecutionTimeout() {
@@ -148,7 +148,7 @@ public class AgentPropertiesLoader {
 
     /**
      * Returns the minimum port identifier that will be used for connection to an ATMOSPHERE on-device component.
-     * 
+     *
      * @return - the minimum port identifier that will be used for connection to an ATMOSPHERE on-device component.
      */
     public static int getAdbMinForwardPort() {
@@ -159,7 +159,7 @@ public class AgentPropertiesLoader {
 
     /**
      * Returns the maximum port identifier that will be used for connection to the ATMOSPHERE service.
-     * 
+     *
      * @return - the maximum port identifier that will be used for connection to the ATMOSPHERE service.
      */
     public static int getAdbMaxForwardPort() {
@@ -170,7 +170,7 @@ public class AgentPropertiesLoader {
 
     /**
      * Returns the maximum number of on-device component connection retries.
-     * 
+     *
      * @return - the maximum number of on-device component connection retries.
      */
     public static int getOnDeviceComponentConnectionRetryLimit() {
@@ -182,7 +182,7 @@ public class AgentPropertiesLoader {
     /**
      * Returns a {@link AutomaticDeviceSetupFlag} constant specifying how the agent should react when new device is
      * being connected.
-     * 
+     *
      * @return {@link AutomaticDeviceSetupFlag} constant specifying how the agent should react when new device is being
      *         connected.
      */
@@ -194,20 +194,11 @@ public class AgentPropertiesLoader {
 
     /**
      * Returns the path to the on-device components' files from the config file.
-     * 
+     *
      * @return - the path to the on-device components' files.
      */
     public static String getOnDeviceComponentFilesPath() {
         String onDeviceComponentFilesPath = getPropertyString(AgentProperties.ON_DEVICE_COMPONENT_FILES_PATH);
         return onDeviceComponentFilesPath.concat(File.separator);
-    }
-
-    /**
-     * Returns the path to the Chrome Driver executable from the config file.
-     * 
-     * @return - the path to the Chrome Driver executable
-     */
-    public static String getChromeDriverExecutablePath() {
-        return getPropertyString(AgentProperties.CHROME_DRIVER_EXECUTABLE_PATH);
     }
 }
