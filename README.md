@@ -10,11 +10,9 @@ In order to be able to run the `atmosphere-agent` project you need to:
   * [atmosphere-server-agent-lib](https://github.com/MusalaSoft/atmosphere-server-agent-lib)
   * [atmosphere-agent-device-lib](https://github.com/MusalaSoft/atmosphere-agent-device-lib)
   * [atmosphere-ime](https://github.com/MusalaSoft/atmosphere-ime)
-  * [atmosphere-service](https://github.com/MusalaSoft/atmosphere-uiautomator-bridge)
+  * [atmosphere-service](https://github.com/MusalaSoft/atmosphere-service)
   * [atmosphere-uiautomator-bridge](https://github.com/MusalaSoft/atmosphere-uiautomator-bridge)
-* download Chrome Web Driver from [here](https://sites.google.com/a/chromium.org/chromedriver/) and extract the archive
 * clone the [atmosphere-agent](https://github.com/MusalaSoft/atmosphere-agent) project
-* open `agent.properties` from the `atmosphere-agent` root directory and find the `chromedriver.executable.path` property. Change the value to point to your chromedriver executable file.
 
 Once you have performed the steps mentioned above, in the `atmosphere-agent` project root directory open a terminal/command prompt and run the following commands:
 
