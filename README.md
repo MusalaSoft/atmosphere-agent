@@ -3,10 +3,8 @@ The agent is responsible for establishing and maintaining the connection with sp
 
 ## Project setup
 In order to be able to run the `atmosphere-agent` project you need to:
-* make sure the Android SDK is installed and the `ANDROID_HOME` variable is added as an environment variable. [Here](https://github.com/MusalaSoft/atmosphere-docs/blob/master/setup/android_sdk.md) you may read how to install the Android SDK.
 
 * clone and publish the following projects to Maven locally (follow the links for more information):
-  * [atmosphere-commons](https://github.com/MusalaSoft/atmosphere-commons)
   * [atmosphere-server-agent-lib](https://github.com/MusalaSoft/atmosphere-server-agent-lib)
   * [atmosphere-agent-device-lib](https://github.com/MusalaSoft/atmosphere-agent-device-lib)
   * [atmosphere-ime](https://github.com/MusalaSoft/atmosphere-ime)

@@ -18,8 +18,9 @@ run {
 }
 
 repositories {
-    mavenCentral()
     mavenLocal()
+    jcenter()
+    mavenCentral()
     maven {
         url 'http://www.terracotta.org/download/reflector/releases/'
     }
@@ -73,18 +74,6 @@ publishing {
             version version
 
             from components.java
-        }
-        atmosphereAgentTests(MavenPublication) {
-            groupId 'com.musala.atmosphere'
-            artifactId 'atmosphere-agent'
-            version version
-
-            from components.java
-
-            artifact testJar {
-                classifier "tests"
-                from sourceSets.test.output
-            }
         }
     }
 
