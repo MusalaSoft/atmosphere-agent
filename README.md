@@ -1,3 +1,5 @@
+See our site for better context of this readme. [Click here](http://atmosphereframework.com/)
+
 # atmosphere-agent
 The agent is responsible for establishing and maintaining the connection with specific devices. It acts as a middleman between the server and the mobile devices.
 
