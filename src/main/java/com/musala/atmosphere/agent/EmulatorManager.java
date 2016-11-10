@@ -162,7 +162,9 @@ public class EmulatorManager implements IDeviceChangeListener {
      *        - desired device parameters.
      * @return the name of the created emulator.
      * @throws IOException
+     *         thrown when an I/O exception of some sort has occurred.
      * @throws CommandFailedException
+     *         if creating and starting an emulator fails
      */
     public String createAndStartEmulator(EmulatorParameters desiredDeviceParameters)
         throws IOException,
@@ -184,7 +186,9 @@ public class EmulatorManager implements IDeviceChangeListener {
      * @param desiredDeviceParameters
      *        - the desired device parameters.
      * @throws IOException
+     *         thrown when an I/O exception of some sort has occurred.
      * @throws CommandFailedException
+     *         if creating an emulator fails
      */
     private void createEmulator(String emulatorName, EmulatorParameters desiredDeviceParameters)
         throws IOException,
@@ -260,7 +264,9 @@ public class EmulatorManager implements IDeviceChangeListener {
      * @param serialNumber
      *        - serial number of the emulator device.
      * @throws IOException
+     *         thrown when an I/O exception of some sort has occurred.
      * @throws NotPossibleForDeviceException
+     *         thrown when cannot close and erase a real device.
      */
     public void closeAndEraseEmulator(String serialNumber) throws IOException, NotPossibleForDeviceException {
         IDevice emulatorDevice = getEmulatorBySerialNumber(serialNumber);
@@ -292,6 +298,7 @@ public class EmulatorManager implements IDeviceChangeListener {
      * @param timeout
      *        - the timeout in milliseconds.
      * @throws TimeoutReachedException
+     *         thrown when the device is not found after the given timeout
      */
     public void waitForEmulatorExists(String emulatorName, long timeout) throws TimeoutReachedException {
         while (timeout > 0) {
@@ -318,6 +325,7 @@ public class EmulatorManager implements IDeviceChangeListener {
      *        - the AVD name of the emulator.
      * @return the serial number of the emulator.
      * @throws DeviceNotFoundException
+     *         thrown when the device is not found
      */
     public String getSerialNumberOfEmulator(String emulatorName) throws DeviceNotFoundException {
         IDevice desiredDevice = connectedEmulatorsList.get(emulatorName);
@@ -336,8 +344,11 @@ public class EmulatorManager implements IDeviceChangeListener {
      * @param timeout
      *        - the timeout in milliseconds.
      * @throws CommandFailedException
+     *         if the command fails
      * @throws DeviceBootTimeoutReachedException
+     *         thrown when a device boot timeout is reached
      * @throws DeviceNotFoundException
+     *         thrown when the device is not found
      */
     public void waitForEmulatorToBoot(String emulatorName, long timeout)
         throws CommandFailedException,

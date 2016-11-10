@@ -16,9 +16,9 @@ import com.android.ddmlib.TimeoutException;
 
 /**
  * A Profiling class. Returns hardware usage statistics for a device.
- * 
+ *
  * @author georgi.gaydarov
- * 
+ *
  */
 public class DeviceProfiler {
     public static String FREE_MEMORY_ID = "Free";
@@ -33,19 +33,24 @@ public class DeviceProfiler {
 
     /**
      * Gets information about memory allocated by all processes on the profiled device.
-     * 
+     *
      * @return a map, containing processes and kilobytes of allocated memory by them.
      * @throws IOException
+     *         when an I/O error occurs.
      * @throws TimeoutException
+     *         Exception thrown when a connection to Adb failed with a timeout.
      * @throws AdbCommandRejectedException
+     *         thrown when adb refuses a command.
+     *
      * @throws ShellCommandUnresponsiveException
+     *         thrown when a shell command executed on a device takes too long to send its output.
      */
     public Map<String, Long> getMeminfoDataset()
         throws TimeoutException,
             AdbCommandRejectedException,
             ShellCommandUnresponsiveException,
             IOException {
-        Map<String, Long> dataset = new HashMap<String, Long>();
+        Map<String, Long> dataset = new HashMap<>();
         CollectingOutputReceiver outputReceiver = new CollectingOutputReceiver();
         profiledDevice.executeShellCommand(DUMP_MEMORY_INFO_COMMAND, outputReceiver);
         String output = outputReceiver.getOutput();

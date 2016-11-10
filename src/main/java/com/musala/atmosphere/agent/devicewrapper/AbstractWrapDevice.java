@@ -177,6 +177,8 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
      *        - a communicator to the UI automator component on the device
      * @param fileRecycler
      *        - responsible for removing obsolete files
+     * @param chromeDriverService
+     *        - the service component of the ChromeDriver
      * @throws RemoteException
      *         - required when implementing {@link UnicastRemoteObject}
      */
@@ -186,7 +188,8 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
             ServiceCommunicator serviceCommunicator,
             UIAutomatorCommunicator automatorCommunicator,
             ChromeDriverService chromeDriverService,
-            FileRecycler fileRecycler) throws RemoteException {
+            FileRecycler fileRecycler)
+        throws RemoteException {
         // TODO: Use a dependency injection mechanism here.
         this.wrappedDevice = deviceToWrap;
         this.executor = executor;
@@ -198,7 +201,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
         transferService = new FileTransferService(wrappedDevice);
         apkInstaller = new ApkInstaller(wrappedDevice);
         imeManager = new ImeManager(shellCommandExecutor);
-        pullFileCompletionService = new ExecutorCompletionService<Boolean>(executor);
+        pullFileCompletionService = new ExecutorCompletionService<>(executor);
 
         webElementManager = new WebElementManager(chromeDriverService, deviceToWrap.getSerialNumber());
     }
@@ -542,6 +545,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
      *
      * @return Memory amount in MB.
      * @throws CommandFailedException
+     *         In case of an error in the execution
      */
     private long getFreeRAM() throws CommandFailedException {
         DeviceProfiler profiler = new DeviceProfiler(wrappedDevice);
@@ -672,6 +676,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
      *
      * @return Image in an array of bytes that, when dumped to a file, shows the device display.
      * @throws CommandFailedException
+     *         In case of an error in the execution
      */
     private byte[] getScreenshot() throws CommandFailedException {
         shellCommandExecutor.execute(SCREENSHOT_COMMAND);
@@ -740,6 +745,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
      * @param args
      *        - containing the package of the force-stopped process
      * @throws CommandFailedException
+     *         In case of an error in the force stop process
      */
     private void forceStopProcess(String args) throws CommandFailedException {
         shellCommandExecutor.execute(FORCE_STOP_PROCESS_COMMAND + args);
@@ -751,6 +757,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
      * @param args
      *        - containing the package of the process.
      * @throws CommandFailedException
+     *         In case of an error in the uninstallApplication command
      */
     private void uninstallApplication(String args) throws CommandFailedException {
         shellCommandExecutor.execute(UNINSTALL_APP_COMMAND + args);
@@ -798,7 +805,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
             movies[index] = MovieCreator.build(currentFilePath);
         }
 
-        List<Track> videoTracks = new LinkedList<Track>();
+        List<Track> videoTracks = new LinkedList<>();
 
         for (Movie movie : movies) {
             for (Track track : movie.getTracks()) {

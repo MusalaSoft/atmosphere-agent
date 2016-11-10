@@ -1,6 +1,5 @@
 package com.musala.atmosphere.agent.webview;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -72,11 +71,9 @@ public class WebElementManager {
      *
      * @param packageName
      *        - package name of the application under test
-     * @throws IOException
-     *         if initialization of the {@link ChromeDriver driver} fails
      */
     public void initDriver(String packageName) {
-        Map<String, Object> chromeOptions = new HashMap<String, Object>();
+        Map<String, Object> chromeOptions = new HashMap<>();
         chromeOptions.put(APPLICATION_PACKAGE_NAME, packageName);
         chromeOptions.put(DEVICE_SERIAL_NUMBER, deviceSerialNumber);
         chromeOptions.put(USE_RUNNING_APPLICATION, true);
@@ -125,7 +122,7 @@ public class WebElementManager {
     public List<Map<String, Object>> findElements(String xpathQuery) {
         List<WebElement> webElements = driver.findElements(By.xpath(xpathQuery));
 
-        List<Map<String, Object>> foundElements = new ArrayList<Map<String, Object>>();
+        List<Map<String, Object>> foundElements = new ArrayList<>();
         for (WebElement element : webElements) {
             foundElements.add(getWebElementAttributes(element));
         }
@@ -313,7 +310,7 @@ public class WebElementManager {
 
         // The class of the returned map is Maps.TransformedEntriesMap<K,V1,V2>, which is not serializable and needs to
         // be converted to a hash map
-        Map<String, Object> elementAttributes = new HashMap<String, Object>();
+        Map<String, Object> elementAttributes = new HashMap<>();
 
         for (Entry<Object, Object> entry : attributes.entrySet()) {
             elementAttributes.put((String) entry.getKey(), entry.getValue());
@@ -332,7 +329,7 @@ public class WebElementManager {
     private Pair<Integer, Integer> getSize(String xpathQuery) {
         WebElement element = getWebElement(xpathQuery);
         Dimension dimensions = element.getSize();
-        Pair<Integer, Integer> size = new Pair<Integer, Integer>(dimensions.getWidth(), dimensions.getHeight());
+        Pair<Integer, Integer> size = new Pair<>(dimensions.getWidth(), dimensions.getHeight());
         return size;
     }
 

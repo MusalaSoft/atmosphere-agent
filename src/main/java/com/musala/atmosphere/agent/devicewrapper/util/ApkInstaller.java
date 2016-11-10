@@ -59,10 +59,11 @@ public class ApkInstaller {
 
     /**
      * Creates a new .apk file that will be installed on the current device. Use {@link #appendToAPK(byte[], int)
-     * appendToAPK(byte[])} and {@link #buildAndInstallAPK() buildAndInstallAPK()} to transfer the file. If another file
-     * is being transfered, it will be discarded.
+     * appendToAPK(byte[])} and {@link #buildAndInstallAPK(boolean) buildAndInstallAPK()} to transfer the file. If
+     * another file is being transfered, it will be discarded.
      *
      * @throws CommandFailedException
+     *         thrown when the installation fails
      */
     public void initAPKInstall() throws CommandFailedException {
         String tempApkFilePrefix = device.getSerialNumber();
@@ -82,18 +83,19 @@ public class ApkInstaller {
     }
 
     /**
-     * Appends bytes to the .apk file that is currently being built. Use {@link #buildAndInstallAPK()} to install the
-     * transfered .apk file or {@link #discardAPK()} to discard all transfered data.
+     * Appends bytes to the .apk file that is currently being built. Use {@link #buildAndInstallAPK(boolean)} to install
+     * the transfered .apk file or {@link #discardAPK()} to discard all transfered data.
      *
      * @param bytes
      *        - Byte array to append to the .apk file that is being built.
      * @param length
      *        - The number of actual bytes to write.
      * @throws CommandFailedException
+     *         thrown when append to the APK fails
      */
     public void appendToAPK(byte[] bytes, int length) throws CommandFailedException {
         if (tempApkFile == null || tempApkFileOutputStream == null) {
-            throw new IllegalStateException("Temp .apk file should be created (by calling initAPKInstall()) before any calls to appendToAPK() and buildAndInstallAPK().");
+            throw new IllegalStateException("Temp .apk file should be created (by calling initAPKInstall()) before any calls to appendToAPK() and buildAndInstallAPK(boolean).");
         }
         try {
             tempApkFileOutputStream.write(bytes, 0, length);
@@ -105,7 +107,10 @@ public class ApkInstaller {
     /**
      * Builds the transfered .apk file, uploads and then installs it on the current device.
      *
+     * @param shouldForceInstall
+     *        - force install an APK if the parameter is <code>true</code>
      * @throws CommandFailedException
+     *         thrown when install and build APK fails
      */
     public void buildAndInstallAPK(boolean shouldForceInstall) throws CommandFailedException {
         if (tempApkFile == null || tempApkFileOutputStream == null) {

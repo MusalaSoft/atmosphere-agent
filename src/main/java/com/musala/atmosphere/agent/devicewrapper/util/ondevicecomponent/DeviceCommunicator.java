@@ -12,9 +12,9 @@ import com.musala.atmosphere.commons.exceptions.CommandFailedException;
 
 /**
  * Abstract class that communicates with an on-device component.
- * 
+ *
  * @author yordan.petrov
- * 
+ *
  * @param <T>
  *        - the {@link RequestType request type} used for communication
  */
@@ -28,12 +28,11 @@ public abstract class DeviceCommunicator<T extends RequestType> {
     protected BackgroundShellCommandExecutor shellCommandExecutor;
 
     /**
-     * Creates an {@link OnDeviceCommunicator on-device communicator} instance that communicate with an on-device
+     * Creates an {@link DeviceCommunicator on-device communicator} instance that communicate with an on-device
      * component.
-     * 
-     * @param portForwarder
-     *        - a port forwarding service, that will be used to forward a local port to the remote port of the on-device
-     *        component
+     *
+     * @param requestSender
+     *        - a request to an ATMOSPHERE on-device component.
      * @param commandExecutor
      *        - a shell command executor or the device
      * @param serialNumber
@@ -63,10 +62,9 @@ public abstract class DeviceCommunicator<T extends RequestType> {
     public abstract void validateRemoteServer();
 
     /**
-     * Validates that the remote server is an ATMOSPHERE on-device component socket server.</br> <b>Note:</b> This is
-     * the default implementation for validation logic that can be reused when called in the implementation of the
-     * abstract {@link DeviceRequestSender#validateRemoteServer()} .
-     * 
+     * Validates that the remote server is an ATMOSPHERE on-device component socket server.<br>
+     * <b>Note:</b> This is the default implementation for validation logic that can be reused
+     *
      * @param validationRequest
      *        - the request that will be used for validation
      */

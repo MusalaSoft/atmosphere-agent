@@ -23,9 +23,9 @@ import com.musala.atmosphere.commons.exceptions.CommandFailedException;
 
 /**
  * Handles requests sent to an ATMOSPHERE on-device component.
- * 
+ *
  * @author yordan.petrov
- * 
+ *
  */
 public abstract class DeviceRequestSender<T extends RequestType> {
 
@@ -48,7 +48,7 @@ public abstract class DeviceRequestSender<T extends RequestType> {
     /**
      * Creates an {@link DeviceRequestSender on-device request sender} instance, that sends requests to an ATMOSPHERE
      * on-device component and retrieves the response.
-     * 
+     *
      * @param portForwarder
      *        - a port forwarding service, that will be used to forward a local port to the remote port of the on-device
      *        component
@@ -59,7 +59,7 @@ public abstract class DeviceRequestSender<T extends RequestType> {
 
     /**
      * Establishes connection to an ATMOSPHERE on-device component.
-     * 
+     *
      * @throws IOException
      *         when an I/O error occurs when closing this socket.
      */
@@ -96,7 +96,7 @@ public abstract class DeviceRequestSender<T extends RequestType> {
 
     /**
      * Closes the socket connection with client, if such is present.
-     * 
+     *
      * @throws IOException
      *         when an I/O error occurs when closing this socket.
      */
@@ -108,12 +108,14 @@ public abstract class DeviceRequestSender<T extends RequestType> {
 
     /**
      * Sends a {@link ServiceRequest} request to an ATMOSPHERE on-device component and returns the response.
-     * 
+     *
      * @param socketServerRequest
      *        - request that will be send to the ATMOSPHERE on-device component
      * @return the response from the ATMOSPHERE service
      * @throws ClassNotFoundException
      *         when the response is not of the correct class
+     * @throws UnknownHostException
+     *         thrown to indicate that the IP address of a host could not be determined.
      * @throws IOException
      *         when connection or request execution results in an I/O exception
      * @throws CommandFailedException
@@ -164,7 +166,7 @@ public abstract class DeviceRequestSender<T extends RequestType> {
 
     /**
      * Sleeps the invoker thread for the given time.
-     * 
+     *
      * @param timeout
      *        - time in milliseconds for which the thread should stay inactive.
      */
@@ -178,8 +180,9 @@ public abstract class DeviceRequestSender<T extends RequestType> {
 
     /**
      * Disconnects from the ATMOSPHERE on-device component if a connection is present.
-     * 
+     *
      * @throws IOException
+     *         when an I/O error occurs when disconnecting.
      */
     private void disconnect() throws IOException {
         if (socketClientInputStream != null) {

@@ -12,9 +12,9 @@ import com.musala.atmosphere.commons.exceptions.CommandFailedException;
 
 /**
  * Class responsible for pushing and pulling files to and from an {@link IDevice} instance.
- * 
+ *
  * @author georgi.gaydarov
- * 
+ *
  */
 public class FileTransferService {
     // WARNING : do not change the remote folder unless you really know what you are doing.
@@ -27,11 +27,12 @@ public class FileTransferService {
 
     /**
      * Uploads a file to the device. The file will be stored at the temporary files folder under the same name.
-     * 
-     * @param fileName
+     *
+     * @param localFileName
      *        - the file to upload.
      * @return the absolute remote path of the uploaded file.
      * @throws CommandFailedException
+     *         In case of an error in the execution
      */
     public String pushFile(String localFileName) throws CommandFailedException {
         String isolatedFileName = new File(localFileName).getName();
@@ -46,11 +47,13 @@ public class FileTransferService {
 
     /**
      * Download a file from the temporary files of the device.
-     * 
+     *
      * @param remoteFileName
      *        - the name of the file to download
      * @param localFileName
      *        - the local path to the destination file
+     * @throws CommandFailedException
+     *         thrown when pulling file failed
      */
     public void pullFile(String remoteFileName, String localFileName) throws CommandFailedException {
         String remoteFileNameWithPath = FileTransferConstants.DEVICE_TMP_PATH + remoteFileName;

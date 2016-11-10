@@ -10,9 +10,9 @@ import com.android.ddmlib.TimeoutException;
 
 /**
  * A class used for pulling files from the device in background.
- * 
+ *
  * @author yavor.stankov
- * 
+ *
  */
 public class BackgroundPullFileTask implements Callable<Boolean> {
     private String remoteFilePath;
@@ -23,9 +23,7 @@ public class BackgroundPullFileTask implements Callable<Boolean> {
 
     /**
      * Creates new background task for pulling remote files from the device.
-     * 
-     * @param command
-     *        - shell command to be executed.
+     *
      * @param wrappedDevice
      *        - device wrapper that will be used for the execution
      * @param remoteFilePath

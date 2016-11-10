@@ -6,6 +6,7 @@ import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
+import java.rmi.server.UnicastRemoteObject;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -180,6 +181,7 @@ public class DeviceManager {
      *
      * @return List of the DeviceInformation objects, one for every available device on the current Agent.
      * @throws RemoteException
+     *         thrown when an RMI failed
      */
     public List<String> getAllDeviceRmiIdentifiers() throws RemoteException {
         List<String> wrappersList = new LinkedList<>();
@@ -370,6 +372,7 @@ public class DeviceManager {
      *        serial numver of the device we want to get unique identifier for.
      * @return unique identifier for the device.
      * @throws DeviceNotFoundException
+     *         thrown when the device is not found
      */
     public String getRmiWrapperBindingIdentifier(String deviceSerialNumber) throws DeviceNotFoundException {
         IDevice device = getDeviceBySerialNumber(deviceSerialNumber);
@@ -432,6 +435,7 @@ public class DeviceManager {
      * @param timeout
      *        - the timeout in milliseconds.
      * @throws TimeoutReachedException
+     *         - thrown when the device is not found after the given timeout
      */
     public void waitForDeviceExists(String serialNumber, long timeout) throws TimeoutReachedException {
         while (timeout > 0) {
@@ -466,7 +470,9 @@ public class DeviceManager {
      *
      * @return the first available device wrapper ({@link IWrapDevice} interface).
      * @throws RemoteException
+     *         - required when implementing {@link UnicastRemoteObject}
      * @throws NotBoundException
+     *         - thrown if an attempt is made to lookup or unbind in the registry a name that has no associated binding.
      */
     public IWrapDevice getFirstAvailableDeviceWrapper() throws RemoteException, NotBoundException {
         List<String> wrapperIdentifiers = getAllDeviceRmiIdentifiers();
@@ -483,7 +489,9 @@ public class DeviceManager {
      *
      * @return the first available emulator wrapper ({@link IWrapDevice} interface).
      * @throws RemoteException
+     *         - required when implementing {@link UnicastRemoteObject}
      * @throws NotBoundException
+     *         - thrown if an attempt is made to lookup or unbind in the registry a name that has no associated binding.
      */
     public IWrapDevice getFirstAvailableEmulatorDeviceWrapper() throws RemoteException, NotBoundException {
         // TODO: Move to EmulatorManager.

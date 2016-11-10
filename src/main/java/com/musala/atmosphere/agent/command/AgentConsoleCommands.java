@@ -6,9 +6,9 @@ import java.util.List;
 
 /**
  * Enumerates all possible first arguments of shell commands, available for Agent.
- * 
+ *
  * @author nikola.taushanov
- * 
+ *
  */
 public enum AgentConsoleCommands {
 
@@ -41,8 +41,8 @@ public enum AgentConsoleCommands {
 
     /**
      * Gets the command of given AgentConsoleCommand element.
-     * 
-     * @return
+     *
+     * @return - a command
      */
     public String getCommand() {
         return command;
@@ -50,7 +50,7 @@ public enum AgentConsoleCommands {
 
     /**
      * Gets the description of given AgentConsoleCommand.
-     * 
+     *
      * @return - description of the given AgentConsoleCommand.
      */
     public String getDescription() {
@@ -59,7 +59,7 @@ public enum AgentConsoleCommands {
 
     /**
      * Gets the format for a command of given type.
-     * 
+     *
      * @return - string, representing the way a command with its parameters should be written.
      */
     public String getSyntax() {
@@ -67,7 +67,7 @@ public enum AgentConsoleCommands {
     }
 
     /**
-     * 
+     *
      * @return - a list with all acceptable values for the number of parameters for the corresponding command.
      */
     public List<Integer> getPossibleNumberOfParameters() {
@@ -79,10 +79,11 @@ public enum AgentConsoleCommands {
      * command there is a String which is in the following format: "<b>Command format</b> - <b>Command Description</b>"
      * where <b>"Command format"</b> is pattern how to write the given command and what arguments it can be passed,
      * while the <b>"Command description"</b> says what the command does.
-     * 
+     *
+     * @return - list with all the commands that can be passed to the console to manage the Agent
      */
     public static List<String> getListOfCommandDescriptions() {
-        List<String> allCommandsFullInformation = new ArrayList<String>();
+        List<String> allCommandsFullInformation = new ArrayList<>();
         for (AgentConsoleCommands currentCommand : AgentConsoleCommands.values()) {
             String description = currentCommand.getDescription();
             String syntax = currentCommand.getSyntax();
@@ -94,8 +95,9 @@ public enum AgentConsoleCommands {
 
     /**
      * Searches for command by given command name. Returns null if no corresponding command is found.
-     * 
+     *
      * @param commandName
+     *        - the name of the command
      * @return an {@link AgentConsoleCommands AgentConsoleCommands} instance.
      */
     public static AgentConsoleCommands findCommand(String commandName) {

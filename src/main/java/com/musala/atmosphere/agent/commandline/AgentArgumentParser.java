@@ -9,14 +9,14 @@ import com.musala.atmosphere.commons.exceptions.ArgumentParseException;
 
 /**
  * Parses the different Agent command line arguments.
- * 
+ *
  * @author yordan.petrov
- * 
+ *
  */
 public class AgentArgumentParser implements IArgumentParser {
     /**
      * Parses and returns a {@link InetAddress} instance from the given string representation of a host name.
-     * 
+     *
      * @param hostname
      *        - the given string representation of a host name
      * @return a parsed {@link InetAddress} instance from the given string representation of a host name.
@@ -37,8 +37,8 @@ public class AgentArgumentParser implements IArgumentParser {
 
     /**
      * Parses and returns a {@link Integer} instance from the given string representation of a port number.
-     * 
-     * @param portname
+     *
+     * @param port
      *        - the given string representation of a port number
      * @return a parsed {@link Integer} instance from the given string representation of a port number
      * @throws ArgumentParseException

@@ -3,6 +3,7 @@ package com.musala.atmosphere.agent;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.rmi.RemoteException;
+import java.rmi.server.UnicastRemoteObject;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
@@ -29,9 +30,9 @@ import com.musala.atmosphere.commons.util.Pair;
 
 /**
  * Class that instantiates the Agent ATMOSPHERE component.
- * 
+ *
  * @author vladimir.vladimirov, nikola.taushanov
- * 
+ *
  */
 public class Agent {
     private static final Logger LOGGER = Logger.getLogger(Agent.class.getCanonicalName());
@@ -69,7 +70,7 @@ public class Agent {
 
     /**
      * Creates an Agent component bound on the given port.
-     * 
+     *
      * @param agentRmiPort
      *        - RMI port number, on which agent is to be created.
      */
@@ -106,7 +107,7 @@ public class Agent {
     }
 
     /**
-     * 
+     *
      * @return - the moment in time, rounded to nanosecond, when the Agent was initialized.
      */
     public Date getStartDate() {
@@ -114,7 +115,7 @@ public class Agent {
     }
 
     /**
-     * 
+     *
      * @return - the number of the port under which the agent is registered in RMI.
      */
     public int getAgentRmiPort() {
@@ -123,7 +124,7 @@ public class Agent {
 
     /**
      * Executes a passed shell command from the console.
-     * 
+     *
      * @param passedShellCommand
      *        - the passed shell command.
      * @throws IllegalArgumentException
@@ -153,7 +154,7 @@ public class Agent {
 
     /**
      * Sets the current Agent state.
-     * 
+     *
      * @param state
      *        - the new {@link AgentState AgentState}.
      */
@@ -163,7 +164,7 @@ public class Agent {
 
     /**
      * Reads a command from the agent's console.
-     * 
+     *
      * @return
      */
     private String readCommand() {
@@ -191,8 +192,7 @@ public class Agent {
     }
 
     /**
-     * 
-     * @return
+     * @return <code>true</code> when the Agent is running, otherwise returns <code>false</code>
      */
     public boolean isRunning() {
         return isRunning;
@@ -200,14 +200,14 @@ public class Agent {
 
     /**
      * Connects this Agent to a Server.
-     * 
-     * @param ipAddress
+     *
+     * @param ip
      *        server's IP address.
      * @param port
      *        server's RMI port.
      */
     public void connectToServer(String ip, int port) {
-        List<String> params = new LinkedList<String>();
+        List<String> params = new LinkedList<>();
         params.add(ip);
         params.add(String.valueOf(port));
         AgentCommand connectCommand = new AgentCommand(AgentConsoleCommands.AGENT_CONNECT, params);
@@ -216,9 +216,10 @@ public class Agent {
 
     /**
      * Gets the unique identifier of the current Agent.
-     * 
+     *
      * @return Unique identifier for the current Agent.
      * @throws RemoteException
+     *         - required when implementing {@link UnicastRemoteObject}
      */
     public String getId() throws RemoteException {
         return agentManager.getAgentId();
@@ -228,9 +229,11 @@ public class Agent {
      * Starts an Agent. Either no parameters or one that specifies on which port the Agent will be started can be
      * passed. If the passed argument could not be parsed as integer an exception is thrown. If no parameters or more
      * than one parameter was passed, the Agent will be created on the port specified in the properties file.
-     * 
+     *
      * @param args
+     *        an arguments for the main method
      * @throws IOException
+     *         thrown when an I/O exception of some sort has occurred.
      */
     public static void main(String[] args) throws IOException {
         AgentCommandLine commandLine = new AgentCommandLine();

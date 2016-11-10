@@ -41,6 +41,7 @@ public abstract class AgentState {
      * Executes the passed {@link AgentCommand command} and changes
      *
      * @param commandForExecution
+     *        it should be an {@link AgentConsoleCommands#AGENT_EXIT exit } command.
      */
     public void executeCommand(AgentCommand commandForExecution) {
         if (commandForExecution != null) {
@@ -80,6 +81,7 @@ public abstract class AgentState {
      * Prints information about all available commands that can be executed on the agent, through the agent console.
      *
      * @param commandForExecution
+     *        it should be an {@link AgentConsoleCommands#AGENT_EXIT exit } command.
      */
     public void executeHelpCommand(AgentCommand commandForExecution) {
         try {
@@ -99,6 +101,7 @@ public abstract class AgentState {
      * Prints the time for which the {@link Agent agent} has been running.
      *
      * @param commandForExecution
+     *        it should be an {@link AgentConsoleCommands#AGENT_EXIT exit } command.
      */
     public void executeUptimeCommand(AgentCommand commandForExecution) {
         try {
@@ -159,6 +162,7 @@ public abstract class AgentState {
      * of attached devices and their device wrapper identifiers.
      *
      * @param commandForExecution
+     *        it should be an {@link AgentConsoleCommands#AGENT_EXIT exit } command.
      */
     public void executeDevicesCommand(AgentCommand commandForExecution) {
         try {

@@ -8,9 +8,9 @@ import com.musala.atmosphere.commons.exceptions.CommandFailedException;
 
 /**
  * Manages IME functionality
- * 
+ *
  * @author denis.bialev
- * 
+ *
  */
 public class ImeManager {
 
@@ -24,9 +24,12 @@ public class ImeManager {
 
     /**
      * Sets the keyboard with the given ID as the default input method on the device.
-     * 
+     *
+     * @param imeID
+     *        - the input method ID
      * @return true if setting it was successful; false if not.
      * @throws CommandFailedException
+     *         In case of an error in the execution
      */
     public boolean setDefaultKeyboard(String imeID) throws CommandFailedException {
 
@@ -45,9 +48,10 @@ public class ImeManager {
 
     /**
      * Sets the Atmosphere IME as the default input method on the device.
-     * 
+     *
      * @return true if setting it was successful; false if not.
      * @throws CommandFailedException
+     *         In case of an error in the execution
      */
     public boolean setAtmosphereImeAsDefault() throws CommandFailedException {
         return setDefaultKeyboard(OnDeviceComponent.IME.getImeId());

@@ -27,7 +27,6 @@ import com.musala.atmosphere.commons.sa.IConnectionRequestReceiver;
 import com.musala.atmosphere.commons.sa.IWrapDevice;
 import com.musala.atmosphere.commons.sa.RmiStringConstants;
 import com.musala.atmosphere.commons.sa.SystemSpecification;
-import com.musala.atmosphere.commons.sa.exceptions.ADBridgeFailException;
 import com.musala.atmosphere.commons.sa.exceptions.DeviceBootTimeoutReachedException;
 import com.musala.atmosphere.commons.sa.exceptions.DeviceNotFoundException;
 import com.musala.atmosphere.commons.sa.exceptions.NotPossibleForDeviceException;
@@ -35,9 +34,9 @@ import com.musala.atmosphere.commons.sa.exceptions.TimeoutReachedException;
 
 /**
  * Used for managing all devices on the current Agent.
- * 
+ *
  * @author georgi.gaydarov
- * 
+ *
  */
 public class AgentManager extends UnicastRemoteObject implements IAgentManager {
     /**
@@ -67,13 +66,13 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager {
 
     /**
      * Creates a new AgentManager on this computer.
-     * 
-     * @param adbPath
-     *        Path to adb.exe
+     *
      * @param rmiPort
      *        Port, which will be used for the RMI Registry
+     * @param fileRecycler
+     *        {@link FileRecycler FileRecycler} object
      * @throws RemoteException
-     * @throws ADBridgeFailException
+     *         - required when implementing {@link UnicastRemoteObject}
      */
     public AgentManager(int rmiPort, FileRecycler fileRecycler) throws RemoteException {
         systemSpecificationLoader = new SystemSpecificationLoader();
@@ -199,15 +198,19 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager {
 
     /**
      * Connects this Agent to a Server.
-     * 
+     *
      * @param ipAddress
      *        server's IP address.
      * @param port
      *        server's RMI port.
      * @throws NotBoundException
+     *         - thrown if an attempt is made to lookup or unbind in the registry a name that has no associated binding.
      * @throws RemoteException
+     *         - required when implementing {@link UnicastRemoteObject}
      * @throws AccessException
+     *         thrown when accessing the server's method fails
      * @throws IllegalPortException
+     *         thrown when the given port is not valid
      */
     public void connectToServer(String ipAddress, int port)
         throws AccessException,

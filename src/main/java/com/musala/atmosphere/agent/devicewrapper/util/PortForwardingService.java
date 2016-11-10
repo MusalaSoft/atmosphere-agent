@@ -12,9 +12,9 @@ import com.musala.atmosphere.agent.util.PortAllocator;
 /**
  * Class that handles device port forwarding. Used to forward a local port (issued to a device) to a remote (on-device)
  * port so one local port can be reused to create socket connection to several on-device applications.
- * 
+ *
  * @author georgi.gaydarov
- * 
+ *
  */
 public class PortForwardingService {
     private final IDevice device;
@@ -28,9 +28,11 @@ public class PortForwardingService {
     /**
      * Creates a port forwarding service for the passed device and allocates a local port that will be used for
      * forwarding.
-     * 
+     *
      * @param device
      *        - device for which to create a port forwarding service.
+     * @param remotePort
+     *        - the remote port
      */
     public PortForwardingService(IDevice device, int remotePort) {
         PortAllocator portAllocator = new PortAllocator();
@@ -43,8 +45,9 @@ public class PortForwardingService {
 
     /**
      * Forwards the allocated local port to the remote port on the wrapped device.
-     * 
+     *
      * @throws ForwardingPortFailedException
+     *         Thrown when the forwarding of port to an ATMOSPHERE on-device application fails.
      */
     public void forwardPort() throws ForwardingPortFailedException {
         if (isForwarded) {
@@ -62,8 +65,9 @@ public class PortForwardingService {
 
     /**
      * Removes the port forwarding.
-     * 
+     *
      * @throws PortForwardingRemovalException
+     *         Thrown when the port forwarded to the ATMOSPHERE service port can not be freed.
      */
     public void removeForward() throws PortForwardingRemovalException {
         if (!isForwarded) {

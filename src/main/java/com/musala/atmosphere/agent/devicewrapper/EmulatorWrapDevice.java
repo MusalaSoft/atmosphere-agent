@@ -58,6 +58,10 @@ public class EmulatorWrapDevice extends AbstractWrapDevice {
      *        - a communicator to the UI automator component on the device
      * @param fileRecycler
      *        - responsible for removing obsolete files
+     * @param chromeDriverService
+     *        - the service component of the ChromeDriver
+     * @throws NotPossibleForDeviceException
+     *         - thrown when cannot create emulator wrap device.
      * @throws RemoteException
      *         required when implementing {@link UnicastRemoteObject}
      */
@@ -67,7 +71,9 @@ public class EmulatorWrapDevice extends AbstractWrapDevice {
             ServiceCommunicator serviceCommunicator,
             UIAutomatorCommunicator automatorCommunicator,
             ChromeDriverService chromeDriverService,
-            FileRecycler fileRecycler) throws NotPossibleForDeviceException, RemoteException {
+            FileRecycler fileRecycler)
+        throws NotPossibleForDeviceException,
+            RemoteException {
         super(deviceToWrap,
               executor,
               shellCommandExecutor,
@@ -89,7 +95,7 @@ public class EmulatorWrapDevice extends AbstractWrapDevice {
 
             ExtendedEmulatorConsole emulatorConsole = prepareEmulatorConsole();
 
-            if(deviceToWrap.getVersion().getApiLevel() <= SET_MAGNETIC_FIELD_MAXIMUM_API_LEVEL_SUPPORT){
+            if (deviceToWrap.getVersion().getApiLevel() <= SET_MAGNETIC_FIELD_MAXIMUM_API_LEVEL_SUPPORT) {
                 emulatorConsole.setMagneticField(new DeviceMagneticField(50.0f, 50.0f, 50.0f));
             }
         } catch (CommandFailedException e) {

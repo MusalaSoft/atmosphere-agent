@@ -2,10 +2,8 @@ package com.musala.atmosphere.agent.devicewrapper.util;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -72,7 +70,7 @@ public class ExtendedEmulatorConsole {
      * Hash map that maps emulator console ports to ExtendedEmulatorConsole instances. Used for the singleton pattern.
      * (one ExtendedEmulatorConsole for a port)
      */
-    private final static HashMap<Integer, ExtendedEmulatorConsole> emulatorConsoles = new HashMap<Integer, ExtendedEmulatorConsole>();
+    private final static HashMap<Integer, ExtendedEmulatorConsole> emulatorConsoles = new HashMap<>();
 
     /**
      * Returns the {@link ExtendedEmulatorConsole ExtendedEmulatorConsole} instance (or creates one and then returns it)
@@ -82,6 +80,7 @@ public class ExtendedEmulatorConsole {
      *        The device that we want to send commands to.
      * @return {@link ExtendedEmulatorConsole} for the passed IDevice.
      * @throws EmulatorConnectionFailedException
+     *         thrown when the connection to an emulator's console has failed for some reason.
      * @throws NotPossibleForDeviceException
      *         If the given device is not emulator
      */
@@ -130,6 +129,7 @@ public class ExtendedEmulatorConsole {
      * @param emulatorSerialNumber
      *        The serial number of the emulator a new console is created for
      * @throws EmulatorConnectionFailedException
+     *         Thrown when the connection to an emulator's console has failed for some reason.
      */
     private ExtendedEmulatorConsole(int port, String emulatorSerialNumber) throws EmulatorConnectionFailedException {
         this.port = port;
@@ -158,7 +158,7 @@ public class ExtendedEmulatorConsole {
 
         if (!authenticate()) {
             throw new EmulatorConnectionFailedException("Could not authenticate correctly with the emulator."
-                                                        + " Is the emulator system image updated to the latest version via SDK Manager?");
+                    + " Is the emulator system image updated to the latest version via SDK Manager?");
         }
 
         // And finally, if everything is OK, put this instance in the singleton map
@@ -189,7 +189,8 @@ public class ExtendedEmulatorConsole {
     }
 
     /**
-     * Sends an authentication command to the emulator. Usually, this should only be done when a new connection to the emulator is established.
+     * Sends an authentication command to the emulator. Usually, this should only be done when a new connection to the
+     * emulator is established.
      *
      * @return <code>true</code> if the authentication was successful, <code>false</code> otherwise.
      */
@@ -207,7 +208,10 @@ public class ExtendedEmulatorConsole {
             return true;
         } finally {
             if (br != null) {
-                try { br.close(); } catch (IOException e) {}
+                try {
+                    br.close();
+                } catch (IOException e) {
+                }
             }
         }
 
@@ -261,7 +265,9 @@ public class ExtendedEmulatorConsole {
      * Sets the network up/down speed of the emulator.
      *
      * @param uploadSpeed
+     *        - the speed of u
      * @param downloadSpeed
+     *        - the speed of download
      * @throws CommandFailedException
      *         In case of an error in the execution
      */
@@ -276,6 +282,7 @@ public class ExtendedEmulatorConsole {
      *
      * @return the response from the emulator console.
      * @throws EmulatorConnectionFailedException
+     *         Thrown when the connection to an emulator's console has failed for some reason.
      */
     public synchronized String getMobileDataState() throws EmulatorConnectionFailedException {
         String command = COMMAND_GSM_STATUS;
@@ -471,6 +478,7 @@ public class ExtendedEmulatorConsole {
      *        The command string.
      * @return true if OK was found, false if KO was found.
      * @throws EmulatorConnectionFailedException
+     *         Thrown when the connection to an emulator's console has failed for some reason.
      */
     protected synchronized boolean executeCommand(String command) throws EmulatorConnectionFailedException {
         // if the command does not end with a newline, this call will block.
@@ -489,6 +497,7 @@ public class ExtendedEmulatorConsole {
      *        - the command to be executed.
      * @return - the command output.
      * @throws EmulatorConnectionFailedException
+     *         Thrown when the connection to an emulator's console has failed for some reason.
      */
     protected synchronized String executeCommandWithResponse(String command) throws EmulatorConnectionFailedException {
         executeCommand(command);
@@ -502,6 +511,7 @@ public class ExtendedEmulatorConsole {
      * @param command
      *        The command string. <b>MUST BE TERMINATED BY \n</b>.
      * @throws EmulatorConnectionFailedException
+     *         Thrown when the connection to an emulator's console has failed for some reason.
      */
     private void sendCommand(String command) throws EmulatorConnectionFailedException {
         try {
@@ -553,6 +563,7 @@ public class ExtendedEmulatorConsole {
      *
      * @return true if we found OK, false if we found KO.
      * @throws EmulatorConnectionFailedException
+     *         Thrown when the connection to an emulator's console has failed for some reason.
      */
     private boolean responseIsFine() throws EmulatorConnectionFailedException {
         try {

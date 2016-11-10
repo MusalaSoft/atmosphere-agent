@@ -30,9 +30,8 @@ public class ServiceCommunicator extends DeviceCommunicator<ServiceRequest> {
     /**
      * Creates a {@link ServiceCommunicator service communicator} instance that communicate with an on-device component.
      *
-     * @param portForwarder
-     *        - a port forwarding service, that will be used to forward a local port to the remote port of the on-device
-     *        component
+     * @param requestSender
+     *        - a request sender
      * @param commandExecutor
      *        - a shell command executor or the device
      * @param serialNumber
@@ -49,9 +48,10 @@ public class ServiceCommunicator extends DeviceCommunicator<ServiceRequest> {
      *
      * @return a {@link PowerProperties} data container instance.
      * @throws CommandFailedException
+     *         if getting the power properties fails
      */
     public PowerProperties getPowerProperties() throws CommandFailedException {
-        Request<ServiceRequest> serviceRequest = new Request<ServiceRequest>(ServiceRequest.GET_POWER_PROPERTIES);
+        Request<ServiceRequest> serviceRequest = new Request<>(ServiceRequest.GET_POWER_PROPERTIES);
 
         try {
             PowerProperties properties = (PowerProperties) requestSender.request(serviceRequest);
@@ -67,9 +67,10 @@ public class ServiceCommunicator extends DeviceCommunicator<ServiceRequest> {
      *
      * @return a {@link DeviceOrientation} instance.
      * @throws CommandFailedException
+     *         if getting the device orientation fails
      */
     public DeviceOrientation getDeviceOrientation() throws CommandFailedException {
-        Request<ServiceRequest> request = new Request<ServiceRequest>(ServiceRequest.GET_ORIENTATION_READINGS);
+        Request<ServiceRequest> request = new Request<>(ServiceRequest.GET_ORIENTATION_READINGS);
 
         try {
             float[] response = (float[]) requestSender.request(request);
@@ -92,9 +93,10 @@ public class ServiceCommunicator extends DeviceCommunicator<ServiceRequest> {
      *
      * @return a member of the {@link BatteryState BatteryState} enumeration.
      * @throws CommandFailedException
+     *         if getting the battery state fails
      */
     public BatteryState getBatteryState() throws CommandFailedException {
-        Request<ServiceRequest> serviceRequest = new Request<ServiceRequest>(ServiceRequest.GET_POWER_PROPERTIES);
+        Request<ServiceRequest> serviceRequest = new Request<>(ServiceRequest.GET_POWER_PROPERTIES);
 
         try {
             Integer serviceResponse = (Integer) requestSender.request(serviceRequest);
@@ -117,7 +119,7 @@ public class ServiceCommunicator extends DeviceCommunicator<ServiceRequest> {
      *         if getting the total ram fails
      */
     public int getTatalRamMemory() throws CommandFailedException {
-        Request<ServiceRequest> serviceRequest = new Request<ServiceRequest>(ServiceRequest.GET_TOTAL_RAM);
+        Request<ServiceRequest> serviceRequest = new Request<>(ServiceRequest.GET_TOTAL_RAM);
 
         try {
             int serviceResponse = (int) requestSender.request(serviceRequest);
@@ -132,9 +134,10 @@ public class ServiceCommunicator extends DeviceCommunicator<ServiceRequest> {
      *
      * @return a member of the {@link ConnectionType} enumeration.
      * @throws CommandFailedException
+     *         if getting the connection type fails
      */
     public ConnectionType getConnectionType() throws CommandFailedException {
-        Request<ServiceRequest> serviceRequest = new Request<ServiceRequest>(ServiceRequest.GET_CONNECTION_TYPE);
+        Request<ServiceRequest> serviceRequest = new Request<>(ServiceRequest.GET_CONNECTION_TYPE);
 
         try {
             Integer serviceResponse = (Integer) requestSender.request(serviceRequest);
@@ -151,9 +154,11 @@ public class ServiceCommunicator extends DeviceCommunicator<ServiceRequest> {
      * @param state
      *        - true if the WiFi should be on; false if it should be off.
      * @throws CommandFailedException
+     *         if setting the WiFi fails
+     *
      */
     public void setWiFi(boolean state) throws CommandFailedException {
-        Request<ServiceRequest> serviceRequest = new Request<ServiceRequest>(ServiceRequest.SET_WIFI);
+        Request<ServiceRequest> serviceRequest = new Request<>(ServiceRequest.SET_WIFI);
         Boolean[] arguments = new Boolean[] {state};
         serviceRequest.setArguments(arguments);
 
@@ -172,7 +177,7 @@ public class ServiceCommunicator extends DeviceCommunicator<ServiceRequest> {
      *
      */
     public void openLocationSettings() throws CommandFailedException {
-        Request<ServiceRequest> serviceRequest = new Request<ServiceRequest>(ServiceRequest.OPEN_LOCATION_SETTINGS);
+        Request<ServiceRequest> serviceRequest = new Request<>(ServiceRequest.OPEN_LOCATION_SETTINGS);
 
         try {
             requestSender.request(serviceRequest);
@@ -190,7 +195,7 @@ public class ServiceCommunicator extends DeviceCommunicator<ServiceRequest> {
      *         if failed to get the GPS location state of the device
      */
     public boolean isGpsLocationEnabled() throws CommandFailedException {
-        Request<ServiceRequest> serviceRequest = new Request<ServiceRequest>(ServiceRequest.IS_GPS_LOCATION_ENABLED);
+        Request<ServiceRequest> serviceRequest = new Request<>(ServiceRequest.IS_GPS_LOCATION_ENABLED);
 
         try {
             return (boolean) requestSender.request(serviceRequest);
@@ -208,7 +213,7 @@ public class ServiceCommunicator extends DeviceCommunicator<ServiceRequest> {
      *         - if the execution of the command failed
      */
     public DeviceAcceleration getAcceleration() throws CommandFailedException {
-        Request<ServiceRequest> serviceRequest = new Request<ServiceRequest>(ServiceRequest.GET_ACCELERATION_READINGS);
+        Request<ServiceRequest> serviceRequest = new Request<>(ServiceRequest.GET_ACCELERATION_READINGS);
         try {
             Float[] acceeleration = (Float[]) requestSender.request(serviceRequest);
             DeviceAcceleration deviceAcceleration = new DeviceAcceleration(acceeleration[0],
@@ -226,9 +231,10 @@ public class ServiceCommunicator extends DeviceCommunicator<ServiceRequest> {
      *
      * @return a float representing the proximity of the device
      * @throws CommandFailedException
+     *         if getting the proximity fails
      */
     public float getProximity() throws CommandFailedException {
-        Request<ServiceRequest> serviceRequest = new Request<ServiceRequest>(ServiceRequest.GET_PROXIMITY_READINGS);
+        Request<ServiceRequest> serviceRequest = new Request<>(ServiceRequest.GET_PROXIMITY_READINGS);
         try {
             float proximity = (float) requestSender.request(serviceRequest);
 
@@ -244,9 +250,10 @@ public class ServiceCommunicator extends DeviceCommunicator<ServiceRequest> {
      *
      * @return {@link TelephonyInformation} instance.
      * @throws CommandFailedException
+     *         if getting the telephony information fails
      */
     public TelephonyInformation getTelephonyInformation() throws CommandFailedException {
-        Request<ServiceRequest> serviceRequest = new Request<ServiceRequest>(ServiceRequest.GET_TELEPHONY_INFORMATION);
+        Request<ServiceRequest> serviceRequest = new Request<>(ServiceRequest.GET_TELEPHONY_INFORMATION);
         try {
             TelephonyInformation telephonyInformation = (TelephonyInformation) requestSender.request(serviceRequest);
             return telephonyInformation;
@@ -258,11 +265,14 @@ public class ServiceCommunicator extends DeviceCommunicator<ServiceRequest> {
     /**
      * Starts an application on the device.
      *
+     * @param args
+     *        start application arguments
      * @return <code>true</code> if the application launch is successful and <code>false</code> otherwise
      * @throws CommandFailedException
+     *         thrown when starting an application fails
      */
     public boolean startApplication(Object[] args) throws CommandFailedException {
-        Request<ServiceRequest> startAppRequest = new Request<ServiceRequest>(ServiceRequest.START_APP);
+        Request<ServiceRequest> startAppRequest = new Request<>(ServiceRequest.START_APP);
         startAppRequest.setArguments(args);
 
         try {
@@ -282,7 +292,7 @@ public class ServiceCommunicator extends DeviceCommunicator<ServiceRequest> {
      *         thrown when the mock fails, e.g. when communication with the service fails
      */
     public boolean mockLocation(Object[] args) throws CommandFailedException {
-        Request<ServiceRequest> mockLocationRequest = new Request<ServiceRequest>(ServiceRequest.MOCK_LOCATION);
+        Request<ServiceRequest> mockLocationRequest = new Request<>(ServiceRequest.MOCK_LOCATION);
         mockLocationRequest.setArguments(args);
 
         try {
@@ -301,7 +311,7 @@ public class ServiceCommunicator extends DeviceCommunicator<ServiceRequest> {
      *         thrown when disabling the mock provider fails, e.g. communication with the service fails
      */
     public void disableMockLocation(Object[] args) throws CommandFailedException {
-        Request<ServiceRequest> disableMockLocationRequest = new Request<ServiceRequest>(ServiceRequest.DISABLE_MOCK_LOCATION);
+        Request<ServiceRequest> disableMockLocationRequest = new Request<>(ServiceRequest.DISABLE_MOCK_LOCATION);
         disableMockLocationRequest.setArguments(args);
 
         try {
@@ -316,9 +326,10 @@ public class ServiceCommunicator extends DeviceCommunicator<ServiceRequest> {
      *
      * @return - <code>true</code> if the device is awake and <code>false</code> otherwise
      * @throws CommandFailedException
+     *         thrown when getting the awake status fails, e.g. communication with the service fails
      */
     public boolean getAwakeStatus() throws CommandFailedException {
-        Request<ServiceRequest> getAwakeStatusRequest = new Request<ServiceRequest>(ServiceRequest.GET_AWAKE_STATUS);
+        Request<ServiceRequest> getAwakeStatusRequest = new Request<>(ServiceRequest.GET_AWAKE_STATUS);
 
         try {
             return (boolean) requestSender.request(getAwakeStatusRequest);
@@ -332,9 +343,10 @@ public class ServiceCommunicator extends DeviceCommunicator<ServiceRequest> {
      *
      * @return true if the device has a camera, else false
      * @throws CommandFailedException
+     *         thrown when getting the camera availability fails, e.g. communication with the service fails
      */
     public boolean getCameraAvailability() throws CommandFailedException {
-        Request<ServiceRequest> getCameraAvailabilityRequest = new Request<ServiceRequest>(ServiceRequest.GET_CAMERA_AVAILABILITY);
+        Request<ServiceRequest> getCameraAvailabilityRequest = new Request<>(ServiceRequest.GET_CAMERA_AVAILABILITY);
 
         try {
             return (boolean) requestSender.request(getCameraAvailabilityRequest);
@@ -350,10 +362,11 @@ public class ServiceCommunicator extends DeviceCommunicator<ServiceRequest> {
      *        -contains the packageName
      * @return true if there are such processes and false otherwise
      * @throws CommandFailedException
+     *         thrown when getting the running process fails, e.g. communication with the service fails
      */
 
     public boolean getProcessRunning(Object args[]) throws CommandFailedException {
-        Request<ServiceRequest> getProcessRunningRequest = new Request<ServiceRequest>(ServiceRequest.GET_PROCESS_RUNNING);
+        Request<ServiceRequest> getProcessRunningRequest = new Request<>(ServiceRequest.GET_PROCESS_RUNNING);
         getProcessRunningRequest.setArguments(args);
 
         try {
@@ -372,7 +385,7 @@ public class ServiceCommunicator extends DeviceCommunicator<ServiceRequest> {
      *         if setting the keyguard status failed
      */
     public void setKeyguard(Object args[]) throws CommandFailedException {
-        Request<ServiceRequest> setKeyguardRequest = new Request<ServiceRequest>(ServiceRequest.SET_KEYGUARD);
+        Request<ServiceRequest> setKeyguardRequest = new Request<>(ServiceRequest.SET_KEYGUARD);
         setKeyguardRequest.setArguments(args);
 
         try {
@@ -386,10 +399,11 @@ public class ServiceCommunicator extends DeviceCommunicator<ServiceRequest> {
      * Used to check the lock state of the device.
      *
      * @throws CommandFailedException
-     *         if checking for the lock state fails.
+     *         thrown when the request fails
+     * @return boolean, the lock state of the device
      */
     public boolean isLocked() throws CommandFailedException {
-        Request<ServiceRequest> isLocked = new Request<ServiceRequest>(ServiceRequest.IS_LOCKED);
+        Request<ServiceRequest> isLocked = new Request<>(ServiceRequest.IS_LOCKED);
 
         try {
             return (boolean) requestSender.request(isLocked);
@@ -409,7 +423,7 @@ public class ServiceCommunicator extends DeviceCommunicator<ServiceRequest> {
      *         if bringing the task to the front fails.
      */
     public boolean bringTaskToFront(Object args[]) throws CommandFailedException {
-        Request<ServiceRequest> bringTaskToFrontRequest = new Request<ServiceRequest>(ServiceRequest.BRING_TASK_TO_FRONT);
+        Request<ServiceRequest> bringTaskToFrontRequest = new Request<>(ServiceRequest.BRING_TASK_TO_FRONT);
         bringTaskToFrontRequest.setArguments(args);
 
         try {
@@ -429,7 +443,7 @@ public class ServiceCommunicator extends DeviceCommunicator<ServiceRequest> {
      *         if getting the running tasks id fails.
      */
     public int[] getRunningTaskIds(Object args[]) throws CommandFailedException {
-        Request<ServiceRequest> getRunningTasksRequest = new Request<ServiceRequest>(ServiceRequest.GET_RUNNING_TASK_IDS);
+        Request<ServiceRequest> getRunningTasksRequest = new Request<>(ServiceRequest.GET_RUNNING_TASK_IDS);
         getRunningTasksRequest.setArguments(args);
 
         try {
@@ -450,7 +464,7 @@ public class ServiceCommunicator extends DeviceCommunicator<ServiceRequest> {
      *         if waiting for the task update fails.
      */
     public boolean waitForTasksUpdate(Object args[]) throws CommandFailedException {
-        Request<ServiceRequest> waitForTasksUpdateRequest = new Request<ServiceRequest>(ServiceRequest.WAIT_FOR_TASKS_UPDATE);
+        Request<ServiceRequest> waitForTasksUpdateRequest = new Request<>(ServiceRequest.WAIT_FOR_TASKS_UPDATE);
         waitForTasksUpdateRequest.setArguments(args);
 
         try {
@@ -468,7 +482,7 @@ public class ServiceCommunicator extends DeviceCommunicator<ServiceRequest> {
      *         if checking for audio playing fails
      */
     public boolean isAudioPlaying() throws CommandFailedException {
-        Request<ServiceRequest> isAudioPlayingRequest = new Request<ServiceRequest>(ServiceRequest.IS_AUDIO_PLAYING);
+        Request<ServiceRequest> isAudioPlayingRequest = new Request<>(ServiceRequest.IS_AUDIO_PLAYING);
 
         try {
             return (boolean) requestSender.request(isAudioPlayingRequest);
@@ -482,10 +496,11 @@ public class ServiceCommunicator extends DeviceCommunicator<ServiceRequest> {
      *
      * @param args
      *        - args[0] should contain the AtmosphereIntent object for the broadcast
-     *
+     * @throws CommandFailedException
+     *         if sending the broadcast fails
      */
     public void sendBroadcast(Object args[]) throws CommandFailedException {
-        Request<ServiceRequest> sendBroadcastRequest = new Request<ServiceRequest>(ServiceRequest.SEND_BROADCAST);
+        Request<ServiceRequest> sendBroadcastRequest = new Request<>(ServiceRequest.SEND_BROADCAST);
         sendBroadcastRequest.setArguments(args);
 
         try {
@@ -504,7 +519,7 @@ public class ServiceCommunicator extends DeviceCommunicator<ServiceRequest> {
      *         if showing the tap location fails
      */
     public void showTapLocation(Object[] args) throws CommandFailedException {
-        Request<ServiceRequest> showTapLocationRequest = new Request<ServiceRequest>(ServiceRequest.SHOW_TAP_LOCATION);
+        Request<ServiceRequest> showTapLocationRequest = new Request<>(ServiceRequest.SHOW_TAP_LOCATION);
         showTapLocationRequest.setArguments(args);
 
         try {
@@ -523,7 +538,7 @@ public class ServiceCommunicator extends DeviceCommunicator<ServiceRequest> {
      *         if stopping the background processes fails
      */
     public void stopBackgroundProcess(Object[] args) throws CommandFailedException {
-        Request<ServiceRequest> stopBackgroundProcessRequest = new Request<ServiceRequest>(ServiceRequest.STOP_BACKGROUND_PROCESS);
+        Request<ServiceRequest> stopBackgroundProcessRequest = new Request<>(ServiceRequest.STOP_BACKGROUND_PROCESS);
         stopBackgroundProcessRequest.setArguments(args);
 
         try {
@@ -558,7 +573,7 @@ public class ServiceCommunicator extends DeviceCommunicator<ServiceRequest> {
      *         if sending request for retrieving token fails
      */
     public String retrieveToken() throws CommandFailedException {
-        Request<ServiceRequest> receiveTokenRequest = new Request<ServiceRequest>(ServiceRequest.RETRIEVE_TOKEN);
+        Request<ServiceRequest> receiveTokenRequest = new Request<>(ServiceRequest.RETRIEVE_TOKEN);
 
         try {
             return (String) requestSender.request(receiveTokenRequest);
@@ -579,7 +594,7 @@ public class ServiceCommunicator extends DeviceCommunicator<ServiceRequest> {
      * @return <code>true</code> if shaping is successful, <code>false</code> otherwise
      */
     public Boolean shapeDevice(Object[] args) throws CommandFailedException {
-        Request<ServiceRequest> shapeDeviceRequest = new Request<ServiceRequest>(ServiceRequest.SHAPE_DEVICE);
+        Request<ServiceRequest> shapeDeviceRequest = new Request<>(ServiceRequest.SHAPE_DEVICE);
         shapeDeviceRequest.setArguments(args);
 
         try {
@@ -599,7 +614,7 @@ public class ServiceCommunicator extends DeviceCommunicator<ServiceRequest> {
      * @return <code>true</code> if unshaping is successful, <code>false</code> otherwise
      */
     public Boolean unshapeDevice() throws CommandFailedException {
-        Request<ServiceRequest> shapeDeviceRequest = new Request<ServiceRequest>(ServiceRequest.UNSHAPE_DEVICE);
+        Request<ServiceRequest> shapeDeviceRequest = new Request<>(ServiceRequest.UNSHAPE_DEVICE);
 
         try {
             return (Boolean) requestSender.request(shapeDeviceRequest);
@@ -618,7 +633,7 @@ public class ServiceCommunicator extends DeviceCommunicator<ServiceRequest> {
      *         if sending request for getting free space fails
      */
     public Long getAvailableDiskSpace() throws CommandFailedException {
-        Request<ServiceRequest> getFreeSpaceRequest = new Request<ServiceRequest>(ServiceRequest.GET_AVAILABLE_DISK_SPACE);
+        Request<ServiceRequest> getFreeSpaceRequest = new Request<>(ServiceRequest.GET_AVAILABLE_DISK_SPACE);
         try {
             return (Long) requestSender.request(getFreeSpaceRequest);
         } catch (ClassNotFoundException | IOException | CommandFailedException e) {
@@ -636,7 +651,7 @@ public class ServiceCommunicator extends DeviceCommunicator<ServiceRequest> {
      *         if sending request for getting external storage absolute path fails
      */
     public String getExternalStorage() throws CommandFailedException {
-        Request<ServiceRequest> externalStorageRequest = new Request<ServiceRequest>(ServiceRequest.GET_EXTERNAL_STORAGE);
+        Request<ServiceRequest> externalStorageRequest = new Request<>(ServiceRequest.GET_EXTERNAL_STORAGE);
 
         try {
             return (String) requestSender.request(externalStorageRequest);
@@ -664,7 +679,7 @@ public class ServiceCommunicator extends DeviceCommunicator<ServiceRequest> {
 
     @Override
     public void validateRemoteServer() {
-        Request<ServiceRequest> validationRequest = new Request<ServiceRequest>(ServiceRequest.VALIDATION);
+        Request<ServiceRequest> validationRequest = new Request<>(ServiceRequest.VALIDATION);
         validateRemoteServer(validationRequest);
     }
 

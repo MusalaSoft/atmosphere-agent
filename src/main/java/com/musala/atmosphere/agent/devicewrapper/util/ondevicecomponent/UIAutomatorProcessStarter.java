@@ -40,8 +40,8 @@ public class UIAutomatorProcessStarter {
     private Map<String, String> params;
 
     public UIAutomatorProcessStarter() {
-        params = new HashMap<String, String>();
-        attachmentsKeys = new HashMap<String, String>();
+        params = new HashMap<>();
+        attachmentsKeys = new HashMap<>();
     }
 
     public void addParameter(String key, String value) {
@@ -86,6 +86,7 @@ public class UIAutomatorProcessStarter {
      *        - timeout, that will be used when executing shell commands on the device
      * @return the execution console response
      * @throws CommandFailedException
+     *         thrown when failed to run
      */
     @Deprecated
     public String run(ShellCommandExecutor executor, FileTransferService service, int commandExecutorTimeout)
@@ -104,6 +105,7 @@ public class UIAutomatorProcessStarter {
      *        - the device {@link FileTransferService} instance to be used for file uploading
      * @return the execution console response
      * @throws CommandFailedException
+     *         thrown when failed to run
      */
     @Deprecated
     public String run(ShellCommandExecutor executor, FileTransferService service) throws CommandFailedException {
@@ -118,6 +120,7 @@ public class UIAutomatorProcessStarter {
      * @param executor
      *        - the device {@link ShellCommandExecutor} instance to be used for UIAutomator starting
      * @throws CommandFailedException
+     *         thrown when the execution fails
      */
     public void runInBackground(BackgroundShellCommandExecutor executor) throws CommandFailedException {
         String command = buildCommand();

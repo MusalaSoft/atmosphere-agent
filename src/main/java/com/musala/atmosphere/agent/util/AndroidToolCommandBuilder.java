@@ -12,9 +12,9 @@ import com.musala.atmosphere.commons.util.Pair;
 
 /**
  * A builder of commands for the android tool.
- * 
+ *
  * @author yordan.petrov
- * 
+ *
  */
 public class AndroidToolCommandBuilder {
     private final static Logger LOGGER = Logger.getLogger(AndroidToolCommandBuilder.class.getCanonicalName());
@@ -86,13 +86,14 @@ public class AndroidToolCommandBuilder {
 
     /**
      * Checks whether a given Android target has an system image for the given {@link AbiType}.
-     * 
+     *
      * @param targetId
      *        - the identifier of the Android target.
      * @param requiredAbi
      *        - the {@link AbiType} to check for.
      * @return true if system image for the {@link AbiType} is found, false if such is not found.
      * @throws CommandFailedException
+     *         when fails to execute the command
      */
     private boolean hasAbi(String targetId, AbiType requiredAbi) throws CommandFailedException {
         String[] availableTargetAbis = getAvailableTargetAbis(targetId);
@@ -106,11 +107,12 @@ public class AndroidToolCommandBuilder {
 
     /**
      * Returns a list of the available {@link AbiType} system images for the given target.
-     * 
+     *
      * @param targetId
      *        - the identifier of the Android target.
      * @return a list of the available {@link AbiType} system images for the given target.
      * @throws CommandFailedException
+     *         when fails to get an available target abis
      */
     private String[] getAvailableTargetAbis(String targetId) throws CommandFailedException {
         String[] availableTargetAbis = null;
@@ -137,9 +139,11 @@ public class AndroidToolCommandBuilder {
 
     /**
      * Returns a command for creating an Android Virtual Device profile.
-     * 
+     *
      * @return a command for creating an Android Virtual Device profile.
      * @throws CommandFailedException
+     *         thrown when the command fails
+     *
      */
     public String getCreateAvdCommand() throws CommandFailedException {
         String target = deviceParameters.getTarget();
@@ -173,9 +177,8 @@ public class AndroidToolCommandBuilder {
 
     /**
      * Returns a command for deleting an Android Virtual Device profile.
-     * 
+     *
      * @return a command for deleting an Android Virtual Device profile.
-     * @throws CommandFailedException
      */
     public String getDeleteAvdCommand() {
         return String.format(DELETE_AVD_COMMAND_FORMAT, avdName);

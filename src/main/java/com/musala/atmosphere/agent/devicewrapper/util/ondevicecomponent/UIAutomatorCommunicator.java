@@ -13,7 +13,6 @@ import com.musala.atmosphere.commons.ad.uiautomator.UIAutomatorRequest;
 import com.musala.atmosphere.commons.beans.SwipeDirection;
 import com.musala.atmosphere.commons.exceptions.CommandFailedException;
 import com.musala.atmosphere.commons.gesture.Gesture;
-import com.musala.atmosphere.commons.gesture.Timeline;
 import com.musala.atmosphere.commons.ui.UiElementPropertiesContainer;
 import com.musala.atmosphere.commons.ui.selector.UiElementSelector;
 import com.musala.atmosphere.commons.ui.tree.AccessibilityElement;
@@ -35,12 +34,13 @@ public class UIAutomatorCommunicator extends DeviceCommunicator<UIAutomatorReque
     }
 
     /**
-     * Plays the passed list of {@link Timeline} instances.
+     * Plays the passed list of Gesture instances.
      *
-     * @param pointerTimelines
-     *        - a list of {@link Timeline} instances.
+     * @param gesture
+     *        - a Gesture instance.
      *
      * @throws CommandFailedException
+     *         thrown when play gesture fails
      */
     public void playGesture(Gesture gesture) throws CommandFailedException {
         Object[] arguments = new Object[] {gesture};
@@ -94,12 +94,14 @@ public class UIAutomatorCommunicator extends DeviceCommunicator<UIAutomatorReque
      *        <code>true</code> if the view has vertical orientation, <code>false</code> otherwise
      * @return <code>true</code> if scrolled is performed else <code>false</code>
      * @throws CommandFailedException
+     *         thrown when getting the running process fails
      */
     public boolean scrollToDirection(ScrollDirection scrollDirection,
                                      UiElementPropertiesContainer propertiesContainer,
                                      Integer maxSwipes,
                                      Integer maxSteps,
-                                     Boolean isVertical) throws CommandFailedException {
+                                     Boolean isVertical)
+        throws CommandFailedException {
         Object[] arguments = new Object[] {scrollDirection, propertiesContainer, maxSwipes, maxSteps, isVertical};
 
         return (boolean) requestActionWithResponse(UIAutomatorRequest.SCROLL_TO_DIRECTION, arguments);
@@ -117,6 +119,7 @@ public class UIAutomatorCommunicator extends DeviceCommunicator<UIAutomatorReque
      *         the screen
      *
      * @throws CommandFailedException
+     *         thrown when the request fails
      */
     public boolean waitForExists(UiElementPropertiesContainer propertiesContainer, Integer timeout)
         throws CommandFailedException {
@@ -137,6 +140,7 @@ public class UIAutomatorCommunicator extends DeviceCommunicator<UIAutomatorReque
      *         after the timeout
      *
      * @throws CommandFailedException
+     *         throw when the request fails
      */
     public boolean waitUntilGone(UiElementPropertiesContainer propertiesContainer, Integer timeout)
         throws CommandFailedException {
@@ -150,6 +154,7 @@ public class UIAutomatorCommunicator extends DeviceCommunicator<UIAutomatorReque
      *
      * @return <code>true</code> if the notification bar has been successfully opened, <code>false</code> otherwise
      * @throws CommandFailedException
+     *         thrown when fails to open notification bar
      */
     public boolean openNotificationBar() throws CommandFailedException {
         return (boolean) requestActionWithResponse(UIAutomatorRequest.OPEN_NOTIFICATION_BAR, null);
@@ -160,6 +165,7 @@ public class UIAutomatorCommunicator extends DeviceCommunicator<UIAutomatorReque
      *
      * @return <code>true</code> if the quick settings have been successfully opened, <code>false</code> otherwise
      * @throws CommandFailedException
+     *         throw when the request fails
      */
     public boolean openQuickSettings() throws CommandFailedException {
         return (boolean) requestActionWithResponse(UIAutomatorRequest.OPEN_QUICK_SETTINGS, null);
@@ -178,6 +184,7 @@ public class UIAutomatorCommunicator extends DeviceCommunicator<UIAutomatorReque
      * @return <code>true</code> if a window update occurred, <code>false</code> if timeout has elapsed or if the
      *         current window does not have the specified package name
      * @throws CommandFailedException
+     *         thrown when the request fails
      */
     public boolean waitForWindowUpdate(String packageName, int timeout) throws CommandFailedException {
         Object[] arguments = new Object[] {packageName, timeout};
@@ -232,6 +239,8 @@ public class UIAutomatorCommunicator extends DeviceCommunicator<UIAutomatorReque
      * Sends a request for getting all {@link AccessibilityElement UI elements} present on the screen and matching the
      * given selector.
      *
+     * @param selector
+     *        - the element's selector
      * @param visibleOnly
      *        - if <code>true</code> only the visible elements will be searched; if <code>false</code> all elements will
      *        be searched
@@ -270,7 +279,8 @@ public class UIAutomatorCommunicator extends DeviceCommunicator<UIAutomatorReque
     public List<AccessibilityElement> getChildren(AccessibilityElement parentElement,
                                                   UiElementSelector selector,
                                                   Boolean directChildrenOnly,
-                                                  Boolean visibleOnly) throws CommandFailedException {
+                                                  Boolean visibleOnly)
+        throws CommandFailedException {
         Object[] requestArguments = new Object[] {parentElement, selector, directChildrenOnly, visibleOnly};
 
         return (List<AccessibilityElement>) requestActionWithResponse(UIAutomatorRequest.GET_CHILDREN,
@@ -332,7 +342,7 @@ public class UIAutomatorCommunicator extends DeviceCommunicator<UIAutomatorReque
     public List<AccessibilityElement> executeXpathQueryOnLocalRoot(String xpathQuery,
                                                                    boolean visibleOnly,
                                                                    AccessibilityElement localRoot)
-                                                                       throws CommandFailedException {
+        throws CommandFailedException {
         Object[] arguments = new Object[] {xpathQuery, visibleOnly, localRoot};
 
         return (List<AccessibilityElement>) requestActionWithResponse(UIAutomatorRequest.EXECUTE_XPATH_QUERY_ON_LOCAL_ROOT,
@@ -352,7 +362,7 @@ public class UIAutomatorCommunicator extends DeviceCommunicator<UIAutomatorReque
      */
     private Object requestActionWithResponse(UIAutomatorRequest requestType, Object[] arguments)
         throws CommandFailedException {
-        Request<UIAutomatorRequest> automatorRequest = new Request<UIAutomatorRequest>(requestType);
+        Request<UIAutomatorRequest> automatorRequest = new Request<>(requestType);
         automatorRequest.setArguments(arguments);
 
         try {
@@ -373,9 +383,10 @@ public class UIAutomatorCommunicator extends DeviceCommunicator<UIAutomatorReque
      * @param arguments
      *        - arguments for the request
      * @throws CommandFailedException
+     *         thrown when the request fails
      */
     private void requestAction(UIAutomatorRequest requestType, Object[] arguments) throws CommandFailedException {
-        Request<UIAutomatorRequest> automatorRequest = new Request<UIAutomatorRequest>(requestType);
+        Request<UIAutomatorRequest> automatorRequest = new Request<>(requestType);
         automatorRequest.setArguments(arguments);
 
         try {
@@ -403,7 +414,7 @@ public class UIAutomatorCommunicator extends DeviceCommunicator<UIAutomatorReque
 
     @Override
     public void stopComponent() {
-        Request<UIAutomatorRequest> automatorRequest = new Request<UIAutomatorRequest>(UIAutomatorRequest.STOP);
+        Request<UIAutomatorRequest> automatorRequest = new Request<>(UIAutomatorRequest.STOP);
 
         try {
             requestSender.request(automatorRequest);
@@ -415,7 +426,7 @@ public class UIAutomatorCommunicator extends DeviceCommunicator<UIAutomatorReque
 
     @Override
     public void validateRemoteServer() {
-        Request<UIAutomatorRequest> validationRequest = new Request<UIAutomatorRequest>(UIAutomatorRequest.VALIDATION);
+        Request<UIAutomatorRequest> validationRequest = new Request<>(UIAutomatorRequest.VALIDATION);
         validateRemoteServer(validationRequest);
     }
 

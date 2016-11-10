@@ -94,6 +94,7 @@ public class PreconditionsManager {
      *
      * @return true if the boot animation has stopped running, false if not.
      * @throws CommandFailedException
+     *         In case of an error in the execution
      */
     private boolean hasBootloaderStopped() throws CommandFailedException {
         String commandResponse = shellCommandExecutor.execute(IS_BOOT_ANIMATION_RUNNING_COMMAND);
@@ -103,8 +104,12 @@ public class PreconditionsManager {
     /**
      * Waits for the device to complete its boot process if it is in boot process.
      *
+     * @param timeout
+     *        - wait timeout
      * @throws CommandFailedException
+     *         In case of an error in the execution
      * @throws DeviceBootTimeoutReachedException
+     *         thrown when a device boot timeout is reached
      */
     public void waitForDeviceToBoot(long timeout) throws CommandFailedException, DeviceBootTimeoutReachedException {
         boolean isOffline = wrappedDevice.isOffline();
@@ -234,7 +239,7 @@ public class PreconditionsManager {
      * @return map representing component-installed status relation.
      */
     private Map<OnDeviceComponent, Boolean> getCurrentComponentInstalledStatus() {
-        Map<OnDeviceComponent, Boolean> componentInstalledStatus = new HashMap<OnDeviceComponent, Boolean>();
+        Map<OnDeviceComponent, Boolean> componentInstalledStatus = new HashMap<>();
         componentInstalledStatus.put(OnDeviceComponent.SERVICE, isServiceInstalled());
         componentInstalledStatus.put(OnDeviceComponent.IME, isImeInstalled());
         componentInstalledStatus.put(OnDeviceComponent.UI_AUTOMATOR_BRIDGE, isUiAutomatorBridgeInstalled());
@@ -371,8 +376,6 @@ public class PreconditionsManager {
     /**
      * Takes care of automatic on-device component setup and verification. Make sure the device has booted calling
      * {@link #waitForDeviceToBoot(long)}.
-     *
-     * @throws CommandFailedException
      */
     public void manageOnDeviceComponents() {
         Map<OnDeviceComponent, Boolean> currentComponentInstalledStatus = getCurrentComponentInstalledStatus();

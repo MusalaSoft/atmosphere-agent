@@ -1,6 +1,7 @@
 package com.musala.atmosphere.agent;
 
 import java.rmi.RemoteException;
+import java.rmi.server.UnicastRemoteObject;
 import java.util.Arrays;
 import java.util.List;
 
@@ -42,6 +43,7 @@ public class AndroidDebugBridgeManager {
      * {@link #setAndroidDebugBridgePath(String)} first.
      *
      * @throws ADBridgeFailException
+     *         thrown when the Android debug bridge failed to init.
      */
     public void startAndroidDebugBridge() throws ADBridgeFailException {
         String errorMessage = "The Android debug bridge failed to init.";
@@ -68,6 +70,7 @@ public class AndroidDebugBridgeManager {
      * @param deviceChangeListener
      *        - the new {@link DeviceChangeListener} to be set.
      * @throws RemoteException
+     *         - required when implementing {@link UnicastRemoteObject}
      */
     public void setListener(DeviceChangeListener deviceChangeListener) throws RemoteException {
         AndroidDebugBridge.removeDeviceChangeListener(currentDeviceChangeListener);
@@ -77,6 +80,8 @@ public class AndroidDebugBridgeManager {
 
     /**
      * Gets the current {@link DeviceChangeListener}.
+     *
+     * @return - the current {@link DeviceChangeListener}
      */
     public DeviceChangeListener getCurrentListener() {
         return currentDeviceChangeListener;
@@ -97,6 +102,7 @@ public class AndroidDebugBridgeManager {
      *
      * @return List of IDevices
      * @throws ADBridgeFailException
+     *         thrown when the Android debug bridge failed to init.
      */
     public List<IDevice> getInitialDeviceList() throws ADBridgeFailException {
         // From an adb example :

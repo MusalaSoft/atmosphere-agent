@@ -4,6 +4,7 @@ import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
+import java.rmi.server.UnicastRemoteObject;
 
 import com.android.ddmlib.AndroidDebugBridge.IDeviceChangeListener;
 import com.android.ddmlib.IDevice;
@@ -14,9 +15,9 @@ import com.musala.atmosphere.commons.sa.exceptions.ADBridgeFailException;
 
 /**
  * A class to register ADB's device list changed events
- * 
+ *
  * @author georgi.gaydarov
- * 
+ *
  */
 class DeviceChangeListener implements IDeviceChangeListener {
     private final DeviceManager deviceManager;
@@ -28,8 +29,9 @@ class DeviceChangeListener implements IDeviceChangeListener {
     private DeviceChangeHandler deviceChangeHandler;
 
     /**
-     * 
+     *
      * @throws RemoteException
+     *         - required when implementing {@link UnicastRemoteObject}
      */
     public DeviceChangeListener() throws RemoteException {
         deviceChangeHandler = new DeviceChangeHandler();
@@ -41,7 +43,7 @@ class DeviceChangeListener implements IDeviceChangeListener {
      * Creates a new DeviceChangeListener that sends events to the server when something in the devices list has changed
      * and updates the list of devices on the agent.
      * </p>
-     * 
+     *
      * @param serverIPAddress
      *        - IP address of the server's RMI registry
      * @param serverRmiPort
@@ -118,7 +120,7 @@ class DeviceChangeListener implements IDeviceChangeListener {
 
     /**
      * Sends event to the server in order to inform it for device list change.
-     * 
+     *
      * @param device
      *        - on which the change has occurred
      * @param connected
@@ -128,13 +130,15 @@ class DeviceChangeListener implements IDeviceChangeListener {
      * @throws CommandFailedException
      *         if getting device's information fails
      */
-    public void onDeviceListChanged(IDevice device, boolean connected) throws CommandFailedException, NotBoundException {
+    public void onDeviceListChanged(IDevice device, boolean connected)
+        throws CommandFailedException,
+            NotBoundException {
         deviceChangeHandler.onDeviceListChanged(device.getSerialNumber(), connected);
     }
 
     /**
      * Gets called when device's information is changed.
-     * 
+     *
      * @param device
      *        - on which the change has occurred
      */

@@ -31,9 +31,9 @@ import com.musala.atmosphere.commons.util.Pair;
 
 /**
  * Real (physical) device wrapper. Implements methods in a real device specific way.
- * 
+ *
  * @author georgi.gaydarov
- * 
+ *
  */
 public class RealWrapDevice extends AbstractWrapDevice {
 
@@ -45,7 +45,7 @@ public class RealWrapDevice extends AbstractWrapDevice {
 
     /**
      * Creates an wrapper of the given real {@link IDevice device}.
-     * 
+     *
      * @param deviceToWrap
      *        - device to be wrapped
      * @param executor
@@ -56,10 +56,14 @@ public class RealWrapDevice extends AbstractWrapDevice {
      *        - a communicator to the service component on the device
      * @param automatorCommunicator
      *        - a communicator to the UI automator component on the device
+     * @param chromeDriverService
+     *        - the service component of the ChromeDriver
      * @param fileRecycler
      *        - responsible for removing obsolete files
      * @throws RemoteException
      *         - required when implementing {@link UnicastRemoteObject}
+     * @throws NotPossibleForDeviceException
+     *         - thrown when Cannot create real wrap device for an emulator.
      */
     public RealWrapDevice(IDevice deviceToWrap,
             ExecutorService executor,
@@ -67,7 +71,9 @@ public class RealWrapDevice extends AbstractWrapDevice {
             ServiceCommunicator serviceCommunicator,
             UIAutomatorCommunicator automatorCommunicator,
             ChromeDriverService chromeDriverService,
-            FileRecycler fileRecycler) throws RemoteException, NotPossibleForDeviceException {
+            FileRecycler fileRecycler)
+        throws RemoteException,
+            NotPossibleForDeviceException {
         super(deviceToWrap,
               executor,
               shellCommandExecutor,

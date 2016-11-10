@@ -6,7 +6,7 @@ import java.util.concurrent.Future;
 
 /**
  * Used to executes {@link Runnable} tasks in new threads, created by {@link ExecutorService}.
- * 
+ *
  * @author denis.bialev
  *
  */
@@ -23,9 +23,10 @@ public class DeviceManagerExecutor {
 
     /**
      * Executes the runnable task in new thread.
-     * 
+     *
      * @param task
      *        - a task that will be executed
+     * @return - the result of an asynchronous computation
      */
     public Future<?> execute(Runnable task) {
         Future<?> future = executor.submit(task);

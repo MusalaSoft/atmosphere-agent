@@ -87,7 +87,7 @@ public class AgentPropertiesLoader {
     /**
      * Returns the timeout for the creation of the emulator form the config file.
      *
-     * @return
+     * @return - the creation wait timeout for an emulator
      */
     public static int getEmulatorCreationWaitTimeout() {
         String returnValueString = getPropertyString(AgentProperties.EMULATOR_CREATION_WAIT_TIMEOUT);
@@ -98,7 +98,7 @@ public class AgentPropertiesLoader {
     /**
      * Returns the path to the Android SDK tools directory from the config file.
      *
-     * @return
+     * @return - android SDK tools path
      */
     public static String getAndroidSdkToolsDirPath() {
         return String.format(ADB_SDK_TOOLS_FORMAT, getSdkDir(), SEPARATOR_CHAR);
