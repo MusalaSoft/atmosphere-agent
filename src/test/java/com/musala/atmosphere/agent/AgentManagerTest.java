@@ -92,6 +92,7 @@ public class AgentManagerTest {
 
         IDevice mockDevice = mock(IDevice.class);
         when(mockDevice.getSerialNumber()).thenReturn(mockDeviceSerialNumber);
+        when(mockDevice.getProperty(IDevice.PROP_BUILD_API_LEVEL)).thenReturn(mockDeviceApi);
         when(mockDevice.isEmulator()).thenReturn(mockDeviceEmulator);
         when(mockDevice.arePropertiesSet()).thenReturn(true);
         when(mockDevice.getProperties()).thenReturn(mockPropMap);

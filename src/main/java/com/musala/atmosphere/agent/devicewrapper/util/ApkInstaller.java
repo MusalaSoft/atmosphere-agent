@@ -138,7 +138,13 @@ public class ApkInstaller {
         String componentPath = ON_DEVICE_COMPONENT_FILES_PATH.concat(onDeviceComponent.getFileName());
 
         try {
-            device.installPackage(componentPath, true);
+            String grantPermissionsAutomatically = "";
+            String deviceApiLevel = device.getProperty(IDevice.PROP_BUILD_API_LEVEL);
+            if (deviceApiLevel != null && Integer.parseInt(deviceApiLevel) >= 23) {
+                grantPermissionsAutomatically = "-g";
+            }
+
+            device.installPackage(componentPath, true, grantPermissionsAutomatically);
         } catch (InstallException e) {
             String errorMessage = String.format(COMPONENT_INSTALLATION_FAILED_MESSAGE,
                                                 onDeviceComponent.getHumanReadableName());
