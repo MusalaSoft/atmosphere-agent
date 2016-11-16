@@ -214,8 +214,7 @@ public class DeviceManager {
             return null;
         }
 
-        Map<String, String> devicePropertiesMap = connectedDevice.getProperties();
-        String apiLevelString = devicePropertiesMap.get(DevicePropertyStringConstants.PROPERTY_API_LEVEL.toString());
+        String apiLevelString = connectedDevice.getProperty(IDevice.PROP_BUILD_API_LEVEL);
         int deviceApiLevel = NO_AVAIBLE_API_LEVEL;
         if (apiLevelString != null) {
             deviceApiLevel = Integer.parseInt(apiLevelString);
@@ -392,9 +391,14 @@ public class DeviceManager {
         String rmiWrapperBindingId = getRmiWrapperBindingIdentifier(device);
 
         try {
-            IWrapDevice deviceWrapper = getDeviceWrapper(rmiWrapperBindingId);
-            deviceWrapper.unbindWrapper();
-
+            // IWrapDevice deviceWrapper = getDeviceWrapper(rmiWrapperBindingId);
+            /*
+             * TODO: The method 'unbindWrapper()' fails because the physical device is missing
+             * (if is disconnected manually by removing the USB cable).
+             * Find an another solution for future work. Maybe is a good idea
+             * to stop the onDeviceComponents from the service.
+             */
+            // deviceWrapper.unbindWrapper();
             rmiRegistry.unbind(rmiWrapperBindingId);
         } catch (NotBoundException e) {
             // Wrapper for the device was never published, so we have nothing to unbind.

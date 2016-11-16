@@ -1,6 +1,7 @@
 package com.musala.atmosphere.agent.devicewrapper.util;
 
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
 import com.android.ddmlib.AdbCommandRejectedException;
 import com.android.ddmlib.IDevice;
@@ -11,9 +12,9 @@ import com.musala.atmosphere.commons.exceptions.CommandFailedException;
 
 /**
  * A class that is used for running shell commands that do not return.
- * 
+ *
  * @author georgi.gaydarov
- * 
+ *
  */
 public class BackgroundShellCommandRunner implements Runnable {
     private final String command;
@@ -25,7 +26,7 @@ public class BackgroundShellCommandRunner implements Runnable {
     private final IDevice wrappedDevice;
 
     /**
-     * 
+     *
      * @param command
      *        - shell command to be executed.
      * @param wrappedDevice
@@ -41,10 +42,11 @@ public class BackgroundShellCommandRunner implements Runnable {
         executorThread = Thread.currentThread();
         try {
             NullOutputReceiver outputReceiver = new NullOutputReceiver();
-            wrappedDevice.executeShellCommand(command, outputReceiver, 0 /*
-                                                                          * this execution will never throw a
-                                                                          * ShellCommandUnresponsiveException
-                                                                          */);
+            /*
+             * this execution will never throw a
+             * ShellCommandUnresponsiveException
+             */
+            wrappedDevice.executeShellCommand(command, outputReceiver, 0, TimeUnit.MICROSECONDS);
         } catch (TimeoutException | AdbCommandRejectedException | IOException | ShellCommandUnresponsiveException e) {
             onExecutionException = new CommandFailedException("Shell command execution failed. See the enclosed exception for more information.",
                                                               e);
@@ -52,7 +54,7 @@ public class BackgroundShellCommandRunner implements Runnable {
     }
 
     /**
-     * 
+     *
      * @return true if an exception was thrown when the passed shell command was executed, false otherwise.
      */
     public boolean isExecutionExceptionThrown() {
@@ -60,7 +62,7 @@ public class BackgroundShellCommandRunner implements Runnable {
     }
 
     /**
-     * 
+     *
      * @return the exception which was thrown when the passed shell command was executed (null if no exception was
      *         thrown).
      */
@@ -69,7 +71,7 @@ public class BackgroundShellCommandRunner implements Runnable {
     }
 
     /**
-     * 
+     *
      * @return the {@link Thread} object that is responsible for the shell command execution.
      */
     public Thread getExecutorThread() {
