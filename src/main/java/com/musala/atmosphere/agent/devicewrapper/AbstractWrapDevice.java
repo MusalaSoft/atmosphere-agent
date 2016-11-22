@@ -91,6 +91,8 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 
     private static final String SCREENSHOT_COMMAND = "screencap -p " + SCREENSHOT_REMOTE_FILE_NAME;
 
+    private static final String LIST_RUNNING_PROCESSES_COMMAND = "ps";
+
     private static final String FORCE_STOP_PROCESS_COMMAND = "am force-stop ";
 
     // TODO the command should be moved to a different enumeration
@@ -286,7 +288,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
                 returnValue = serviceCommunicator.getAwakeStatus();
                 break;
             case GET_PROCESS_RUNNING:
-                returnValue = serviceCommunicator.getProcessRunning(args);
+                returnValue = isProcessRunning((String) args[0]);
                 break;
             case GET_RUNNING_TASK_IDS:
                 returnValue = serviceCommunicator.getRunningTaskIds(args);
@@ -737,6 +739,21 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
                 xmlDumpFile.delete();
             }
         }
+    }
+
+    /**
+     * Checks if there are running processes on the device with the given package name.
+     *
+     * @param packageName
+     *        - the package name to look for
+     * @return <code>true</code> if there are such running processes, <code>false</code> otherwise
+     * @throws CommandFailedException
+     *         when the shell command to retrieve the running processes fails
+     */
+    private boolean isProcessRunning(String packageName) throws CommandFailedException {
+        // Note: if this command is run on a device directly, not all running processes will be returned, so we use adb.
+        String output = shellCommandExecutor.execute(LIST_RUNNING_PROCESSES_COMMAND);
+        return output.contains(packageName);
     }
 
     /**

@@ -356,15 +356,17 @@ public class ServiceCommunicator extends DeviceCommunicator<ServiceRequest> {
     }
 
     /**
-     * Checks of there are running Processes on the device with the given package
+     * Checks if there are running processes with the given package on the device.
      *
      * @param args
-     *        -contains the packageName
-     * @return true if there are such processes and false otherwise
+     *        - contains the package name to look for
+     * @return <code>true</code> if there are such processes and <code>false</code> otherwise
      * @throws CommandFailedException
      *         thrown when getting the running process fails, e.g. communication with the service fails
+     * @deprecated Since Lollipop this method is no longer available.
+     *         Use {@link com.musala.atmosphere.agent.devicewrapper.AbstractWrapDevice#isProcessRunning AbstractWrapDevice.isProcessRunning}.
      */
-
+    @Deprecated
     public boolean getProcessRunning(Object args[]) throws CommandFailedException {
         Request<ServiceRequest> getProcessRunningRequest = new Request<>(ServiceRequest.GET_PROCESS_RUNNING);
         getProcessRunningRequest.setArguments(args);
@@ -421,7 +423,9 @@ public class ServiceCommunicator extends DeviceCommunicator<ServiceRequest> {
      * @return <code>true</code> if the task is on the front and <code>false</code> otherwise.
      * @throws CommandFailedException
      *         if bringing the task to the front fails.
+     * @deprecated Since Lollipop this method is no longer available.
      */
+    @Deprecated
     public boolean bringTaskToFront(Object args[]) throws CommandFailedException {
         Request<ServiceRequest> bringTaskToFrontRequest = new Request<>(ServiceRequest.BRING_TASK_TO_FRONT);
         bringTaskToFrontRequest.setArguments(args);
@@ -441,7 +445,9 @@ public class ServiceCommunicator extends DeviceCommunicator<ServiceRequest> {
      * @return array of the task ids that are currently running.
      * @throws CommandFailedException
      *         if getting the running tasks id fails.
+     * @deprecated Since Lollipop this method is no longer available.
      */
+    @Deprecated
     public int[] getRunningTaskIds(Object args[]) throws CommandFailedException {
         Request<ServiceRequest> getRunningTasksRequest = new Request<>(ServiceRequest.GET_RUNNING_TASK_IDS);
         getRunningTasksRequest.setArguments(args);
@@ -462,7 +468,9 @@ public class ServiceCommunicator extends DeviceCommunicator<ServiceRequest> {
      * @return <code>true</code> if the task is updated for the given timeout and <code>false</code> otherwise.
      * @throws CommandFailedException
      *         if waiting for the task update fails.
+     * @deprecated Since Lollipop this method is no longer available.
      */
+    @Deprecated
     public boolean waitForTasksUpdate(Object args[]) throws CommandFailedException {
         Request<ServiceRequest> waitForTasksUpdateRequest = new Request<>(ServiceRequest.WAIT_FOR_TASKS_UPDATE);
         waitForTasksUpdateRequest.setArguments(args);
