@@ -42,16 +42,16 @@ dependencies {
     compile 'com.googlecode.mp4parser:isoparser:1.0.6'
     compile fileTree(dir: 'natives/', include: '*.*')
     compile 'gov.nist.math:scimark:2.0'
-	// Fix for: 'Failed to load class "org.slf4j.impl.StaticLoggerBinder"' error message.
-	// See http://www.slf4j.org/codes.html#StaticLoggerBinder for further details.
-	compile 'org.slf4j:slf4j-simple:1.7.21'
-	compile 'io.github.bonigarcia:webdrivermanager:1.4.10'
+    // Fix for: 'Failed to load class "org.slf4j.impl.StaticLoggerBinder"' error message.
+    // See http://www.slf4j.org/codes.html#StaticLoggerBinder for further details.
+    compile 'org.slf4j:slf4j-simple:1.7.21'
+    compile 'io.github.bonigarcia:webdrivermanager:1.4.10'
     compile 'org.seleniumhq.selenium:selenium-java:2.47.1'
     runtime 'org.apache.httpcomponents:httpclient:4.4.1'
     runtime 'org.apache.httpcomponents:httpcore:4.4.4'
 
     onDeviceComponents 'com.musala.atmosphere:atmosphere-ime:0.0.1'
-    onDeviceComponents 'com.musala.atmosphere:atmosphere-service:0.0.1'
+    onDeviceComponents 'com.musala.atmosphere:atmosphere-service:0.0.2'
     onDeviceComponents 'com.musala.atmosphere:atmosphere-uiautomator-bridge:0.0.1'
 
     testCompile 'org.mockito:mockito-all:1.9.5'
