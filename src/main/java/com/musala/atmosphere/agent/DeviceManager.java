@@ -138,7 +138,7 @@ public class DeviceManager {
                 });
             }
 
-            deviceManagerExecutor.releaseResources();
+            deviceManagerExecutor.releaseResourcesAwaitTermination();
 
             ChromeDriverManager.getInstance().setup();
             chromeDriverService = ChromeDriverService.createDefaultService();

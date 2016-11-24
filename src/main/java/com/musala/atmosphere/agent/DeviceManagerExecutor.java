@@ -3,6 +3,7 @@ package com.musala.atmosphere.agent;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Used to executes {@link Runnable} tasks in new threads, created by {@link ExecutorService}.
@@ -39,6 +40,35 @@ public class DeviceManagerExecutor {
      */
     public void releaseResources() {
         executor.shutdown();
+    }
+
+    /**
+     * Initiates an orderly shutdown in which previously submitted tasks are executed, but no new tasks are accepted.
+     * Blocks until all tasks have completed execution, or the <b>timeout of 5 minutes</b> occurs, or the current thread
+     * is interrupted, whichever happens first.
+     * Use {@link #releaseResourcesAwaitTermination(long, TimeUnit)} to set the timeout.
+     */
+    public void releaseResourcesAwaitTermination() {
+        releaseResourcesAwaitTermination(5, TimeUnit.MINUTES);
+    }
+
+    /**
+     * Initiates an orderly shutdown in which previously submitted tasks are executed, but no new tasks are accepted.
+     * Blocks until all tasks have completed execution, or the timeout occurs, or the current thread is interrupted,
+     * whichever happens first.
+     *
+     * @param timeout
+     *        - the maximum time to wait
+     * @param unit
+     *        - the time unit of the timeout argument
+     */
+    public void releaseResourcesAwaitTermination(long timeout, TimeUnit unit) {
+        executor.shutdown();
+        try {
+            executor.awaitTermination(timeout, unit);
+        } catch (InterruptedException e) {
+            // Nothing to do here
+        }
     }
 
     @Override

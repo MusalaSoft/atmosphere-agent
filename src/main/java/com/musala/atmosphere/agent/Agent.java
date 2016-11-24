@@ -100,6 +100,8 @@ public class Agent {
             currentAgentState = new DisconnectedAgent(this, agentManager, agentConsole);
 
             LOGGER.info("Agent created on port: " + agentRmiPort);
+            String agentStartedMessage = "The Agent has started successfully.";
+            agentConsole.writeLine(agentStartedMessage);
         } catch (RemoteException | ADBridgeFailException e) {
             LOGGER.fatal("Could not create agent manager.", e);
             throw new RuntimeException("Creation of agent manager failed.", e);
@@ -212,6 +214,8 @@ public class Agent {
         params.add(String.valueOf(port));
         AgentCommand connectCommand = new AgentCommand(AgentConsoleCommands.AGENT_CONNECT, params);
         currentAgentState.executeConnectCommand(connectCommand);
+        String agentConnectedMessage = "Connection to server established.";
+        agentConsole.writeLine(agentConnectedMessage);
     }
 
     /**
