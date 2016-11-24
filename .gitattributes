@@ -16,7 +16,7 @@
 *.jsp           text
 *.jspf          text
 *.properties    text
-*.sh            text
+*.sh            text eol=lf
 *.tld           text
 *.txt           text
 *.xml           text
