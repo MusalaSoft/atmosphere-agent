@@ -30,6 +30,10 @@ public class PreconditionsManager {
 
     private static final String BOOT_ANIMATION_NOT_RUNNING_RESPONSE = "stopped\r\n";
 
+    private static final String IS_BOOT_COMPLETED_COMMAND = "getprop sys.boot_completed";
+
+    private static final String BOOT_COMPLETED_RESPONSE = "1";
+
     private static final int BOOT_ANIMATION_REVALIDATION_SLEEP_TIME = 1000;
 
     /**
@@ -97,8 +101,15 @@ public class PreconditionsManager {
      *         In case of an error in the execution
      */
     private boolean hasBootloaderStopped() throws CommandFailedException {
-        String commandResponse = shellCommandExecutor.execute(IS_BOOT_ANIMATION_RUNNING_COMMAND);
-        return commandResponse.equals(BOOT_ANIMATION_NOT_RUNNING_RESPONSE);
+        int apiLevel = Integer.parseInt(wrappedDevice.getProperty(IDevice.PROP_BUILD_API_LEVEL));
+        if (apiLevel >= 24) { // Android N
+            String commandResponse = shellCommandExecutor.execute(IS_BOOT_COMPLETED_COMMAND);
+            commandResponse = commandResponse.replaceAll("(\\r|\\n)", "");
+            return commandResponse.equals(BOOT_COMPLETED_RESPONSE);
+        } else {
+            String commandResponse = shellCommandExecutor.execute(IS_BOOT_ANIMATION_RUNNING_COMMAND);
+            return commandResponse.equals(BOOT_ANIMATION_NOT_RUNNING_RESPONSE);
+        }
     }
 
     /**
@@ -114,11 +125,11 @@ public class PreconditionsManager {
     public void waitForDeviceToBoot(long timeout) throws CommandFailedException, DeviceBootTimeoutReachedException {
         boolean isOffline = wrappedDevice.isOffline();
         boolean isBooting = isOffline || !hasBootloaderStopped();
-        boolean isTiemoutPositive = true;
+        boolean isTimeoutPositive = true;
 
         if (isBooting) {
             LOGGER.info("Waiting for device " + deviceSerialNumber + " to boot.");
-            while (isTiemoutPositive && isBooting) {
+            while (isTimeoutPositive && isBooting) {
                 try {
                     Thread.sleep(BOOT_ANIMATION_REVALIDATION_SLEEP_TIME);
                     timeout -= BOOT_ANIMATION_REVALIDATION_SLEEP_TIME;
@@ -128,13 +139,13 @@ public class PreconditionsManager {
 
                 isOffline = wrappedDevice.isOffline();
                 isBooting = isOffline || !hasBootloaderStopped();
-                isTiemoutPositive = timeout > 0;
+                isTimeoutPositive = timeout > 0;
             }
 
-            if (isTiemoutPositive || !isBooting) {
+            if (isTimeoutPositive || !isBooting) {
                 LOGGER.info("Device " + deviceSerialNumber + " booted.");
             } else {
-                String message = String.format("Device %s boot timeout reahced.", deviceSerialNumber);
+                String message = String.format("Device %s boot timeout reached.", deviceSerialNumber);
                 LOGGER.warn(message);
                 throw new DeviceBootTimeoutReachedException(message);
             }
