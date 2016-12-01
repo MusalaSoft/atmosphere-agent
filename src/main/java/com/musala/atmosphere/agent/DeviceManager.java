@@ -138,8 +138,6 @@ public class DeviceManager {
                 });
             }
 
-            deviceManagerExecutor.releaseResourcesAwaitTermination();
-
             ChromeDriverManager.getInstance().setup();
             chromeDriverService = ChromeDriverService.createDefaultService();
             try {
@@ -152,6 +150,8 @@ public class DeviceManager {
 
             this.fileRecycler = fileRecycler;
             LOGGER.info("Device manager created successfully.");
+
+            deviceManagerExecutor.releaseResourcesAwaitTermination();
         }
     }
 
