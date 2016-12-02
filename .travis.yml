@@ -3,6 +3,11 @@ jdk: oraclejdk7
 os: 
     - linux
 
+notifications:
+  email:
+    recipients:
+        - atmosphere@musala.com
+
 android:
     components:
     - platform-tools
