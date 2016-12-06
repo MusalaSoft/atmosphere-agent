@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.openqa.selenium.By;
 import org.openqa.selenium.Dimension;
@@ -21,11 +22,13 @@ import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.remote.DesiredCapabilities;
 
 import com.musala.atmosphere.commons.exceptions.AtmosphereConfigurationException;
+import com.musala.atmosphere.commons.exceptions.CommandFailedException;
 import com.musala.atmosphere.commons.geometry.Point;
 import com.musala.atmosphere.commons.util.Pair;
 import com.musala.atmosphere.commons.webelement.action.WebElementAction;
 import com.musala.atmosphere.commons.webelement.action.WebElementWaitCondition;
 import com.musala.atmosphere.commons.webelement.exception.WebElementNotPresentException;
+import com.musala.atmosphere.commons.webview.selection.WebViewSelectionCriterion;
 
 /**
  * Class responsible for initializing {@link ChromeDriver chrome driver} used for retrieving information for the
@@ -50,6 +53,12 @@ public class WebElementManager {
     private WebDriver driver;
 
     private String deviceSerialNumber;
+
+    /**
+     * The window handlers are set of unique web view identifiers. The identifiers are different for each WebDriver
+     * instance.
+     */
+    private Set<String> windowHandlers;
 
     /**
      * Creates new instance of the driver manager for a device with the given serial number using the instance of the
@@ -80,9 +89,9 @@ public class WebElementManager {
 
         DesiredCapabilities capabilities = DesiredCapabilities.chrome();
         capabilities.setCapability(ChromeOptions.CAPABILITY, chromeOptions);
-
         try {
             driver = new ChromeDriver(service, capabilities);
+            this.windowHandlers = driver.getWindowHandles();
         } catch (SessionNotCreatedException e) {
             throw new AtmosphereConfigurationException(String.format("Another instance of the WebView in %s you are trying to interact with might already be opened for debugging.",
                                                                      packageName));
@@ -394,4 +403,115 @@ public class WebElementManager {
 
         return element != null;
     }
+
+    /**
+     * Gets the window handlers for the current screen.
+     *
+     * @return a set of handlers(identifiers).
+     */
+    public Set<String> getWindowHandlers() {
+        return this.windowHandlers;
+    }
+
+    /**
+     * Switches the WebDriver to another web view window by xPath query of a child WebElement.
+     *
+     * @param xpathQuery
+     *        - the xPath query used for matching
+     * @throws CommandFailedException
+     *         - thrown when fails to switch to another window by xPath query.
+     */
+    public void switchToWebViewByXpathQuery(String xpathQuery) throws CommandFailedException {
+        this.switchToWebViewBy(WebViewSelectionCriterion.CHILD_ELEMENT, xpathQuery);
+    }
+
+    /**
+     * Switches the WebDriver to another web view window by {@link WebViewSelectionCriterion criterion} and value.
+     *
+     * @param criterion
+     *        - a criterion used for the web view selection
+     * @param value
+     *        - the value of the criterion
+     * @throws CommandFailedException
+     *         - thrown when fails to switch to another window
+     * @return <code>true</code> if the switching is successful, <code>false</code> if it fails.
+     */
+    public boolean switchToWebViewBy(WebViewSelectionCriterion criterion, String value) throws CommandFailedException {
+        if (windowHandlers.size() == 1) {
+            return false;
+        }
+        String targetWindowHandler = null;
+
+        for (String handler : windowHandlers) {
+            driver.switchTo().window(handler);
+            String searchResult = null;
+
+            switch (criterion) {
+                case URL:
+                    searchResult = driver.getCurrentUrl();
+                    if (searchResult.equals(value)) {
+                        targetWindowHandler = checkTargetHandler(handler, criterion, targetWindowHandler);
+                    }
+                    break;
+                case TITLE:
+                    searchResult = driver.getTitle();
+                    if (searchResult.equals(value)) {
+                        targetWindowHandler = checkTargetHandler(handler, criterion, targetWindowHandler);
+                    }
+                    break;
+                case CHILD_ELEMENT:
+                    List<WebElement> elements = driver.findElements(By.xpath(value));
+                    if (elements.size() == 1) {
+                        targetWindowHandler = checkTargetHandler(handler, criterion, targetWindowHandler);
+                    } else if (elements.size() > 1) {
+                        throw new CommandFailedException("The child element selector is not unique.");
+                    }
+                    break;
+                default:
+                    throw new CommandFailedException("Command failed due a non implemented criterion.");
+            }
+        }
+
+        if (targetWindowHandler != null) {
+            driver.switchTo().window(targetWindowHandler);
+            return true;
+        }
+
+        return false;
+    }
+
+    private String checkTargetHandler(String currentHandler,
+                                      WebViewSelectionCriterion criterion,
+                                      String targetWindowHandler)
+        throws CommandFailedException {
+        if (targetWindowHandler != null) {
+            throw new CommandFailedException(String.format("More the one web views have the same %s value",
+                                                           criterion.getName()));
+        }
+        return currentHandler;
+    }
+
+    /**
+     * Gets the title of the current web view.
+     *
+     * @return the title of the current web view or empty string if the title is not set.
+     */
+    public String getWebViewTitle() {
+        String title = driver.getTitle();
+
+        return title;
+    }
+
+    /**
+     * Gets the URL of the current web view.
+     *
+     * @return the URL of the current web view of <code>null</code> if failed to get the URL.
+     */
+    public String getWebViewCurrentUrl() {
+        String currentUrl = driver.getCurrentUrl();
+
+        return currentUrl;
+    }
+
 }
+

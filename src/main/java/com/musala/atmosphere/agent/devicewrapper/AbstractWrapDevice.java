@@ -69,6 +69,7 @@ import com.musala.atmosphere.commons.ui.tree.AccessibilityElement;
 import com.musala.atmosphere.commons.util.Pair;
 import com.musala.atmosphere.commons.webelement.action.WebElementAction;
 import com.musala.atmosphere.commons.webelement.action.WebElementWaitCondition;
+import com.musala.atmosphere.commons.webview.selection.WebViewSelectionCriterion;
 
 public abstract class AbstractWrapDevice extends UnicastRemoteObject implements IWrapDevice {
 
@@ -478,6 +479,21 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
             // WebView Related
             case GET_WEB_VIEW:
                 webElementManager.initDriver((String) args[0]);
+                break;
+            case GET_WEB_VIEWS:
+                returnValue = webElementManager.getWindowHandlers();
+                break;
+            case SWITCH_TO_WEBVIEW:
+                webElementManager.switchToWebViewBy((WebViewSelectionCriterion) args[0], (String) args[1]);
+                break;
+            case SWITCH_TO_WEBVIEW_BY_CHILD:
+                webElementManager.switchToWebViewByXpathQuery((String) args[0]);
+                break;
+            case GET_WEBVIEW_TITLE:
+                returnValue = webElementManager.getWebViewTitle();
+                break;
+            case GET_WEBVIEW_URL:
+                returnValue = webElementManager.getWebViewCurrentUrl();
                 break;
             case FIND_WEB_ELEMENT:
                 returnValue = webElementManager.findElement((String) args[0]);
