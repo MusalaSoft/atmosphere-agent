@@ -1,8 +1,10 @@
 package com.musala.atmosphere.agent.devicewrapper;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.RandomAccessFile;
 import java.nio.channels.FileChannel;
 import java.rmi.RemoteException;
@@ -42,6 +44,7 @@ import com.musala.atmosphere.agent.devicewrapper.util.BackgroundShellCommandExec
 import com.musala.atmosphere.agent.devicewrapper.util.DeviceProfiler;
 import com.musala.atmosphere.agent.devicewrapper.util.FileTransferService;
 import com.musala.atmosphere.agent.devicewrapper.util.ImeManager;
+import com.musala.atmosphere.agent.devicewrapper.util.Buffer;
 import com.musala.atmosphere.agent.devicewrapper.util.ShellCommandExecutor;
 import com.musala.atmosphere.agent.devicewrapper.util.ondevicecomponent.ServiceCommunicator;
 import com.musala.atmosphere.agent.devicewrapper.util.ondevicecomponent.UIAutomatorCommunicator;
@@ -111,8 +114,6 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 
     private static final String FALLBACK_COMPONENT_PATH = "/data/local/tmp";
 
-    private static final String DEVICE_LOG_FILE_NAME = "device.log";
-
     private static final String RECORDS_DIRECTORY_NAME = "AtmosphereScreenRecords";
 
     private static final String START_SCREENRECORD_SCRIPT_NAME = "start_screenrecord.sh";
@@ -141,8 +142,9 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 
     private static final String GET_DEVICE_LOGCAT = "logcat -d -f ";
 
-    private static final String REMOVE_COMMAND = "rm ";
+    private static final String CLEAR_DEVICE_LOGCAT = "logcat -c";
 
+    // TODO: Consider to remove field because is not used directly
     private ExecutorService executor;
 
     private CompletionService<Boolean> pullFileCompletionService;
@@ -164,6 +166,8 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
     private final ImeManager imeManager;
 
     private WebElementManager webElementManager;
+
+    private Buffer<String, Pair<Integer, String>> logcatBuffer;
 
     /**
      * Creates an abstract wrapper of the given {@link IDevice device}.
@@ -200,6 +204,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
         this.serviceCommunicator = serviceCommunicator;
         this.automatorCommunicator = automatorCommunicator;
         this.fileRecycler = fileRecycler;
+        this.logcatBuffer = new Buffer<String, Pair<Integer, String>>();
 
         transferService = new FileTransferService(wrappedDevice);
         apkInstaller = new ApkInstaller(wrappedDevice);
@@ -317,10 +322,22 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
             case CHECK_ELEMENT_PRESENCE:
                 returnValue = automatorCommunicator.isElementPresent((AccessibilityElement) args[0], (Boolean) args[1]);
                 break;
+            // Logcat related
             case GET_DEVICE_LOGCAT:
                 returnValue = getDeviceLogcat((String) args[0]);
                 break;
-
+            case CLEAR_LOGCAT:
+                clearDeviceLogcat(CLEAR_DEVICE_LOGCAT);
+                break;
+            case START_DEVICE_LOGCAT:
+                startDeviceLogcat((String) args[0], (String) args[1]);
+                break;
+            case GET_LOGCAT_BUFFER:
+                returnValue = getNewOutputFromLogcatBuffer((String) args[0]);
+                break;
+            case STOP_LOGCAT:
+                stopLogcat((String) args[0]);
+                break;
             // Setters
             case SET_POWER_PROPERTIES:
                 setPowerProperties((PowerProperties) args[0]);
@@ -524,6 +541,77 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
     }
 
     /**
+     * Stops the LogCat buffering.
+     *
+     * @param deviceSerialNumber
+     *        - the serial number of the device
+     */
+    private void stopLogcat(String deviceSerialNumber) {
+        logcatBuffer.remove(deviceSerialNumber);
+    }
+
+    /**
+     * Gets the newly added lines to the {@link LogcatBufer}.
+     *
+     * @param deviceSerialNumber
+     *        - the serial number of the target device
+     * @return a list of string lines
+     */
+    public List<Pair<Integer, String>> getNewOutputFromLogcatBuffer(String deviceSerialNumber) {
+        return logcatBuffer.getBuffer(deviceSerialNumber);
+    }
+
+    /**
+     * Starts a LogCat for a specific device on the agent and add the output to the {@link Buffer}.
+     *
+     * @param deviceSerialNumber
+     *        - the serial number of the target device
+     * @param startLogcatCommand
+     *        - an ADB for starting a LogCat.
+     * @throws CommandFailedException
+     *         thrown when fails to execute the command
+     */
+    private void startDeviceLogcat(String deviceSerialNumber, final String startLogcatCommand)
+        throws CommandFailedException {
+        logcatBuffer.addKey(deviceSerialNumber);
+
+        Runtime runtime = Runtime.getRuntime();
+        Process adbProcess = null;
+        try {
+            int controlLineId = 0;
+            adbProcess = runtime.exec(startLogcatCommand);
+            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(adbProcess.getInputStream()));
+            String currentLine = null;
+            while (logcatBuffer.contains(deviceSerialNumber)) {
+                currentLine = bufferedReader.readLine();
+                if (!currentLine.isEmpty()) {
+                    Pair<Integer, String> idToLogLine = new Pair<Integer, String>(controlLineId, currentLine);
+                    logcatBuffer.addValue(deviceSerialNumber, idToLogLine);
+                    controlLineId++;
+                }
+            }
+        } catch (IOException e) {
+            throw new CommandFailedException();
+        } finally {
+            if (adbProcess != null) {
+                adbProcess.destroy();
+            }
+        }
+    }
+
+    /**
+     * Clears a LogCat from a device with a specific serial number.
+     *
+     * @param clearLogcatCommand
+     *        - an ADB command that clears a LogCat
+     * @throws CommandFailedException
+     *         thrown when fails to clear a LogCat
+     */
+    private void clearDeviceLogcat(String clearLogcatCommand) throws CommandFailedException {
+        shellCommandExecutor.execute(clearLogcatCommand);
+    }
+
+    /**
      * Gets the information retrieved from the device LogCat as a sequence of bytes applying the given filter.
      *
      * @param logFilter
@@ -533,22 +621,27 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
      *         if LogCat command fails
      */
     private byte[] getDeviceLogcat(String logFilter) throws CommandFailedException {
+        String deviceLogcatFileName = String.format("device_%s.log", this.getDeviceInformation().getSerialNumber());
         String externalStorage = serviceCommunicator.getExternalStorage();
         String remoteLogParentDir = externalStorage != null ? externalStorage : FALLBACK_COMPONENT_PATH;
-        String remoteLogDir = String.format("%s/%s", remoteLogParentDir, DEVICE_LOG_FILE_NAME);
+        String remoteLogDir = String.format("%s/%s", remoteLogParentDir, deviceLogcatFileName);
 
         shellCommandExecutor.execute(GET_DEVICE_LOGCAT + remoteLogDir + logFilter);
 
         try {
-            wrappedDevice.pullFile(remoteLogDir, DEVICE_LOG_FILE_NAME);
-            File localLogFile = new File(DEVICE_LOG_FILE_NAME);
+            wrappedDevice.pullFile(remoteLogDir, deviceLogcatFileName);
+            File localLogFile = new File(deviceLogcatFileName);
             long fileLenght = localLogFile.length();
             byte[] logData = new byte[(int) fileLenght];
-            FileInputStream fileStream = new FileInputStream(localLogFile);
-            fileStream.read(logData);
-            fileStream.close();
+            FileInputStream fileInputStream = new FileInputStream(localLogFile);
+            fileInputStream.read(logData);
+            fileInputStream.close();
 
-            shellCommandExecutor.execute(REMOVE_COMMAND + remoteLogDir);
+            // clears the LogCat file from the agent
+            localLogFile.delete();
+            // clears the LogCat file from the device
+            String removeFileCommand = String.format("rm %s", remoteLogDir);
+            shellCommandExecutor.execute(removeFileCommand);
 
             return logData;
         } catch (SyncException | IOException | AdbCommandRejectedException | TimeoutException e) {
