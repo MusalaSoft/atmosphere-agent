@@ -989,7 +989,16 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
         String externalStorage = serviceCommunicator.getExternalStorage();
         String recordsParentDir = externalStorage != null ? externalStorage : FALLBACK_COMPONENT_PATH;
 
-        String output = shellCommandExecutor.execute(STOP_SCREEN_RECORD_COMMAND + recordsParentDir);
+        String processNamePrefix = "";
+        if (getDeviceInformation().getApiLevel() >= 23) { // Android M
+            processNamePrefix = "/system/bin/";
+        }
+
+        String command = String.format("%s%s %s",
+                                       STOP_SCREEN_RECORD_COMMAND,
+                                       recordsParentDir,
+                                       processNamePrefix);
+        String output = shellCommandExecutor.execute(command);
 
         if (output.trim().length() <= 0) {
             return;
