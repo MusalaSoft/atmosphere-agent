@@ -201,4 +201,14 @@ public class AgentPropertiesLoader {
         String onDeviceComponentFilesPath = getPropertyString(AgentProperties.ON_DEVICE_COMPONENT_FILES_PATH);
         return onDeviceComponentFilesPath.concat(File.separator);
     }
+
+    /**
+     * Returns whether the FTP server is enabled in the properties file.
+     *
+     * @return <code>true</code> the ftp.server flag true, otherwise returns <code>false</code>
+     */
+    public static boolean hasFtpServer() {
+        boolean hasFtpServer = Boolean.parseBoolean(getPropertyString(AgentProperties.FTP_SERVER));
+        return hasFtpServer;
+    }
 }

@@ -41,16 +41,18 @@ import com.musala.atmosphere.agent.DevicePropertyStringConstants;
 import com.musala.atmosphere.agent.devicewrapper.util.ApkInstaller;
 import com.musala.atmosphere.agent.devicewrapper.util.BackgroundPullFileTask;
 import com.musala.atmosphere.agent.devicewrapper.util.BackgroundShellCommandExecutor;
+import com.musala.atmosphere.agent.devicewrapper.util.Buffer;
 import com.musala.atmosphere.agent.devicewrapper.util.DeviceProfiler;
 import com.musala.atmosphere.agent.devicewrapper.util.FileTransferService;
 import com.musala.atmosphere.agent.devicewrapper.util.ImeManager;
-import com.musala.atmosphere.agent.devicewrapper.util.Buffer;
 import com.musala.atmosphere.agent.devicewrapper.util.ShellCommandExecutor;
 import com.musala.atmosphere.agent.devicewrapper.util.ondevicecomponent.ServiceCommunicator;
 import com.musala.atmosphere.agent.devicewrapper.util.ondevicecomponent.UIAutomatorCommunicator;
 import com.musala.atmosphere.agent.exception.OnDeviceServiceTerminationException;
+import com.musala.atmosphere.agent.util.AgentPropertiesLoader;
 import com.musala.atmosphere.agent.util.DeviceScreenResolutionParser;
 import com.musala.atmosphere.agent.util.FileRecycler;
+import com.musala.atmosphere.agent.util.FtpConnectionManager;
 import com.musala.atmosphere.agent.webview.WebElementManager;
 import com.musala.atmosphere.commons.DeviceInformation;
 import com.musala.atmosphere.commons.PowerProperties;
@@ -169,6 +171,8 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 
     private Buffer<String, Pair<Integer, String>> logcatBuffer;
 
+    private FtpConnectionManager ftpConnectionManager;
+
     /**
      * Creates an abstract wrapper of the given {@link IDevice device}.
      *
@@ -212,6 +216,10 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
         pullFileCompletionService = new ExecutorCompletionService<>(executor);
 
         webElementManager = new WebElementManager(chromeDriverService, deviceToWrap.getSerialNumber());
+
+        if(AgentPropertiesLoader.hasFtpServer()) {
+            this.ftpConnectionManager = FtpConnectionManager.getInstance();
+        }
     }
 
     @Override
@@ -577,11 +585,13 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 
         Runtime runtime = Runtime.getRuntime();
         Process adbProcess = null;
+
         try {
             int controlLineId = 0;
             adbProcess = runtime.exec(startLogcatCommand);
             BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(adbProcess.getInputStream()));
             String currentLine = null;
+
             while (logcatBuffer.contains(deviceSerialNumber)) {
                 currentLine = bufferedReader.readLine();
                 if (!currentLine.isEmpty()) {
@@ -919,7 +929,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 
     }
 
-    private void combineVideoFiles(String directoryPath) throws IOException {
+    private File combineVideoFiles(String directoryPath) throws IOException {
         File file = new File(directoryPath);
         String[] fileNames = file.list();
 
@@ -957,19 +967,23 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
         }
 
         String timestamp = new SimpleDateFormat(TIMESTAMP_FORMAT).format(new Date());
-        RandomAccessFile randomAccessFile = new RandomAccessFile(String.format("%s%s%s%s%s_%s_screen_record.mp4",
-                                                                               SCREEN_RECORDS_LOCAL_DIR,
-                                                                               File.separator,
-                                                                               MERGED_RECORDS_DIR_NAME,
-                                                                               File.separator,
-                                                                               timestamp,
-                                                                               wrappedDevice.getSerialNumber()),
-                                                                 "rw");
+
+        String screenRecordFileName = String.format("%s%s%s%s%s_%s_screen_record.mp4",
+                                                    SCREEN_RECORDS_LOCAL_DIR,
+                                                    File.separator,
+                                                    MERGED_RECORDS_DIR_NAME,
+                                                    File.separator,
+                                                    timestamp,
+                                                    wrappedDevice.getSerialNumber());
+
+        RandomAccessFile randomAccessFile = new RandomAccessFile(screenRecordFileName, "rw");
         FileChannel fileChannel = randomAccessFile.getChannel();
         combinedMovieContainer.writeContainer(fileChannel);
 
         fileChannel.close();
         randomAccessFile.close();
+
+        return new File(screenRecordFileName);
     }
 
     private void startScreenRecording(int timeLimit) throws CommandFailedException {
@@ -986,6 +1000,8 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
     }
 
     private void stopScreenRecording() throws CommandFailedException {
+        File screenRecordFile = null;
+
         String externalStorage = serviceCommunicator.getExternalStorage();
         String recordsParentDir = externalStorage != null ? externalStorage : FALLBACK_COMPONENT_PATH;
 
@@ -1063,15 +1079,25 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
         }
 
         try {
-            combineVideoFiles(separatedVideosDirectoryPath);
-
-            // TODO: Since we don't know when the FileRecycler will remove the files, there is a chance to not remove
-            // some of the recorded files, due to Agent.stop(). Find a way to handle this problem.
-            fileRecycler.addFile(separatedVideosDirectoryPath);
+            screenRecordFile = combineVideoFiles(separatedVideosDirectoryPath);
         } catch (IOException e) {
             LOGGER.error(String.format("Failed to merge video records pulled from device with serial number %s.",
                                        wrappedDevice.getSerialNumber()),
                          e);
+        }
+
+        if(ftpConnectionManager != null) {
+            String remoteScreenRecordName = screenRecordFile.getName();
+            boolean isRecordUploaded = ftpConnectionManager.transferData(screenRecordFile, remoteScreenRecordName);
+
+            if (!isRecordUploaded) {
+                final String exceptionMessage = "Faild to upload a video file to the FTP server.";
+                LOGGER.error(exceptionMessage);
+                throw new CommandFailedException(exceptionMessage);
+            }
+            // TODO: Since we don't know when the FileRecycler will remove the files, there is a chance to not remove
+            // some of the recorded files, due to Agent.stop(). Find a way to handle this problem.
+            fileRecycler.addFile(separatedVideosDirectoryPath);
         }
     }
 
