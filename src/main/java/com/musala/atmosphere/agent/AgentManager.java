@@ -18,7 +18,9 @@ import org.apache.log4j.Logger;
 import com.android.ddmlib.AndroidDebugBridge;
 import com.musala.atmosphere.agent.exception.IllegalPortException;
 import com.musala.atmosphere.agent.util.AgentIdCalculator;
+import com.musala.atmosphere.agent.util.AgentPropertiesLoader;
 import com.musala.atmosphere.agent.util.FileRecycler;
+import com.musala.atmosphere.agent.util.FtpConnectionManager;
 import com.musala.atmosphere.agent.util.SystemSpecificationLoader;
 import com.musala.atmosphere.commons.exceptions.CommandFailedException;
 import com.musala.atmosphere.commons.sa.EmulatorParameters;
@@ -64,6 +66,8 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager {
 
     private int rmiRegistryPort;
 
+    private FtpConnectionManager ftpConnectionManager;
+
     /**
      * Creates a new AgentManager on this computer.
      *
@@ -99,6 +103,11 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager {
 
         rmiRegistryPort = rmiPort;
         deviceManager = new DeviceManager(rmiPort, fileRecycler);
+
+        if(AgentPropertiesLoader.hasFtpServer()) {
+            ftpConnectionManager = FtpConnectionManager.getInstance();
+            ftpConnectionManager.connectToFtpServer();
+        }
 
         LOGGER.info("AgentManager created successfully.");
     }
@@ -142,6 +151,11 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager {
 
             // Stops the chrome driver started as a service
             deviceManager.stopChromeDriverService();
+
+            if(AgentPropertiesLoader.hasFtpServer()) {
+                // Disconnect and logout the FTP client
+                ftpConnectionManager.disconnect();
+            }
         } catch (Exception e) {
             // If something cannot be closed it was never opened, so it's okay.
             // Nothing to do here.

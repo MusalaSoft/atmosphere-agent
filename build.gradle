@@ -47,6 +47,8 @@ dependencies {
     compile 'org.slf4j:slf4j-simple:1.7.21'
     compile 'io.github.bonigarcia:webdrivermanager:1.5.0'
     compile 'org.seleniumhq.selenium:selenium-java:2.47.1'
+    compile 'commons-net:commons-net:3.5'
+
     runtime 'org.apache.httpcomponents:httpclient:4.4.1'
     runtime 'org.apache.httpcomponents:httpcore:4.4.4'
 
