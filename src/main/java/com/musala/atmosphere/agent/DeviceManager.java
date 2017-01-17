@@ -84,7 +84,7 @@ public class DeviceManager {
 
     private ChromeDriverService chromeDriverService;
 
-    private FileRecycler fileRecycler;
+    private static FileRecycler fileRecycler;
 
     public DeviceManager() {
     }
@@ -148,7 +148,7 @@ public class DeviceManager {
                 LOGGER.error(startChromeDriverServiceFailedMessage, e);
             }
 
-            this.fileRecycler = fileRecycler;
+            DeviceManager.fileRecycler = fileRecycler;
             LOGGER.info("Device manager created successfully.");
 
             deviceManagerExecutor.releaseResourcesAwaitTermination();
