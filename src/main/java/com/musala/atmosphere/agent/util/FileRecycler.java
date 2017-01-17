@@ -7,7 +7,7 @@ import java.util.List;
 
 /**
  * Class responsible for recycling files and directories.
- * 
+ *
  * @author yavor.stankov
  *
  */
@@ -31,7 +31,7 @@ public class FileRecycler implements Runnable {
 
     /**
      * Adds a file to the list with files to be removed.
-     * 
+     *
      * @param filePath
      *        - the full path to the file
      */
@@ -42,7 +42,7 @@ public class FileRecycler implements Runnable {
 
     /**
      * Adds a {@link List list} with files to the list with files to be removed.
-     * 
+     *
      * @param filePaths
      *        - {@link List list} with the full file paths
      */
@@ -54,7 +54,9 @@ public class FileRecycler implements Runnable {
 
     private void removeFiles() {
         for (File currentFile : filesToRemove) {
-            deleteFile(currentFile);
+            if (deleteFile(currentFile)) {
+                removedFiles.add(currentFile);
+            }
         }
 
         clearList();
