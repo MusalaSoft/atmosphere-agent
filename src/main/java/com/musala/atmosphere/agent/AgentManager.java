@@ -1,5 +1,6 @@
 package com.musala.atmosphere.agent;
 
+import java.io.File;
 import java.io.IOException;
 import java.rmi.AccessException;
 import java.rmi.NoSuchObjectException;
@@ -12,6 +13,9 @@ import java.rmi.server.RemoteServer;
 import java.rmi.server.ServerNotActiveException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
 
@@ -20,6 +24,7 @@ import com.musala.atmosphere.agent.exception.IllegalPortException;
 import com.musala.atmosphere.agent.util.AgentIdCalculator;
 import com.musala.atmosphere.agent.util.AgentPropertiesLoader;
 import com.musala.atmosphere.agent.util.FileRecycler;
+import com.musala.atmosphere.agent.util.FtpFileTransferService;
 import com.musala.atmosphere.agent.util.FtpConnectionManager;
 import com.musala.atmosphere.agent.util.SystemSpecificationLoader;
 import com.musala.atmosphere.commons.exceptions.CommandFailedException;
@@ -57,10 +62,6 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager {
     private Registry rmiRegistry;
 
     private final String agentId;
-
-    private String serverIPAddress;
-
-    private int serverRmiPort;
 
     private SystemSpecificationLoader systemSpecificationLoader;
 
@@ -103,11 +104,6 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager {
 
         rmiRegistryPort = rmiPort;
         deviceManager = new DeviceManager(rmiPort, fileRecycler);
-
-        if(AgentPropertiesLoader.hasFtpServer()) {
-            ftpConnectionManager = FtpConnectionManager.getInstance();
-            ftpConnectionManager.connectToFtpServer();
-        }
 
         LOGGER.info("AgentManager created successfully.");
     }
@@ -200,9 +196,6 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager {
 
     @Override
     public void registerServer(String serverIPAddress, int serverRmiPort) throws RemoteException {
-        this.serverIPAddress = serverIPAddress;
-        this.serverRmiPort = serverRmiPort;
-
         // Try to construct a new device change listener that will notify the newly set server
         DeviceChangeListener newDeviceChangeListener = new DeviceChangeListener(serverIPAddress, serverRmiPort);
         androidDebugBridgeManager.setListener(newDeviceChangeListener);

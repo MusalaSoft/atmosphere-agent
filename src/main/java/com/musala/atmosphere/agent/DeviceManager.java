@@ -15,6 +15,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
 import org.openqa.selenium.chrome.ChromeDriverService;
@@ -35,7 +37,10 @@ import com.musala.atmosphere.agent.exception.OnDeviceComponentCommunicationExcep
 import com.musala.atmosphere.agent.exception.OnDeviceComponentInitializationException;
 import com.musala.atmosphere.agent.exception.OnDeviceComponentStartingException;
 import com.musala.atmosphere.agent.util.AgentIdCalculator;
+import com.musala.atmosphere.agent.util.AgentPropertiesLoader;
 import com.musala.atmosphere.agent.util.FileRecycler;
+import com.musala.atmosphere.agent.util.FtpConnectionManager;
+import com.musala.atmosphere.agent.util.FtpFileTransferService;
 import com.musala.atmosphere.commons.DeviceInformation;
 import com.musala.atmosphere.commons.ad.service.ConnectionConstants;
 import com.musala.atmosphere.commons.exceptions.CommandFailedException;
@@ -58,8 +63,6 @@ import io.github.bonigarcia.wdm.ChromeDriverManager;
 public class DeviceManager {
     private static final Logger LOGGER = Logger.getLogger(DeviceManager.class.getCanonicalName());
 
-    private static final String CURRENT_DIR = System.getProperty("user.dir");
-
     private static final int BOOT_VALIDATION_TIMEOUT = 120000;
 
     private static final int DEVICE_EXISTANCE_CHECK_TIMEOUT = 1000;
@@ -67,6 +70,10 @@ public class DeviceManager {
     private static final int ATMOSPHERE_MIN_ALLOWED_API_LEVEL = 17;
 
     private static final int NO_AVAIBLE_API_LEVEL = -1;
+
+    private static final int FTP_TRANSFER_SERVICE_DELAY = 3;
+
+    private static final String QUEUE_FILE_NAME = "pending_transfers.txt";
 
     private static String agentId;
 
@@ -78,20 +85,34 @@ public class DeviceManager {
 
     private static Registry rmiRegistry;
 
-    private static int rmiRegistryPort;
-
     private static volatile Map<String, IDevice> connectedDevicesList = new HashMap<>();
 
     private ChromeDriverService chromeDriverService;
 
     private static FileRecycler fileRecycler;
 
+    private static FtpFileTransferService ftpFileTransferService;
+
     public DeviceManager() {
     }
 
     public DeviceManager(int rmiPort, FileRecycler fileRecycler) throws RemoteException {
+        if(AgentPropertiesLoader.hasFtpServer() && ftpFileTransferService == null) {
+            FtpConnectionManager ftpConnectionManager = new FtpConnectionManager();
+            ftpConnectionManager.connectToFtpServer();
+
+            ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+
+            try {
+                ftpFileTransferService = new FtpFileTransferService(QUEUE_FILE_NAME, ftpConnectionManager);
+
+                scheduler.scheduleAtFixedRate(ftpFileTransferService, 0, FTP_TRANSFER_SERVICE_DELAY, TimeUnit.SECONDS);
+            } catch (IOException e) {
+                LOGGER.error("The FTP file transfer service failed to initialize.", e);
+            }
+        }
+
         if (androidDebugBridgeManager == null) {
-            rmiRegistryPort = rmiPort;
             androidDebugBridgeManager = new AndroidDebugBridgeManager();
 
             AgentIdCalculator agentIdCalculator = new AgentIdCalculator();
@@ -328,7 +349,8 @@ public class DeviceManager {
                                                        serviceCommunicator,
                                                        automatorCommunicator,
                                                        chromeDriverService,
-                                                       fileRecycler);
+                                                       fileRecycler,
+                                                       ftpFileTransferService);
             } else {
                 deviceWrapper = new RealWrapDevice(device,
                                                    executor,
@@ -336,7 +358,8 @@ public class DeviceManager {
                                                    serviceCommunicator,
                                                    automatorCommunicator,
                                                    chromeDriverService,
-                                                   fileRecycler);
+                                                   fileRecycler,
+                                                   ftpFileTransferService);
             }
         } catch (NotPossibleForDeviceException e) {
             // Not really possible as we have just checked.

@@ -53,6 +53,7 @@ import com.musala.atmosphere.agent.util.AgentPropertiesLoader;
 import com.musala.atmosphere.agent.util.DeviceScreenResolutionParser;
 import com.musala.atmosphere.agent.util.FileRecycler;
 import com.musala.atmosphere.agent.util.FtpConnectionManager;
+import com.musala.atmosphere.agent.util.FtpFileTransferService;
 import com.musala.atmosphere.agent.webview.WebElementManager;
 import com.musala.atmosphere.commons.DeviceInformation;
 import com.musala.atmosphere.commons.PowerProperties;
@@ -171,7 +172,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 
     private Buffer<String, Pair<Integer, String>> logcatBuffer;
 
-    private FtpConnectionManager ftpConnectionManager;
+    private FtpFileTransferService ftpFileTransferService;
 
     /**
      * Creates an abstract wrapper of the given {@link IDevice device}.
@@ -199,7 +200,8 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
             ServiceCommunicator serviceCommunicator,
             UIAutomatorCommunicator automatorCommunicator,
             ChromeDriverService chromeDriverService,
-            FileRecycler fileRecycler)
+            FileRecycler fileRecycler,
+            FtpFileTransferService ftpFileTransferService)
         throws RemoteException {
         // TODO: Use a dependency injection mechanism here.
         this.wrappedDevice = deviceToWrap;
@@ -209,6 +211,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
         this.automatorCommunicator = automatorCommunicator;
         this.fileRecycler = fileRecycler;
         this.logcatBuffer = new Buffer<String, Pair<Integer, String>>();
+        this.ftpFileTransferService = ftpFileTransferService;
 
         transferService = new FileTransferService(wrappedDevice);
         apkInstaller = new ApkInstaller(wrappedDevice);
@@ -216,10 +219,6 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
         pullFileCompletionService = new ExecutorCompletionService<>(executor);
 
         webElementManager = new WebElementManager(chromeDriverService, deviceToWrap.getSerialNumber());
-
-        if(AgentPropertiesLoader.hasFtpServer()) {
-            this.ftpConnectionManager = FtpConnectionManager.getInstance();
-        }
     }
 
     @Override
@@ -929,7 +928,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 
     }
 
-    private File combineVideoFiles(String directoryPath) throws IOException {
+    public String combineVideoFiles(String directoryPath) throws IOException {
         File file = new File(directoryPath);
         String[] fileNames = file.list();
 
@@ -983,7 +982,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
         fileChannel.close();
         randomAccessFile.close();
 
-        return new File(screenRecordFileName);
+        return screenRecordFileName;
     }
 
     private void startScreenRecording(int timeLimit) throws CommandFailedException {
@@ -1000,7 +999,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
     }
 
     private void stopScreenRecording() throws CommandFailedException {
-        File screenRecordFile = null;
+        String screenRecordFileName = null;
 
         String externalStorage = serviceCommunicator.getExternalStorage();
         String recordsParentDir = externalStorage != null ? externalStorage : FALLBACK_COMPONENT_PATH;
@@ -1079,26 +1078,25 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
         }
 
         try {
-            screenRecordFile = combineVideoFiles(separatedVideosDirectoryPath);
+            screenRecordFileName = combineVideoFiles(separatedVideosDirectoryPath);
         } catch (IOException e) {
             LOGGER.error(String.format("Failed to merge video records pulled from device with serial number %s.",
                                        wrappedDevice.getSerialNumber()),
                          e);
         }
 
-        if(ftpConnectionManager != null) {
-            String remoteScreenRecordName = screenRecordFile.getName();
-            boolean isRecordUploaded = ftpConnectionManager.transferData(screenRecordFile, remoteScreenRecordName);
-
-            if (!isRecordUploaded) {
-                final String exceptionMessage = "Faild to upload a video file to the FTP server.";
-                LOGGER.error(exceptionMessage);
-                throw new CommandFailedException(exceptionMessage);
+        if (ftpFileTransferService != null) {
+            try {
+                ftpFileTransferService.addTransferTask(screenRecordFileName);
+            } catch (IOException e) {
+                LOGGER.error(String.format("Failed to add \"%s\" to the queue of the pending transfers.",
+                                           screenRecordFileName));
             }
-            // TODO: Since we don't know when the FileRecycler will remove the files, there is a chance to not remove
-            // some of the recorded files, due to Agent.stop(). Find a way to handle this problem.
-            fileRecycler.addFile(separatedVideosDirectoryPath);
         }
+
+        // TODO: Since we don't know when the FileRecycler will remove the files, there is a chance to not remove
+        // some of the recorded files, due to Agent.stop(). Find a way to handle this problem.
+        fileRecycler.addFile(separatedVideosDirectoryPath);
     }
 
     /**

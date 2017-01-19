@@ -22,8 +22,6 @@ public class FtpConnectionManager {
 
     private FTPClient ftpClient;
 
-    private static FtpConnectionManager ftpConnectionManager;
-
     private static String ftpServerName = FtpServerPropertiesLoader.getFtpName();;
 
     private static String username = FtpServerPropertiesLoader.getUsername();
@@ -32,15 +30,11 @@ public class FtpConnectionManager {
 
     private static int port = FtpServerPropertiesLoader.getFtpPort();
 
-    private FtpConnectionManager() {
-        this.ftpClient = new FTPClient();
-    }
+    private static boolean isAvailableForTransfer;
 
-    public static synchronized FtpConnectionManager getInstance() {
-        if (ftpConnectionManager == null) {
-            ftpConnectionManager = new FtpConnectionManager();
-        }
-        return ftpConnectionManager;
+    public FtpConnectionManager() {
+        this.ftpClient = new FTPClient();
+        isAvailableForTransfer = true;
     }
 
     /**
@@ -57,8 +51,10 @@ public class FtpConnectionManager {
             if (!FTPReply.isPositiveCompletion(ftpClient.getReplyCode())) {
                 throw new IOException("FTP server refused connection.");
             }
+
+            LOGGER.info(String.format("Connected to an FTP Server with IP (%s:%s).", ftpServerName, port));
         } catch (IOException e) {
-            LOGGER.error("Failed to connect to an FTP Server", e);
+            LOGGER.error(String.format("Failed to connect to an FTP Server with IP (%s:%s).", ftpServerName, port), e);
         }
     }
 
@@ -83,11 +79,10 @@ public class FtpConnectionManager {
      *
      * @param fileToTransfer
      *        the file to transfer
-     * @param remoteFileName
-     *        the remote file name
      * @return <code>true</code> if the data transfer is successful, otherwise returns <code>false</code>
      */
-    public boolean transferData(File fileToTransfer, String remoteFileName) {
+    public boolean transferData(File fileToTransfer) {
+        isAvailableForTransfer = false;
         boolean isSuccessful = true;
 
         try (InputStream inputStream = new FileInputStream(fileToTransfer)) {
@@ -97,23 +92,30 @@ public class FtpConnectionManager {
                 connectToFtpServer();
             }
 
-            long startTime = System.currentTimeMillis();
-
-            ftpClient.storeFile(remoteFileName, inputStream);
-
-            long stopTime = System.currentTimeMillis();
-            float transferDuration = ((stopTime - startTime))/1000.f;
-
-            LOGGER.info("File transfer finished for " + transferDuration + " seconds.");
+            ftpClient.storeFile(fileToTransfer.getName(), inputStream);
         } catch (FTPConnectionClosedException e) {
             // TODO: Find why sometimes this exception is thrown but the transfer is successful
         } catch (IOException e) {
             isSuccessful = false;
-            LOGGER.error("File transfer failed.", e);
-            e.printStackTrace();
+            LOGGER.error("File transfer FAILED.", e);
         }
 
+        if (isSuccessful) {
+            LOGGER.info("File transfer finished SUCCESSFULLY.");
+        }
+
+        isAvailableForTransfer = true;
+
         return isSuccessful;
+    }
+
+    /**
+     * Returns whether the ftp connection manager is available for transfer
+     *
+     * @return whether the ftp connection manager is available for transfer
+     */
+    public boolean isAvailableForTransfer() {
+        return isAvailableForTransfer;
     }
 
 }
