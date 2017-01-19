@@ -22,6 +22,7 @@ import com.musala.atmosphere.agent.devicewrapper.util.BackgroundShellCommandExec
 import com.musala.atmosphere.agent.devicewrapper.util.ondevicecomponent.ServiceCommunicator;
 import com.musala.atmosphere.agent.devicewrapper.util.ondevicecomponent.UIAutomatorCommunicator;
 import com.musala.atmosphere.agent.util.FileRecycler;
+import com.musala.atmosphere.agent.util.FtpFileTransferService;
 import com.musala.atmosphere.commons.ConnectionType;
 import com.musala.atmosphere.commons.PowerProperties;
 import com.musala.atmosphere.commons.RoutingAction;
@@ -44,9 +45,9 @@ import com.musala.atmosphere.commons.util.telephony.PhoneType;
 import com.musala.atmosphere.commons.util.telephony.SimState;
 
 /**
- * 
+ *
  * @author yordan.petrov
- * 
+ *
  */
 @RunWith(MockitoJUnitRunner.class)
 public class AbstractWrapDeviceTest {
@@ -60,14 +61,16 @@ public class AbstractWrapDeviceTest {
                 ServiceCommunicator serviceCommunicator,
                 UIAutomatorCommunicator automatorCommunicator,
                 ChromeDriverService chromeDriverService,
-                FileRecycler fileRecycler) throws RemoteException {
+                FileRecycler fileRecycler,
+                FtpFileTransferService ftpFileTransferService) throws RemoteException {
             super(deviceToWrap,
                   executor,
                   shellCommandExecutor,
                   serviceCommunicator,
                   automatorCommunicator,
                   chromeDriverService,
-                  fileRecycler);
+                  fileRecycler,
+                  null);
 
         }
 

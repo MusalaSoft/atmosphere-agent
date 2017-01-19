@@ -13,6 +13,7 @@ import com.musala.atmosphere.agent.devicewrapper.util.BatteryChangedIntentData;
 import com.musala.atmosphere.agent.devicewrapper.util.ondevicecomponent.ServiceCommunicator;
 import com.musala.atmosphere.agent.devicewrapper.util.ondevicecomponent.UIAutomatorCommunicator;
 import com.musala.atmosphere.agent.util.FileRecycler;
+import com.musala.atmosphere.agent.util.FtpFileTransferService;
 import com.musala.atmosphere.commons.PowerProperties;
 import com.musala.atmosphere.commons.SmsMessage;
 import com.musala.atmosphere.commons.beans.BatteryLevel;
@@ -71,7 +72,8 @@ public class RealWrapDevice extends AbstractWrapDevice {
             ServiceCommunicator serviceCommunicator,
             UIAutomatorCommunicator automatorCommunicator,
             ChromeDriverService chromeDriverService,
-            FileRecycler fileRecycler)
+            FileRecycler fileRecycler,
+            FtpFileTransferService ftpFileTransferService)
         throws RemoteException,
             NotPossibleForDeviceException {
         super(deviceToWrap,
@@ -80,7 +82,8 @@ public class RealWrapDevice extends AbstractWrapDevice {
               serviceCommunicator,
               automatorCommunicator,
               chromeDriverService,
-              fileRecycler);
+              fileRecycler,
+              ftpFileTransferService);
 
         if (deviceToWrap.isEmulator()) {
             throw new NotPossibleForDeviceException("Cannot create real wrap device for an emulator.");

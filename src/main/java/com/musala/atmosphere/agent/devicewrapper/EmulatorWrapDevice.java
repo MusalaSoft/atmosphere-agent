@@ -16,6 +16,7 @@ import com.musala.atmosphere.agent.devicewrapper.util.ondevicecomponent.ServiceC
 import com.musala.atmosphere.agent.devicewrapper.util.ondevicecomponent.UIAutomatorCommunicator;
 import com.musala.atmosphere.agent.exception.EmulatorConnectionFailedException;
 import com.musala.atmosphere.agent.util.FileRecycler;
+import com.musala.atmosphere.agent.util.FtpFileTransferService;
 import com.musala.atmosphere.commons.PowerProperties;
 import com.musala.atmosphere.commons.SmsMessage;
 import com.musala.atmosphere.commons.beans.BatteryLevel;
@@ -71,7 +72,8 @@ public class EmulatorWrapDevice extends AbstractWrapDevice {
             ServiceCommunicator serviceCommunicator,
             UIAutomatorCommunicator automatorCommunicator,
             ChromeDriverService chromeDriverService,
-            FileRecycler fileRecycler)
+            FileRecycler fileRecycler,
+            FtpFileTransferService ftpFileTransferService)
         throws NotPossibleForDeviceException,
             RemoteException {
         super(deviceToWrap,
@@ -80,7 +82,8 @@ public class EmulatorWrapDevice extends AbstractWrapDevice {
               serviceCommunicator,
               automatorCommunicator,
               chromeDriverService,
-              fileRecycler);
+              fileRecycler,
+              ftpFileTransferService);
 
         if (!deviceToWrap.isEmulator()) {
             throw new NotPossibleForDeviceException("Cannot create emulator wrap device for a real, physical device.");
