@@ -1,6 +1,5 @@
 package com.musala.atmosphere.agent;
 
-import java.io.File;
 import java.io.IOException;
 import java.rmi.AccessException;
 import java.rmi.NoSuchObjectException;
@@ -13,9 +12,6 @@ import java.rmi.server.RemoteServer;
 import java.rmi.server.ServerNotActiveException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.List;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
 
@@ -24,8 +20,6 @@ import com.musala.atmosphere.agent.exception.IllegalPortException;
 import com.musala.atmosphere.agent.util.AgentIdCalculator;
 import com.musala.atmosphere.agent.util.AgentPropertiesLoader;
 import com.musala.atmosphere.agent.util.FileRecycler;
-import com.musala.atmosphere.agent.util.FtpFileTransferService;
-import com.musala.atmosphere.agent.util.FtpConnectionManager;
 import com.musala.atmosphere.agent.util.SystemSpecificationLoader;
 import com.musala.atmosphere.commons.exceptions.CommandFailedException;
 import com.musala.atmosphere.commons.sa.EmulatorParameters;
@@ -66,8 +60,6 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager {
     private SystemSpecificationLoader systemSpecificationLoader;
 
     private int rmiRegistryPort;
-
-    private FtpConnectionManager ftpConnectionManager;
 
     /**
      * Creates a new AgentManager on this computer.
@@ -150,7 +142,7 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager {
 
             if(AgentPropertiesLoader.hasFtpServer()) {
                 // Disconnect and logout the FTP client
-                ftpConnectionManager.disconnect();
+                deviceManager.stopFtpFileTransferService();
             }
         } catch (Exception e) {
             // If something cannot be closed it was never opened, so it's okay.

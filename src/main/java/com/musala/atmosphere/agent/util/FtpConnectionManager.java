@@ -81,7 +81,7 @@ public class FtpConnectionManager {
      *        the file to transfer
      * @return <code>true</code> if the data transfer is successful, otherwise returns <code>false</code>
      */
-    public boolean transferData(File fileToTransfer) {
+    public boolean transferData(File fileToTransfer, String remoteFileName) {
         isAvailableForTransfer = false;
         boolean isSuccessful = true;
 
@@ -92,7 +92,7 @@ public class FtpConnectionManager {
                 connectToFtpServer();
             }
 
-            ftpClient.storeFile(fileToTransfer.getName(), inputStream);
+            ftpClient.storeFile(remoteFileName, inputStream);
         } catch (FTPConnectionClosedException e) {
             // TODO: Find why sometimes this exception is thrown but the transfer is successful
         } catch (IOException e) {
@@ -110,9 +110,47 @@ public class FtpConnectionManager {
     }
 
     /**
-     * Returns whether the ftp connection manager is available for transfer
+     * Creates a remote directory on the FTP server with a given name if not exists.
      *
-     * @return whether the ftp connection manager is available for transfer
+     * @param directoryName
+     *        - the name of the remote directory on the FTP server that will be created
+     * @return <code>true</code> if the creation is successful or the directory already exists, otherwise returns
+     *         <code>false</code>
+     */
+    public boolean createDirectoryIfNotExists(String directoryName) {
+        if (isRemoteDirectoryExists(directoryName)) {
+            return true;
+        }
+
+        boolean isSuccessful = false;
+        try {
+            isSuccessful = ftpClient.makeDirectory(directoryName);
+        } catch (IOException e) {
+            LOGGER.error("Failed to create a directory on the FTP server. Directory name: " + directoryName, e);
+        }
+
+        return isSuccessful;
+    }
+
+    private boolean isRemoteDirectoryExists(String dirName) {
+        boolean exist = false;
+        try {
+            exist = ftpClient.changeWorkingDirectory(dirName);
+
+            if (exist) {
+                ftpClient.changeToParentDirectory();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return exist;
+    }
+
+    /**
+     * Returns whether the FTP connection manager is available for transfer
+     *
+     * @return whether the FTP connection manager is available for transfer
      */
     public boolean isAvailableForTransfer() {
         return isAvailableForTransfer;

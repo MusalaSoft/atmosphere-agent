@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
@@ -46,12 +48,44 @@ public class FtpFileTransferService implements Runnable {
                 // retrieves and removes the head of this queue
                 String filePath = getNextTransferFilePath();
                 File fileToTransfer = new File(filePath);
-                connectionManager.transferData(fileToTransfer);
-                // TODO: Find a way to transfer an error message (if occurs) to the client
+                String remoteFileName = fileToTransfer.getName();
+
+                String username = getUsername(remoteFileName);
+
+                if (username != null) {
+                    boolean isCreated = connectionManager.createDirectoryIfNotExists(username);
+                    if (isCreated) {
+                        remoteFileName = username + System.getProperty("file.separator") + remoteFileName;
+                        connectionManager.transferData(fileToTransfer, remoteFileName);
+                    } else {
+                        // TODO: Find a way to transfer an error message (if occurs) to the client
+                        LOGGER.error("Failed to transfer a data to a remote directory.");
+                    }
+                }
             }
         } catch (IOException e) {
             LOGGER.error(String.format("Failed to read from the \"%s\" file", pendingTransferData.getName()), e);
         }
+    }
+
+    private String getUsername(String filePath) {
+        String fileRegexFormat = "(.*)_[0-9a-z-]+_[0-9a-z]+_screen_record.mp4";
+        Pattern pattern = Pattern.compile(fileRegexFormat);
+        Matcher matcher = pattern.matcher(filePath);
+        String username = null;
+
+        if (matcher.find()) {
+            username = matcher.group(1);
+        }
+
+        return username;
+    }
+
+    /**
+     * Logout and disconnects from the FTP server.
+     */
+    public void stop() {
+        connectionManager.disconnect();
     }
 
     /**

@@ -49,10 +49,8 @@ import com.musala.atmosphere.agent.devicewrapper.util.ShellCommandExecutor;
 import com.musala.atmosphere.agent.devicewrapper.util.ondevicecomponent.ServiceCommunicator;
 import com.musala.atmosphere.agent.devicewrapper.util.ondevicecomponent.UIAutomatorCommunicator;
 import com.musala.atmosphere.agent.exception.OnDeviceServiceTerminationException;
-import com.musala.atmosphere.agent.util.AgentPropertiesLoader;
 import com.musala.atmosphere.agent.util.DeviceScreenResolutionParser;
 import com.musala.atmosphere.agent.util.FileRecycler;
-import com.musala.atmosphere.agent.util.FtpConnectionManager;
 import com.musala.atmosphere.agent.util.FtpFileTransferService;
 import com.musala.atmosphere.agent.webview.WebElementManager;
 import com.musala.atmosphere.commons.DeviceInformation;
@@ -489,7 +487,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
                 startScreenRecording((Integer) args[0]);
                 break;
             case STOP_RECORDING:
-                stopScreenRecording();
+                stopScreenRecording((String) args[0]);
                 break;
 
             // WiFi connection properties related
@@ -928,7 +926,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 
     }
 
-    public String combineVideoFiles(String directoryPath) throws IOException {
+    public String combineVideoFiles(String directoryPath, String uplaodDirectoryName) throws IOException {
         File file = new File(directoryPath);
         String[] fileNames = file.list();
 
@@ -967,11 +965,13 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 
         String timestamp = new SimpleDateFormat(TIMESTAMP_FORMAT).format(new Date());
 
-        String screenRecordFileName = String.format("%s%s%s%s%s_%s_screen_record.mp4",
+        uplaodDirectoryName = !uplaodDirectoryName.isEmpty() ? uplaodDirectoryName + "_" : uplaodDirectoryName;
+        String screenRecordFileName = String.format("%s%s%s%s%s%s_%s_screen_record.mp4",
                                                     SCREEN_RECORDS_LOCAL_DIR,
                                                     File.separator,
                                                     MERGED_RECORDS_DIR_NAME,
                                                     File.separator,
+                                                    uplaodDirectoryName,
                                                     timestamp,
                                                     wrappedDevice.getSerialNumber());
 
@@ -998,7 +998,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
         shellCommandExecutor.executeInBackground(screenRecordCommand);
     }
 
-    private void stopScreenRecording() throws CommandFailedException {
+    private void stopScreenRecording(String uplaodDirectoryName) throws CommandFailedException {
         String screenRecordFileName = null;
 
         String externalStorage = serviceCommunicator.getExternalStorage();
@@ -1009,10 +1009,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
             processNamePrefix = "/system/bin/";
         }
 
-        String command = String.format("%s%s %s",
-                                       STOP_SCREEN_RECORD_COMMAND,
-                                       recordsParentDir,
-                                       processNamePrefix);
+        String command = String.format("%s%s %s", STOP_SCREEN_RECORD_COMMAND, recordsParentDir, processNamePrefix);
         String output = shellCommandExecutor.execute(command);
 
         if (output.trim().length() <= 0) {
@@ -1078,14 +1075,14 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
         }
 
         try {
-            screenRecordFileName = combineVideoFiles(separatedVideosDirectoryPath);
+            screenRecordFileName = combineVideoFiles(separatedVideosDirectoryPath, uplaodDirectoryName);
         } catch (IOException e) {
             LOGGER.error(String.format("Failed to merge video records pulled from device with serial number %s.",
                                        wrappedDevice.getSerialNumber()),
                          e);
         }
 
-        if (ftpFileTransferService != null) {
+        if (ftpFileTransferService != null && !uplaodDirectoryName.isEmpty()) {
             try {
                 ftpFileTransferService.addTransferTask(screenRecordFileName);
             } catch (IOException e) {
