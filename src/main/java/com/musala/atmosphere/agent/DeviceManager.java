@@ -93,6 +93,8 @@ public class DeviceManager {
 
     private static FtpFileTransferService ftpFileTransferService;
 
+    private static ScheduledExecutorService fileTransferServiceScheduler;
+
     public DeviceManager() {
     }
 
@@ -101,12 +103,12 @@ public class DeviceManager {
             FtpConnectionManager ftpConnectionManager = new FtpConnectionManager();
             ftpConnectionManager.connectToFtpServer();
 
-            ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+            fileTransferServiceScheduler = Executors.newSingleThreadScheduledExecutor();
 
             try {
                 ftpFileTransferService = new FtpFileTransferService(QUEUE_FILE_NAME, ftpConnectionManager);
 
-                scheduler.scheduleAtFixedRate(ftpFileTransferService, 0, FTP_TRANSFER_SERVICE_DELAY, TimeUnit.SECONDS);
+                fileTransferServiceScheduler.scheduleAtFixedRate(ftpFileTransferService, 0, FTP_TRANSFER_SERVICE_DELAY, TimeUnit.SECONDS);
             } catch (IOException e) {
                 LOGGER.error("The FTP file transfer service failed to initialize.", e);
             }
@@ -541,6 +543,11 @@ public class DeviceManager {
      */
     public void stopChromeDriverService() {
         chromeDriverService.stop();
+    }
+
+    public void stopFtpFileTransferService() {
+        ftpFileTransferService.stop();
+        fileTransferServiceScheduler.shutdown();
     }
 
     /**
