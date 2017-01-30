@@ -75,4 +75,16 @@ public class FtpServerPropertiesLoader {
         return Integer.parseInt(ftpPort);
     }
 
+    /**
+     * Return whether the FTP server is secured with SSL/TLS (FTPS).
+     *
+     * @return <code>true</code> if the FTP server is secured with SSL/TLS, otherwise returns <code>false</code>
+     */
+    public static boolean isFtps() {
+        String isFtpsString = getPropertyString(FtpServerProperties.FTPS).trim();
+        boolean isFtps = Boolean.parseBoolean(isFtpsString);
+
+        return isFtps;
+    }
+
 }

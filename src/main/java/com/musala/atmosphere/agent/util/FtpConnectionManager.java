@@ -9,6 +9,7 @@ import org.apache.commons.net.ftp.FTP;
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPConnectionClosedException;
 import org.apache.commons.net.ftp.FTPReply;
+import org.apache.commons.net.ftp.FTPSClient;
 import org.apache.log4j.Logger;
 
 /**
@@ -22,7 +23,7 @@ public class FtpConnectionManager {
 
     private FTPClient ftpClient;
 
-    private static String ftpServerName = FtpServerPropertiesLoader.getFtpName();;
+    private static String ftpServerName = FtpServerPropertiesLoader.getFtpName();
 
     private static String username = FtpServerPropertiesLoader.getUsername();
 
@@ -32,8 +33,8 @@ public class FtpConnectionManager {
 
     private static boolean isAvailableForTransfer;
 
-    public FtpConnectionManager() {
-        this.ftpClient = new FTPClient();
+    public FtpConnectionManager(boolean isSecured) {
+        this.ftpClient = isSecured ? new FTPSClient() : new FTPClient();
         isAvailableForTransfer = true;
     }
 

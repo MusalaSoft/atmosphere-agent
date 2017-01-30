@@ -41,6 +41,7 @@ import com.musala.atmosphere.agent.util.AgentPropertiesLoader;
 import com.musala.atmosphere.agent.util.FileRecycler;
 import com.musala.atmosphere.agent.util.FtpConnectionManager;
 import com.musala.atmosphere.agent.util.FtpFileTransferService;
+import com.musala.atmosphere.agent.util.FtpServerPropertiesLoader;
 import com.musala.atmosphere.commons.DeviceInformation;
 import com.musala.atmosphere.commons.ad.service.ConnectionConstants;
 import com.musala.atmosphere.commons.exceptions.CommandFailedException;
@@ -100,7 +101,8 @@ public class DeviceManager {
 
     public DeviceManager(int rmiPort, FileRecycler fileRecycler) throws RemoteException {
         if(AgentPropertiesLoader.hasFtpServer() && ftpFileTransferService == null) {
-            FtpConnectionManager ftpConnectionManager = new FtpConnectionManager();
+            boolean isSecuredFtp = FtpServerPropertiesLoader.isFtps();
+            FtpConnectionManager ftpConnectionManager = new FtpConnectionManager(isSecuredFtp);
             ftpConnectionManager.connectToFtpServer();
 
             fileTransferServiceScheduler = Executors.newSingleThreadScheduledExecutor();
