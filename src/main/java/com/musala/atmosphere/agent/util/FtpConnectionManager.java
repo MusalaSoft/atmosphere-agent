@@ -87,12 +87,6 @@ public class FtpConnectionManager {
         boolean isSuccessful = true;
 
         try (InputStream inputStream = new FileInputStream(fileToTransfer)) {
-            // Connect to the FTP if the socket connection is closed from the server side due a timeout.
-            if (!FTPReply.isPositiveCompletion(ftpClient.getReplyCode())) {
-                LOGGER.info("Reconnecting to an FTP server");
-                connectToFtpServer();
-            }
-
             ftpClient.storeFile(remoteFileName, inputStream);
         } catch (FTPConnectionClosedException e) {
             // TODO: Find why sometimes this exception is thrown but the transfer is successful
@@ -146,6 +140,28 @@ public class FtpConnectionManager {
         }
 
         return exist;
+    }
+
+    /**
+     * Connect to the FTP if the socket connection is closed from the server side due an idle timeout.
+     *
+     */
+    public void reconnect() {
+        String reconnectMessage = "Reconnecting to the FTP server...";
+
+        try {
+            boolean ready = ftpClient.sendNoOp();
+            if (!ready) {
+                LOGGER.info(reconnectMessage);
+                connectToFtpServer();
+            }
+        } catch (FTPConnectionClosedException e) {
+            disconnect();
+            LOGGER.info(reconnectMessage);
+            connectToFtpServer();
+        } catch (IOException e) {
+            LOGGER.error("Cannot wake up the FTP connection.", e);
+        }
     }
 
     /**

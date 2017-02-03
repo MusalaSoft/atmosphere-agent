@@ -44,7 +44,9 @@ public class FtpFileTransferService implements Runnable {
     @Override
     public void run() {
         try {
-            if (connectionManager.isAvailableForTransfer() && !isEmptyQueue()) {
+            if (connectionManager.isAvailableForTransfer() && !isQueueEmpty()) {
+                connectionManager.reconnect();
+
                 // retrieves and removes the head of this queue
                 String filePath = getNextTransferFilePath();
                 File fileToTransfer = new File(filePath);
@@ -55,11 +57,13 @@ public class FtpFileTransferService implements Runnable {
                 if (username != null) {
                     boolean isCreated = connectionManager.createDirectoryIfNotExists(username);
                     if (isCreated) {
-                        remoteFileName = username + System.getProperty("file.separator") + remoteFileName;
+                        // System.getProperty("file.separator") does not work properly when the Agent is on Windows but
+                        // the FTP runs on a Linux system
+                        remoteFileName = String.format("%s/%s", username, remoteFileName);
                         connectionManager.transferData(fileToTransfer, remoteFileName);
                     } else {
                         // TODO: Find a way to transfer an error message (if occurs) to the client
-                        LOGGER.error("Failed to transfer a data to a remote directory.");
+                        LOGGER.error("Failed to transfer a data to a remote directory. Can't create a remote directory.");
                     }
                 }
             }
@@ -110,7 +114,7 @@ public class FtpFileTransferService implements Runnable {
         return filePath;
     }
 
-    private synchronized boolean isEmptyQueue() throws IOException {
+    private synchronized boolean isQueueEmpty() throws IOException {
         pendingTransferList = FileUtils.readLines(pendingTransferData);
         return pendingTransferList.isEmpty();
     }
