@@ -1,6 +1,7 @@
 #!/bin/bash
 RECORD_PATH=$1/AtmosphereScreenRecords
 TIME_LIMIT=$2
+SIZE=$3
 STOP_FILE_NAME=log
 INDEX=1
 
@@ -19,7 +20,7 @@ do
         /system/bin/screenrecord --time-limit $TIME_LIMIT ${RECORD_PATH}/${INDEX}.mp4
         rm "${RECORD_PATH}/${STOP_FILE_NAME}"
     else
-        /system/bin/screenrecord ${RECORD_PATH}/${INDEX}.mp4
+        /system/bin/screenrecord --size $SIZE ${RECORD_PATH}/${INDEX}.mp4
         TIME_LIMIT=$((TIME_LIMIT - 180))
     fi
     let INDEX++
