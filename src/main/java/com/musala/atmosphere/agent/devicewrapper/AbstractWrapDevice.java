@@ -484,7 +484,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 
             // Screen recording related
             case START_RECORDING:
-                startScreenRecording((Integer) args[0]);
+                startScreenRecording((Integer) args[0], (Boolean) args[1]);
                 break;
             case STOP_RECORDING:
                 stopScreenRecording((String) args[0]);
@@ -985,15 +985,23 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
         return screenRecordFileName;
     }
 
-    private void startScreenRecording(int timeLimit) throws CommandFailedException {
+    private void startScreenRecording(int timeLimit, boolean forceLandscape) throws CommandFailedException {
         String externalStorage = serviceCommunicator.getExternalStorage();
         String recordsParentDir = externalStorage != null ? externalStorage : FALLBACK_COMPONENT_PATH;
 
+        Pair<Integer, Integer> resolution = getDeviceInformation().getResolution();
+        int width = Math.max(resolution.getKey(), resolution.getValue());
+        int height = Math.min(resolution.getKey(), resolution.getValue());
+
+        String screenResoloution = !forceLandscape ? String.format("%sx%s", height, width)
+                : String.format("%sx%s", width, height);
         int timeLimitInSeconds = timeLimit * 60;
-        String screenRecordCommand = String.format("%s%s %d",
+
+        String screenRecordCommand = String.format("%s%s %d %s",
                                                    START_SCREEN_RECORD_COMMAND,
                                                    recordsParentDir,
-                                                   timeLimitInSeconds);
+                                                   timeLimitInSeconds,
+                                                   screenResoloution);
 
         shellCommandExecutor.executeInBackground(screenRecordCommand);
     }
