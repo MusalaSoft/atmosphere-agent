@@ -3,7 +3,7 @@ RECORD_PATH=$1/AtmosphereScreenRecords
 TIME_LIMIT=$2
 SIZE=$3
 STOP_FILE_NAME=log
-INDEX=1
+INDEX=100
 
 if [ -d "$RECORD_PATH" ]; then
     rm -rf "$RECORD_PATH"
