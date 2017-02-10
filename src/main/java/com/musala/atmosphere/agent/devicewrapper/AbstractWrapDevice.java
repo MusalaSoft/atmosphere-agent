@@ -10,6 +10,7 @@ import java.nio.channels.FileChannel;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
@@ -111,7 +112,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
 
     private static final String SCREENSHOT_LOCAL_FILE_NAME = "local_screen.png";
 
-    private static final String FIRST_SCREEN_RECORD_NAME = "1.mp4";
+    private static final String FIRST_SCREEN_RECORD_NAME = "100.mp4";
 
     private static final String FALLBACK_COMPONENT_PATH = "/data/local/tmp";
 
@@ -929,6 +930,8 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
     public String combineVideoFiles(String directoryPath, String uplaodDirectoryName) throws IOException {
         File file = new File(directoryPath);
         String[] fileNames = file.list();
+
+        Arrays.sort(fileNames);
 
         int filesCount = fileNames.length;
         Movie[] movies = new Movie[filesCount];
