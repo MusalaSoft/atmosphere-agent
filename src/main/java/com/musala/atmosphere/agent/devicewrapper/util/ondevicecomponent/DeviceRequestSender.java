@@ -129,7 +129,7 @@ public abstract class DeviceRequestSender<T extends RequestType> {
 
         Object readRequest = ConnectionConstants.UNRECOGNIZED_SERVICE_REQUEST;
 
-        for (int i = 0; i < CONNECTION_RETRY_LIMIT; i++) {
+        for (int i = 1; i <= CONNECTION_RETRY_LIMIT; i++) {
             connect();
 
             try {
@@ -147,7 +147,10 @@ public abstract class DeviceRequestSender<T extends RequestType> {
                 readRequest = inputObject;
                 break;
             } catch (SocketException | EOFException e) {
-                LOGGER.error(e);
+                // Show error message only for the final attempt
+                if (i == CONNECTION_RETRY_LIMIT) {
+                    LOGGER.error(e);
+                }
             }
 
             disconnect();
