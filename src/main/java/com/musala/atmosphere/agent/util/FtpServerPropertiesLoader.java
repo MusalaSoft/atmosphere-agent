@@ -87,4 +87,16 @@ public class FtpServerPropertiesLoader {
         return isFtps;
     }
 
+    /**
+     * Return the FTP home directory where all the user files and directories will be uploaded. Make sure this directory
+     * exists and is writable.
+     *
+     * @return the FTP home directory
+     */
+    public static String getFtpHomeDirectory() {
+        String ftpHomeDirectory = getPropertyString(FtpServerProperties.FTP_HOME_DIR).trim();
+
+        return ftpHomeDirectory;
+    }
+
 }

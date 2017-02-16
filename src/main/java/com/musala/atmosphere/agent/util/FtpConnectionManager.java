@@ -33,6 +33,8 @@ public class FtpConnectionManager {
 
     private static boolean isAvailableForTransfer;
 
+    private static String ftpHomeDirectory = FtpServerPropertiesLoader.getFtpHomeDirectory();
+
     public FtpConnectionManager(boolean isSecured) {
         this.ftpClient = isSecured ? new FTPSClient() : new FTPClient();
         isAvailableForTransfer = true;
@@ -48,6 +50,7 @@ public class FtpConnectionManager {
 
             ftpClient.enterLocalPassiveMode();
             ftpClient.setFileType(FTP.BINARY_FILE_TYPE);
+            ftpClient.changeWorkingDirectory(ftpHomeDirectory);
 
             if (!FTPReply.isPositiveCompletion(ftpClient.getReplyCode())) {
                 throw new IOException("FTP server refused connection.");
