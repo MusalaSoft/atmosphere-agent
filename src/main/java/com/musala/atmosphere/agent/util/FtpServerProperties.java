@@ -11,7 +11,8 @@ public enum FtpServerProperties {
     FTP_PORT("ftp.port"),
     FTP_USERNAME("ftp.username"),
     FTP_PASSWORD("ftp.password"),
-    FTPS("ftps");
+    FTPS("ftps"),
+    FTP_HOME_DIR("ftp.home");
 
     private String value;
 
