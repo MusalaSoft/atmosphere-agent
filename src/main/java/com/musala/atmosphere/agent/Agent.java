@@ -167,7 +167,7 @@ public class Agent {
     /**
      * Reads a command from the agent's console.
      *
-     * @return
+     * @return a String with the command
      */
     private String readCommand() {
         String command = null;

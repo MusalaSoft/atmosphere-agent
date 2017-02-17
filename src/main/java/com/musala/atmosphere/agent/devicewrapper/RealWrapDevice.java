@@ -61,6 +61,8 @@ public class RealWrapDevice extends AbstractWrapDevice {
      *        - the service component of the ChromeDriver
      * @param fileRecycler
      *        - responsible for removing obsolete files
+     * @param ftpFileTransferService
+     *        - responsible for file transfers to the FTP server
      * @throws RemoteException
      *         - required when implementing {@link UnicastRemoteObject}
      * @throws NotPossibleForDeviceException

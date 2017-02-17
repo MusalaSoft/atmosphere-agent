@@ -82,7 +82,9 @@ public class FtpConnectionManager {
      * Transfers data from the client(the current Agent) to the FTP server.
      *
      * @param fileToTransfer
-     *        the file to transfer
+     *        - the file to transfer
+     * @param remoteFileName
+     *        - the file name which should be used to store the file on the FTP server
      * @return <code>true</code> if the data transfer is successful, otherwise returns <code>false</code>
      */
     public boolean transferData(File fileToTransfer, String remoteFileName) {

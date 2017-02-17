@@ -61,6 +61,8 @@ public class EmulatorWrapDevice extends AbstractWrapDevice {
      *        - responsible for removing obsolete files
      * @param chromeDriverService
      *        - the service component of the ChromeDriver
+     * @param ftpFileTransferService
+     *        - responsible for file transfers to the FTP server
      * @throws NotPossibleForDeviceException
      *         - thrown when cannot create emulator wrap device.
      * @throws RemoteException

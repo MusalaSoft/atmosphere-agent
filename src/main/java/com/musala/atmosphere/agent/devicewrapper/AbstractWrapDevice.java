@@ -186,10 +186,12 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
      *        - a communicator to the service component on the device
      * @param automatorCommunicator
      *        - a communicator to the UI automator component on the device
-     * @param fileRecycler
-     *        - responsible for removing obsolete files
      * @param chromeDriverService
      *        - the service component of the ChromeDriver
+     * @param fileRecycler
+     *        - responsible for removing obsolete files
+     * @param ftpFileTransferService
+     *        - responsible for file transfers to the FTP server
      * @throws RemoteException
      *         - required when implementing {@link UnicastRemoteObject}
      */
@@ -557,7 +559,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
     }
 
     /**
-     * Gets the newly added lines to the {@link LogcatBufer}.
+     * Gets the newly added lines to the LogCat {@link Buffer}.
      *
      * @param deviceSerialNumber
      *        - the serial number of the target device

@@ -31,7 +31,7 @@ public class FtpServerPropertiesLoader {
     /**
      * Gets the FTP Server name from the properties file.
      *
-     * @return
+     * @return the FTP Server name
      */
     public static String getFtpName() {
         return getPropertyString(FtpServerProperties.FTP_NAME);
