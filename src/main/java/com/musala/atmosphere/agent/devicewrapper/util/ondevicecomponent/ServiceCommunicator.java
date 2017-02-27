@@ -670,6 +670,27 @@ public class ServiceCommunicator extends DeviceCommunicator<ServiceRequest> {
         }
     }
 
+    /**
+     * Sends request to the service to show a toast message on the device's screen.
+     *
+     * @param message
+     *        - the message that should be shown on the device's screen
+     * @throws CommandFailedException
+     *         if the request sending fails
+     */
+    public void showToast(String message) throws CommandFailedException {
+        Request<ServiceRequest> showToastRequest = new Request<>(ServiceRequest.SHOW_TOAST);
+        showToastRequest.setArguments(new Object[] { message });
+
+        try {
+            requestSender.request(showToastRequest);
+        } catch (ClassNotFoundException | IOException e) {
+            throw new CommandFailedException(String.format("Showing toast message failed for device %s.",
+                                                           deviceSerialNumber),
+                                             e);
+        }
+    }
+
     @Override
     public void stopComponent() {
         // TODO: Use socket requests here. Refactor the service to use dispatchers like the UI automator bridge.

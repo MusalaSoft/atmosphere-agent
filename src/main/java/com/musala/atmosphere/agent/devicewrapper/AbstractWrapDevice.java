@@ -923,13 +923,27 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
      */
     private boolean setApplicationPermission(boolean grantPermission, String packageName, String permission) throws CommandFailedException {
         if (getDeviceInformation().getApiLevel() < 23) { // Runtime permissions were added in Android 6.0
+            serviceCommunicator.showToast("Runtime permissions are not supported on this device.");
             return false;
         }
 
         String setPermissionAction = grantPermission ? "grant" : "revoke";
-        String shellCommand = String.format(CHANGE_APP_PERMISSION_COMMAND, setPermissionAction, packageName, permission);
-        String result = shellCommandExecutor.execute(shellCommand);
-        return result.length() == 0 ? true : false;
+        String result = shellCommandExecutor.execute(String.format(CHANGE_APP_PERMISSION_COMMAND,
+                                                                   setPermissionAction,
+                                                                   packageName,
+                                                                   permission));
+        if (result.length() == 0) {
+            String setPermissionMessage = grantPermission ? "Granted" : "Revoked";
+            serviceCommunicator.showToast(String.format("%s permission %s",
+                                                        setPermissionMessage,
+                                                        permission));
+            return true;
+        } else {
+            serviceCommunicator.showToast(String.format("Failed to %s permission %s",
+                                                        setPermissionAction,
+                                                        permission));
+            return false;
+        }
     }
 
     /**
