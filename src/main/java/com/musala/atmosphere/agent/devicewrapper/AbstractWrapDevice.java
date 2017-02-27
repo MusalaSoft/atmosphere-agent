@@ -104,6 +104,8 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
     // TODO the command should be moved to a different enumeration
     private static final String UNINSTALL_APP_COMMAND = "pm uninstall ";
 
+    private static final String CHANGE_APP_PERMISSION_COMMAND = "pm %s %s %s";
+
     private static final String INTERRUPT_BACKGROUND_PROCESS_FORMAT = "kill -SIGINT $(%s)";
 
     private static final String GET_PID_FORMAT = "ps %s %s";
@@ -407,6 +409,12 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
                 break;
             case UNINSTALL_APP:
                 uninstallApplication((String) args[0]);
+                break;
+            case GRANT_APP_PERMISSION:
+                returnValue = setApplicationPermission(true, (String) args[0], (String) args[1]);
+                break;
+            case REVOKE_APP_PERMISSION:
+                returnValue = setApplicationPermission(false, (String) args[0], (String) args[1]);
                 break;
             case FORCE_STOP_PROCESS:
                 forceStopProcess((String) args[0]);
@@ -897,6 +905,45 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
      */
     private void uninstallApplication(String args) throws CommandFailedException {
         shellCommandExecutor.execute(UNINSTALL_APP_COMMAND + args);
+    }
+
+
+    /**
+     * Grants or revokes an application permission during runtime.
+     *
+     * @param grantPermission
+     *        - <code>true</code> if the permission should be granted or <code>false</code> if it should be revoked
+     * @param packageName
+     *        - the package name of the application
+     * @param permission
+     *        - the permission to be granted or revoked
+     * @return <code>true</code> if the permission was set successfully, <code>false</code> if such permission is not available
+     * @throws CommandFailedException
+     *         if the shell command fails
+     */
+    private boolean setApplicationPermission(boolean grantPermission, String packageName, String permission) throws CommandFailedException {
+        if (getDeviceInformation().getApiLevel() < 23) { // Runtime permissions were added in Android 6.0
+            serviceCommunicator.showToast("Runtime permissions are not supported on this device.");
+            return false;
+        }
+
+        String setPermissionAction = grantPermission ? "grant" : "revoke";
+        String result = shellCommandExecutor.execute(String.format(CHANGE_APP_PERMISSION_COMMAND,
+                                                                   setPermissionAction,
+                                                                   packageName,
+                                                                   permission));
+        if (result.length() == 0) {
+            String setPermissionMessage = grantPermission ? "Granted" : "Revoked";
+            serviceCommunicator.showToast(String.format("%s permission %s",
+                                                        setPermissionMessage,
+                                                        permission));
+            return true;
+        } else {
+            serviceCommunicator.showToast(String.format("Failed to %s permission %s",
+                                                        setPermissionAction,
+                                                        permission));
+            return false;
+        }
     }
 
     /**
