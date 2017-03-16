@@ -513,6 +513,9 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
             case GET_WEB_VIEW:
                 webElementManager.initDriver((String) args[0]);
                 break;
+            case SET_WEB_VIEW_IMPLICIT_WAIT:
+                webElementManager.setImplicitWait((Integer) args[0]);
+                break;
             case GET_WEB_VIEWS:
                 returnValue = webElementManager.getWindowHandlers();
                 break;
