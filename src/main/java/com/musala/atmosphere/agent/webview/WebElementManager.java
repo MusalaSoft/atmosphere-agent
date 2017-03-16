@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import org.openqa.selenium.By;
 import org.openqa.selenium.Dimension;
@@ -513,5 +514,14 @@ public class WebElementManager {
         return currentUrl;
     }
 
-}
+    /**
+     * Sets an implicit wait timeout to the {@link WebDriver} driver
+     *
+     * @param implicitWaitTimeout
+     *        - an implicit wait timeout in milliseconds
+     */
+    public void setImplicitWait(int implicitWaitTimeout) throws CommandFailedException {
+        driver.manage().timeouts().implicitlyWait(implicitWaitTimeout, TimeUnit.MILLISECONDS);
+    }
 
+}
