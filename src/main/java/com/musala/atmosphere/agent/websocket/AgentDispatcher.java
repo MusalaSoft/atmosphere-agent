@@ -162,7 +162,7 @@ public class AgentDispatcher {
                     }
                 }) {}.start();
             }
-        } catch (CommandFailedException | IllegalArgumentException e) {
+        } catch (Exception e) {
             sendErrorResponseMessage(e, session, request);
             LOGGER.error(ACTION_FAILD_MESSAGE, e);
         }
