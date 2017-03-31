@@ -55,6 +55,8 @@ public class WebElementManager {
 
     private String deviceSerialNumber;
 
+    private int implicitWaitTimeout;
+
     /**
      * The window handlers are set of unique web view identifiers. The identifiers are different for each WebDriver
      * instance.
@@ -356,6 +358,7 @@ public class WebElementManager {
 
     /**
      * Waits for a web element to meet a given {@link WebElementWaitCondition}, with given timeout.
+     * The timeout will override the implicit wait timeout if is specified.
      *
      * @param xpathQuery
      *        - the xpath query used for matching
@@ -387,7 +390,14 @@ public class WebElementManager {
      */
     private boolean waitForElementExists(String xpathQuery, int timeout) {
         WebElement element = null;
+        int cachedImplicitWaitTimeout = implicitWaitTimeout;
 
+        // The explicit wait should override the implicit wait
+        if(implicitWaitTimeout != 0) {
+            setImplicitWait(0);
+        }
+
+        // TODO: avoid this "while" by using the WebDriver capabilities
         while (timeout > 0) {
             try {
                 element = driver.findElement(By.xpath(xpathQuery));
@@ -400,6 +410,10 @@ public class WebElementManager {
                 } catch (InterruptedException e1) {
                 }
             }
+        }
+
+        if (cachedImplicitWaitTimeout != 0) {
+        	setImplicitWait(cachedImplicitWaitTimeout);
         }
 
         return element != null;
@@ -520,8 +534,8 @@ public class WebElementManager {
      * @param implicitWaitTimeout
      *        - an implicit wait timeout in milliseconds
      */
-    public void setImplicitWait(int implicitWaitTimeout) throws CommandFailedException {
+    public void setImplicitWait(int implicitWaitTimeout) {
+        this.implicitWaitTimeout = implicitWaitTimeout;
         driver.manage().timeouts().implicitlyWait(implicitWaitTimeout, TimeUnit.MILLISECONDS);
     }
-
 }
