@@ -1,17 +1,8 @@
 package com.musala.atmosphere.agent;
 
-import java.rmi.NotBoundException;
-import java.rmi.RemoteException;
-import java.rmi.registry.LocateRegistry;
-import java.rmi.registry.Registry;
-import java.rmi.server.UnicastRemoteObject;
-
 import com.android.ddmlib.AndroidDebugBridge.IDeviceChangeListener;
 import com.android.ddmlib.IDevice;
 import com.musala.atmosphere.commons.exceptions.CommandFailedException;
-import com.musala.atmosphere.commons.sa.IAgentEventSender;
-import com.musala.atmosphere.commons.sa.RmiStringConstants;
-import com.musala.atmosphere.commons.sa.exceptions.ADBridgeFailException;
 
 /**
  * A class to register ADB's device list changed events
@@ -22,18 +13,11 @@ import com.musala.atmosphere.commons.sa.exceptions.ADBridgeFailException;
 class DeviceChangeListener implements IDeviceChangeListener {
     private final DeviceManager deviceManager;
 
-    private IAgentEventSender agentEventSender;
-
     private boolean isServerSet = false;
 
     private DeviceChangeHandler deviceChangeHandler;
 
-    /**
-     *
-     * @throws RemoteException
-     *         - required when implementing {@link UnicastRemoteObject}
-     */
-    public DeviceChangeListener() throws RemoteException {
+    public DeviceChangeListener() {
         deviceChangeHandler = new DeviceChangeHandler();
         deviceManager = new DeviceManager();
     }
@@ -48,12 +32,8 @@ class DeviceChangeListener implements IDeviceChangeListener {
      *        - IP address of the server's RMI registry
      * @param serverRmiPort
      *        - Port on which the server's RMI registry is opened
-     * @throws RemoteException
-     *         When connecting to the server fails or the AgentEventSender could not be found
-     * @throws ADBridgeFailException
-     *         when adb connection fails
      */
-    public DeviceChangeListener(String serverIPAddress, int serverRmiPort) throws RemoteException {
+    public DeviceChangeListener(String serverIPAddress, int serverRmiPort) {
         this();
 
         // If the server is set, get it's AgentEventSender so we can notify the server about changes in the device list.
@@ -62,23 +42,10 @@ class DeviceChangeListener implements IDeviceChangeListener {
         }
 
         isServerSet = true;
-        try {
-            // Get the registry on the server
-            Registry serverRegistry = LocateRegistry.getRegistry(serverIPAddress, serverRmiPort);
-
-            // Search for the AgentEventSender in the server's registry
-            agentEventSender = (IAgentEventSender) serverRegistry.lookup(RmiStringConstants.AGENT_EVENT_SENDER.toString());
-            deviceChangeHandler = new DeviceChangeHandler(agentEventSender, isServerSet);
-        } catch (RemoteException e) {
-            // We could not get the registry on the server or we could not connect to it at all.
-            throw e;
-        } catch (NotBoundException e) {
-            // The server has not published an AgentEventSender in it's registry under the constant
-            // specified by StringConstants.AGENT_EVENT_SENDER_RMI.
-            throw new RemoteException("AgentEventSender is not bound in the target RMI registry.", e);
-        }
+        
+        deviceChangeHandler = new DeviceChangeHandler(isServerSet);
     }
-
+    
     /**
      * Gets called when a device's state, properties or client has changed.
      */
@@ -125,14 +92,11 @@ class DeviceChangeListener implements IDeviceChangeListener {
      *        - on which the change has occurred
      * @param connected
      *        - <code>true</code> if the device has been connected and <code>false</code> if it has been disconnected
-     * @throws NotBoundException
-     *         if an attempt is made to operate with non-existing device
      * @throws CommandFailedException
      *         if getting device's information fails
      */
     public void onDeviceListChanged(IDevice device, boolean connected)
-        throws CommandFailedException,
-            NotBoundException {
+        throws CommandFailedException {
         deviceChangeHandler.onDeviceListChanged(device.getSerialNumber(), connected);
     }
 
@@ -156,11 +120,7 @@ class DeviceChangeListener implements IDeviceChangeListener {
      * @return <code>true</code> if the device is registered and <code>false</code> otherwise.
      */
     private boolean isDeviceRegistered(IDevice device) {
-        try {
-            String deviceRmiId = device.getSerialNumber();
-            return deviceManager.getAllDeviceRmiIdentifiers().contains(deviceRmiId);
-        } catch (RemoteException e) {
-            return false;
-        }
+        String deviceRmiId = device.getSerialNumber();
+        return deviceManager.getAllDeviceRmiIdentifiers().contains(deviceRmiId);
     }
 }

@@ -1,12 +1,6 @@
 package com.musala.atmosphere.agent;
 
 import java.io.IOException;
-import java.rmi.AccessException;
-import java.rmi.NotBoundException;
-import java.rmi.RemoteException;
-import java.rmi.registry.LocateRegistry;
-import java.rmi.registry.Registry;
-import java.rmi.server.UnicastRemoteObject;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -22,8 +16,8 @@ import org.apache.log4j.Logger;
 import org.openqa.selenium.chrome.ChromeDriverService;
 
 import com.android.ddmlib.IDevice;
-import com.musala.atmosphere.agent.devicewrapper.AbstractWrapDevice;
 import com.musala.atmosphere.agent.devicewrapper.EmulatorWrapDevice;
+import com.musala.atmosphere.agent.devicewrapper.IWrapDevice;
 import com.musala.atmosphere.agent.devicewrapper.RealWrapDevice;
 import com.musala.atmosphere.agent.devicewrapper.util.BackgroundShellCommandExecutor;
 import com.musala.atmosphere.agent.devicewrapper.util.PortForwardingService;
@@ -43,10 +37,10 @@ import com.musala.atmosphere.agent.util.FtpConnectionManager;
 import com.musala.atmosphere.agent.util.FtpFileTransferService;
 import com.musala.atmosphere.agent.util.FtpServerPropertiesLoader;
 import com.musala.atmosphere.commons.DeviceInformation;
+import com.musala.atmosphere.commons.RoutingAction;
 import com.musala.atmosphere.commons.ad.service.ConnectionConstants;
 import com.musala.atmosphere.commons.exceptions.CommandFailedException;
 import com.musala.atmosphere.commons.exceptions.NoAvailableDeviceFoundException;
-import com.musala.atmosphere.commons.sa.IWrapDevice;
 import com.musala.atmosphere.commons.sa.exceptions.ADBridgeFailException;
 import com.musala.atmosphere.commons.sa.exceptions.DeviceBootTimeoutReachedException;
 import com.musala.atmosphere.commons.sa.exceptions.DeviceNotFoundException;
@@ -84,8 +78,9 @@ public class DeviceManager {
 
     private static ExecutorService executor = Executors.newFixedThreadPool(THREAD_COUNT);
 
-    private static Registry rmiRegistry;
-
+    /**
+     * Maps a device serial number to a {@link connectedDevicesList} device
+     */
     private static volatile Map<String, IDevice> connectedDevicesList = new HashMap<>();
 
     private ChromeDriverService chromeDriverService;
@@ -96,11 +91,16 @@ public class DeviceManager {
 
     private static ScheduledExecutorService fileTransferServiceScheduler;
 
+    /**
+     * Maps a device serial number to a {@link IWrapDevice} device wrapper
+     */
+    private static Map<String, IWrapDevice> deviceSerialToDeviceWrapper = new HashMap<>();
+
     public DeviceManager() {
     }
 
-    public DeviceManager(int rmiPort, FileRecycler fileRecycler) throws RemoteException {
-        if(AgentPropertiesLoader.hasFtpServer() && ftpFileTransferService == null) {
+    public DeviceManager(int rmiPort, FileRecycler fileRecycler) {
+        if (AgentPropertiesLoader.hasFtpServer() && ftpFileTransferService == null) {
             boolean isSecuredFtp = FtpServerPropertiesLoader.isFtps();
             FtpConnectionManager ftpConnectionManager = new FtpConnectionManager(isSecuredFtp);
             ftpConnectionManager.connectToFtpServer();
@@ -110,7 +110,10 @@ public class DeviceManager {
             try {
                 ftpFileTransferService = new FtpFileTransferService(QUEUE_FILE_NAME, ftpConnectionManager);
 
-                fileTransferServiceScheduler.scheduleAtFixedRate(ftpFileTransferService, 0, FTP_TRANSFER_SERVICE_DELAY, TimeUnit.SECONDS);
+                fileTransferServiceScheduler.scheduleAtFixedRate(ftpFileTransferService,
+                                                                 0,
+                                                                 FTP_TRANSFER_SERVICE_DELAY,
+                                                                 TimeUnit.SECONDS);
             } catch (IOException e) {
                 LOGGER.error("The FTP file transfer service failed to initialize.", e);
             }
@@ -121,13 +124,6 @@ public class DeviceManager {
 
             AgentIdCalculator agentIdCalculator = new AgentIdCalculator();
             agentId = agentIdCalculator.getId();
-
-            // Publish this AgentManager in the RMI registry
-            try {
-                rmiRegistry = LocateRegistry.getRegistry(rmiPort);
-            } catch (RemoteException e) {
-                throw e;
-            }
 
             // Get the initial devices list
             List<IDevice> initialDevicesList = null;
@@ -154,7 +150,7 @@ public class DeviceManager {
                         try {
                             DeviceChangeListener deviceChangeListener = androidDebugBridgeManager.getCurrentListener();
                             deviceChangeListener.onDeviceListChanged(initialDevice, true);
-                        } catch (CommandFailedException | NotBoundException e) {
+                        } catch (CommandFailedException e) {
                             String sendingEventFailedMessage = String.format("Sending device list change event to the Server failed for device [%s]",
                                                                              initialDevice.getSerialNumber());
                             LOGGER.error(sendingEventFailedMessage, e);
@@ -163,7 +159,7 @@ public class DeviceManager {
                 });
             }
 
-            ChromeDriverManager.getInstance().setup();
+            ChromeDriverManager.getInstance().setup("2.27");
             chromeDriverService = ChromeDriverService.createDefaultService();
             try {
                 chromeDriverService.start();
@@ -205,17 +201,36 @@ public class DeviceManager {
      * Gets a list of all published and available device wrapper RMI string identifiers on the current Agent.
      *
      * @return List of the DeviceInformation objects, one for every available device on the current Agent.
-     * @throws RemoteException
-     *         thrown when an RMI failed
+     *
      */
-    public List<String> getAllDeviceRmiIdentifiers() throws RemoteException {
+    public List<String> getAllDeviceRmiIdentifiers() {
         List<String> wrappersList = new LinkedList<>();
 
         synchronized (connectedDevicesList) {
             for (Entry<String, IDevice> deviceEntry : connectedDevicesList.entrySet()) {
                 IDevice currentDevice = deviceEntry.getValue();
-                String rmiWrapperBindingId = getRmiWrapperBindingIdentifier(currentDevice);
+                String rmiWrapperBindingId = getWrapperIdentifier(currentDevice);
                 wrappersList.add(rmiWrapperBindingId);
+            }
+        }
+
+        return wrappersList;
+    }
+
+    public List<DeviceInformation> getDevicesInformation() {
+        List<DeviceInformation> wrappersList = new LinkedList<>();
+
+        synchronized (connectedDevicesList) {
+            for (Entry<String, IDevice> deviceEntry : connectedDevicesList.entrySet()) {
+                String deviceId = deviceEntry.getKey();
+                IWrapDevice wrapDevice = getDeviceWrapperByDeviceId(deviceId);
+                try {
+                    wrappersList.add((DeviceInformation) wrapDevice.route(RoutingAction.GET_DEVICE_INFORMATION));
+                } catch (CommandFailedException e) {
+                    String message = String.format("Getting the information from a device with id %s failed.",
+                                                   deviceId);
+                    LOGGER.error(message, e);
+                }
             }
         }
 
@@ -258,7 +273,7 @@ public class DeviceManager {
             String publishId = createWrapperForDevice(connectedDevice);
             connectedDevicesList.put(connectedDeviceSerialNumber, connectedDevice);
             return publishId;
-        } catch (RemoteException | OnDeviceComponentCommunicationException e) {
+        } catch (OnDeviceComponentCommunicationException e) {
             LOGGER.fatal("Could not publish a wrapper for a device in the RMI registry.", e);
         }
         return null;
@@ -282,14 +297,10 @@ public class DeviceManager {
             return null;
         }
 
-        try {
-            String publishId = unbindWrapperForDevice(disconnectedDevice);
-            connectedDevicesList.remove(disconnectedDeviceSerialNumber);
-            return publishId;
-        } catch (RemoteException e) {
-            LOGGER.error("Device wrapper unbinding failed.", e);
-        }
-        return null;
+        String publishId = unbindWrapperForDevice(disconnectedDevice);
+        connectedDevicesList.remove(disconnectedDeviceSerialNumber);
+
+        return publishId;
     }
 
     /**
@@ -298,11 +309,11 @@ public class DeviceManager {
      * @param device
      *        that will be wrapped.
      * @return RMI binding ID for the newly created wrapper.
-     * @throws RemoteException
+     *
      */
-    private String createWrapperForDevice(IDevice device) throws RemoteException {
+    private String createWrapperForDevice(IDevice device) {
         IWrapDevice deviceWrapper = null;
-        String rmiWrapperBindingId = getRmiWrapperBindingIdentifier(device);
+        String wrapperSerial = getWrapperIdentifier(device);
 
         PreconditionsManager preconditionsManager = new PreconditionsManager(device);
         try {
@@ -371,10 +382,10 @@ public class DeviceManager {
             e.printStackTrace();
         }
 
-        rmiRegistry.rebind(rmiWrapperBindingId, deviceWrapper);
-        LOGGER.info("Created wrapper for device with bindingId = " + rmiWrapperBindingId);
+        deviceSerialToDeviceWrapper.put(serialNumber, deviceWrapper);
+        LOGGER.info("Created wrapper for device with serialNumber = " + wrapperSerial);
 
-        return rmiWrapperBindingId;
+        return wrapperSerial;
     }
 
     /**
@@ -385,7 +396,7 @@ public class DeviceManager {
      *        which we want to get unique identifier for.
      * @return unique identifier for the device.
      */
-    public String getRmiWrapperBindingIdentifier(IDevice device) {
+    public String getWrapperIdentifier(IDevice device) {
         String wrapperId = device.getSerialNumber();
         return wrapperId;
     }
@@ -412,30 +423,17 @@ public class DeviceManager {
      * @param device
      *        the device with the wrapper to be removed.
      * @return the RMI binding ID of the unbound wrapper.
-     * @throws RemoteException
+     *
      */
-    private String unbindWrapperForDevice(IDevice device) throws RemoteException {
-        String rmiWrapperBindingId = getRmiWrapperBindingIdentifier(device);
-
-        try {
-            // IWrapDevice deviceWrapper = getDeviceWrapper(rmiWrapperBindingId);
-            /*
-             * TODO: The method 'unbindWrapper()' fails because the physical device is missing
-             * (if is disconnected manually by removing the USB cable).
-             * Find an another solution for future work. Maybe is a good idea
-             * to stop the onDeviceComponents from the service.
-             */
-            // deviceWrapper.unbindWrapper();
-            rmiRegistry.unbind(rmiWrapperBindingId);
-        } catch (NotBoundException e) {
-            // Wrapper for the device was never published, so we have nothing to unbind.
-            // Nothing to do here.
-            LOGGER.error("Unbinding device wrapper [" + rmiWrapperBindingId + "] failed.", e);
-            return null;
-        } catch (AccessException e) {
-            throw new RemoteException("Unbinding device wrapper [" + rmiWrapperBindingId + "] failed.", e);
-        }
-
+    private String unbindWrapperForDevice(IDevice device) {
+        String rmiWrapperBindingId = getWrapperIdentifier(device);
+        // IWrapDevice deviceWrapper = getDeviceWrapper(rmiWrapperBindingId);
+        /*
+         * TODO: The method 'unbindWrapper()' fails because the physical device is missing (if is disconnected manually
+         * by removing the USB cable). Find an another solution for future work. Maybe is a good idea to stop the
+         * onDeviceComponents from the service.
+         */
+        // deviceWrapper.unbindWrapper();
         LOGGER.info("Removed wrapper for device with bindingId [" + rmiWrapperBindingId + "].");
 
         return rmiWrapperBindingId;
@@ -500,18 +498,16 @@ public class DeviceManager {
      * Gets the first available device that is present on the agent (current machine).
      *
      * @return the first available device wrapper ({@link IWrapDevice} interface).
-     * @throws RemoteException
-     *         - required when implementing {@link UnicastRemoteObject}
-     * @throws NotBoundException
-     *         - thrown if an attempt is made to lookup or unbind in the registry a name that has no associated binding.
+     *
      */
-    public IWrapDevice getFirstAvailableDeviceWrapper() throws RemoteException, NotBoundException {
+    public IWrapDevice getFirstAvailableDeviceWrapper() {
         List<String> wrapperIdentifiers = getAllDeviceRmiIdentifiers();
 
         if (wrapperIdentifiers.isEmpty()) {
             throw new NoAvailableDeviceFoundException("No devices are present on the current agent. Consider creating and starting an emulator.");
         }
-        IWrapDevice deviceWrapper = (IWrapDevice) rmiRegistry.lookup(wrapperIdentifiers.get(0));
+        IWrapDevice deviceWrapper = getDeviceWrapperByDeviceId(wrapperIdentifiers.get(0));
+
         return deviceWrapper;
     }
 
@@ -519,21 +515,22 @@ public class DeviceManager {
      * Gets the first available emulator device that is present on the agent (current machine).
      *
      * @return the first available emulator wrapper ({@link IWrapDevice} interface).
-     * @throws RemoteException
-     *         - required when implementing {@link UnicastRemoteObject}
-     * @throws NotBoundException
-     *         - thrown if an attempt is made to lookup or unbind in the registry a name that has no associated binding.
+     *
      */
-    public IWrapDevice getFirstAvailableEmulatorDeviceWrapper() throws RemoteException, NotBoundException {
+    public IWrapDevice getFirstAvailableEmulatorDeviceWrapper() {
         // TODO: Move to EmulatorManager.
         List<String> wrapperIdentifiers = getAllDeviceRmiIdentifiers();
 
         for (String wrapperId : wrapperIdentifiers) {
-            AbstractWrapDevice deviceWrapper = (AbstractWrapDevice) rmiRegistry.lookup(wrapperId);
-            DeviceInformation deviceInformation = deviceWrapper.getDeviceInformation();
-
-            if (deviceInformation.isEmulator()) {
-                return deviceWrapper;
+            IWrapDevice deviceWrapper = getDeviceWrapperByDeviceId(wrapperId);
+            DeviceInformation deviceInformation;
+            try {
+                deviceInformation = (DeviceInformation) deviceWrapper.route(RoutingAction.GET_DEVICE_INFORMATION);
+                if (deviceInformation.isEmulator()) {
+                    return deviceWrapper;
+                }
+            } catch (CommandFailedException e) {
+                LOGGER.error("Getting the emulator wrapper failed.", e);
             }
         }
         throw new NoAvailableDeviceFoundException("No emulator devices are present on the agent (current machine).");
@@ -558,15 +555,9 @@ public class DeviceManager {
      * @param wrapperId
      *        - id of the wrapper we want to get.
      * @return {@link IWrapDevice} of a device containing given id.
-     * @throws AccessException
-     *         if the caller does not have the needed permission
-     * @throws RemoteException
-     *         if accessing the lookup method fails
-     * @throws NotBoundException
-     *         if the attempted lookup for the wrapper id has no associated binding
+     *
      */
-    private IWrapDevice getDeviceWrapper(String wrapperId) throws AccessException, RemoteException, NotBoundException {
-        IWrapDevice deviceWrapper = (IWrapDevice) rmiRegistry.lookup(wrapperId);
-        return deviceWrapper;
+    public IWrapDevice getDeviceWrapperByDeviceId(String deviceId) {
+        return deviceSerialToDeviceWrapper.get(deviceId);
     }
 }

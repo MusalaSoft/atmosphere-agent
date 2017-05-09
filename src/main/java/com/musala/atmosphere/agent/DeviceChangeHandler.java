@@ -1,7 +1,5 @@
 package com.musala.atmosphere.agent;
 
-import java.rmi.NotBoundException;
-import java.rmi.RemoteException;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -10,12 +8,12 @@ import org.apache.log4j.Logger;
 
 import com.android.ddmlib.IDevice;
 import com.musala.atmosphere.agent.util.AgentIdCalculator;
+import com.musala.atmosphere.agent.websocket.AgentWebSocketDispatcher;
 import com.musala.atmosphere.commons.exceptions.CommandFailedException;
-import com.musala.atmosphere.commons.sa.IAgentEventSender;
 
 /**
  * Handles all on device change actions that occur, such as connect and disconnect device.
- * 
+ *
  * @author denis.bialev
  *
  */
@@ -31,43 +29,39 @@ public class DeviceChangeHandler {
 
     private final String agentId;
 
-    private IAgentEventSender agentEventSender;
-
     private boolean isServerSet = false;
+
+    private AgentWebSocketDispatcher webSocketCommunicator;
 
     /**
      * Creates a new {@link DeviceChangeHandler} that handles all on device change actions that occur.
-     * 
-     * @throws RemoteException
-     *         if sending of a event to the server fails
+     *
      */
-    public DeviceChangeHandler() throws RemoteException {
+    public DeviceChangeHandler() {
         AgentIdCalculator agentIdCalculator = new AgentIdCalculator();
         agentId = agentIdCalculator.getId();
         deviceManager = new DeviceManager();
         deviceManagerExecutor = new DeviceManagerExecutor();
+        webSocketCommunicator = AgentWebSocketDispatcher.getInstance();
     }
 
     /**
      * Creates a new {@link DeviceChangeHandler} that handles all on device change actions that occur.
-     * 
+     *
      * @param agentEventSender
      *        - agent event sender that sends events to the Server
      * @param isServerSet
      *        - the state of the Server
-     * @throws RemoteException
-     *         if sending of the event to the server fails
      */
-    public DeviceChangeHandler(IAgentEventSender agentEventSender, boolean isServerSet) throws RemoteException {
+    public DeviceChangeHandler(boolean isServerSet) {
         this();
 
-        this.agentEventSender = agentEventSender;
         this.isServerSet = isServerSet;
     }
 
     /**
      * Handles the on device changed action according to it's type.
-     * 
+     *
      * @param action
      *        - type of action that will be handled
      * @param device
@@ -98,30 +92,22 @@ public class DeviceChangeHandler {
      *        - RMI binding ID of the changed device's wrapper
      * @param connected
      *        - true if the device is now available, false if it became unavailable
-     * @throws NotBoundException
-     *         if an attempt is made to operate with non-existing device
      * @throws CommandFailedException
      *         if getting device's information fails
      */
     public void onDeviceListChanged(String deviceRmiBindingId, boolean connected)
-            throws CommandFailedException,
-            NotBoundException {
-        // TODO: In future we can use AgentEventSender like sendEvent(Event event, parameters)
+            throws CommandFailedException {
         // If the server is not set return, as we have no one to notify
         if (isServerSet == false) {
             return;
         }
 
-        try {
-            agentEventSender.deviceListChanged(agentId, deviceRmiBindingId, connected);
-        } catch (RemoteException e) {
-            LOGGER.warn("Sending onDeviceListChanged event to the Server failed.", e);
-        }
+        webSocketCommunicator.sendConnectedDeviceInformation(agentId, deviceRmiBindingId, connected);
     }
 
     /**
      * Responsible for disconnecting the device from the Agent when device disconnected event is received.
-     * 
+     *
      * @author denis.bialev
      *
      */
@@ -144,7 +130,7 @@ public class DeviceChangeHandler {
             if (publishId != null && !publishId.isEmpty()) {
                 try {
                     onDeviceListChanged(publishId, false /* device disconnected */);
-                } catch (CommandFailedException | NotBoundException e) {
+                } catch (CommandFailedException e) {
 
                 }
             }
@@ -155,7 +141,7 @@ public class DeviceChangeHandler {
 
     /**
      * Responsible for connecting device to the Agent when device connected event is received.
-     * 
+     *
      * @author denis.bialev
      *
      */
@@ -184,13 +170,13 @@ public class DeviceChangeHandler {
                 }
             }
 
-            if (device.PROP_BUILD_API_LEVEL != null) {
+            if (IDevice.PROP_BUILD_API_LEVEL != null) {
                 String publishId = deviceManager.registerDevice(device);
 
                 if (publishId != null && !publishId.isEmpty()) {
                     try {
                         onDeviceListChanged(publishId, true /* device connected */);
-                    } catch (CommandFailedException | NotBoundException e) {
+                    } catch (CommandFailedException e) {
                         // The exceptions are handled by the AgentEventSender
                     }
                 }

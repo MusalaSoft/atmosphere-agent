@@ -10,6 +10,7 @@ import org.apache.log4j.Logger;
 
 import com.musala.atmosphere.commons.websocket.message.MessageAction;
 import com.musala.atmosphere.commons.websocket.message.RequestMessage;
+import com.musala.atmosphere.commons.websocket.message.ResponseMessage;
 import com.musala.atmosphere.commons.websocket.util.GsonUtil;
 import com.musala.atmosphere.commons.websocket.util.IJsonUtil;
 
@@ -42,20 +43,18 @@ public class AgentWebSocketEndpoint {
 
     @OnMessage
     public void onJsonMessage(String jsonMessage, Session session) {
-        LOGGER.debug("<<< Agent message. >>> " + jsonMessage);
+        LOGGER.debug("Agent onMessage: " + jsonMessage);
 
-        // MessageAction action = (MessageAction) jsonUtil.getProperty(jsonMessage, "messageAction",
-        // MessageAction.class);
-
-        RequestMessage request = jsonUtil.deserializeRequest(jsonMessage);
-        MessageAction messageAction = request.getMessageAction();
+        MessageAction messageAction = (MessageAction) jsonUtil.getProperty(jsonMessage, "messageAction", MessageAction.class);
 
         switch (messageAction) {
             case ROUTING_ACTION:
+                RequestMessage request = jsonUtil.deserializeRequest(jsonMessage);
                 dispatcher.executeRoutingActionRequest(request);
                 break;
             case ERROR:
-                // TODO: handle this case.
+                ResponseMessage response = jsonUtil.deserializeResponse(jsonMessage);
+                LOGGER.error("Server error", response.getException());
                 break;
             default:
                 LOGGER.error("Invalid message action.");
