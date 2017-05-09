@@ -7,9 +7,6 @@ import static org.mockito.Matchers.anyInt;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import java.rmi.RemoteException;
-import java.rmi.registry.LocateRegistry;
-import java.rmi.registry.Registry;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,6 +22,7 @@ import com.android.ddmlib.DdmPreferences;
 import com.android.ddmlib.IDevice;
 import com.android.ddmlib.IShellOutputReceiver;
 import com.android.ddmlib.Log;
+import com.musala.atmosphere.agent.devicewrapper.IWrapDevice;
 import com.musala.atmosphere.agent.util.AgentPropertiesLoader;
 import com.musala.atmosphere.agent.util.FakeDeviceShellAnswer;
 import com.musala.atmosphere.agent.util.FakeOnDeviceComponentAnswer;
@@ -32,7 +30,6 @@ import com.musala.atmosphere.agent.util.FileRecycler;
 import com.musala.atmosphere.commons.DeviceInformation;
 import com.musala.atmosphere.commons.RoutingAction;
 import com.musala.atmosphere.commons.sa.EmulatorParameters;
-import com.musala.atmosphere.commons.sa.IWrapDevice;
 import com.musala.atmosphere.commons.sa.SystemSpecification;
 
 public class AgentManagerTest {
@@ -68,7 +65,7 @@ public class AgentManagerTest {
     }
 
     @Test
-    public void testGetAllDeviceWrappers() throws RemoteException {
+    public void testGetAllDeviceWrappers() {
         List<String> list = deviceManager.getAllDeviceRmiIdentifiers();
         assertNotNull("The devices information list should never be 'null'.", list);
     }
@@ -107,9 +104,8 @@ public class AgentManagerTest {
                                                                            anyInt());
 
         deviceManager.registerDevice(mockDevice);
-
-        Registry agentRegistry = LocateRegistry.getRegistry("localhost", RMI_PORT);
-        IWrapDevice device = (IWrapDevice) agentRegistry.lookup(mockDeviceSerialNumber);
+        
+        IWrapDevice device = deviceManager.getDeviceWrapperByDeviceId(mockDevice.getSerialNumber());
 
         // TODO getting device information fails for the not mocked data such as Ram and Camera.
         // It is because the service socket server is stopped after it has been validated. It should be fixed.
@@ -141,19 +137,19 @@ public class AgentManagerTest {
     }
 
     @Test
-    public void testGetUniqueAgentId() throws RemoteException {
+    public void testGetUniqueAgentId() {
         String agentId = agentManager.getAgentId();
         assertNotNull("Unique Agent ID can never be null", agentId);
     }
 
     @Test
-    public void testGetAgentSpecifications() throws RemoteException {
+    public void testGetAgentSpecifications() {
         SystemSpecification systemSpecification = agentManager.getSpecification();
         assertNotNull("System specification should never be null", systemSpecification);
     }
 
     @Test
-    public void testGetPerformanceScore() throws RemoteException {
+    public void testGetPerformanceScore() {
         EmulatorParameters requiredDeviceParameters = new EmulatorParameters();
         requiredDeviceParameters.setRam(0l);
 

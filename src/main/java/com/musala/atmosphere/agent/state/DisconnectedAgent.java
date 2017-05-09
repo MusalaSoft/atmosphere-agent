@@ -1,8 +1,10 @@
 package com.musala.atmosphere.agent.state;
 
-import java.rmi.NotBoundException;
-import java.rmi.RemoteException;
+import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.List;
+
+import javax.websocket.DeploymentException;
 
 import org.apache.log4j.Logger;
 
@@ -66,6 +68,7 @@ public class DisconnectedAgent extends AgentState {
                     agentConsole.writeLine("Error connecting agent to server: invalid parameters passed to the \"connect\" command. Type 'help' for more information on available commands.");
                     return;
             }
+            
             agentManager.connectToServer(serverIp, serverPort);
 
             AgentState connectedAgent = new ConnectedAgent(agent, agentManager, agentConsole, serverIp, serverPort);
@@ -73,7 +76,7 @@ public class DisconnectedAgent extends AgentState {
         } catch (NumberFormatException e) {
             LOGGER.error("Invalid port number passed as argument of CONNECT command: expected number; got \""
                     + serverPortAsString + "\"", e);
-        } catch (RemoteException | IllegalPortException | NotBoundException e) {
+        } catch (IllegalPortException | DeploymentException | IOException | URISyntaxException e) {
             LOGGER.error("Could not establish connection to server on adress \"" + serverIp + ":" + serverPort
                     + "\". See log for information about the underlying exception.", e);
         } catch (IllegalArgumentException e) {

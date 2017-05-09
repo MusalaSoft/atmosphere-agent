@@ -4,7 +4,6 @@ import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 
-import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -31,7 +30,7 @@ public class DevicesCommandTest extends AgentCommandTestBase {
     }
 
     @Test
-    public void testExecuteDeviceCommand() throws RemoteException {
+    public void testExecuteDeviceCommand() {
         agentState = new DisconnectedAgent(mockedAgent, mockedAgentManager, mockedConsole);
 
         AgentCommand command = new AgentCommand(AgentConsoleCommands.AGENT_DEVICES, new ArrayList<String>());

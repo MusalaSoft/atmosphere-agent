@@ -1,7 +1,5 @@
 package com.musala.atmosphere.agent.devicewrapper;
 
-import java.rmi.RemoteException;
-import java.rmi.server.UnicastRemoteObject;
 import java.util.concurrent.ExecutorService;
 
 import org.apache.log4j.Logger;
@@ -63,8 +61,6 @@ public class RealWrapDevice extends AbstractWrapDevice {
      *        - responsible for removing obsolete files
      * @param ftpFileTransferService
      *        - responsible for file transfers to the FTP server
-     * @throws RemoteException
-     *         - required when implementing {@link UnicastRemoteObject}
      * @throws NotPossibleForDeviceException
      *         - thrown when Cannot create real wrap device for an emulator.
      */
@@ -76,8 +72,7 @@ public class RealWrapDevice extends AbstractWrapDevice {
             ChromeDriverService chromeDriverService,
             FileRecycler fileRecycler,
             FtpFileTransferService ftpFileTransferService)
-        throws RemoteException,
-            NotPossibleForDeviceException {
+        throws NotPossibleForDeviceException {
         super(deviceToWrap,
               executor,
               shellCommandExecutor,

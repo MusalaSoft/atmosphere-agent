@@ -1,6 +1,5 @@
 package com.musala.atmosphere.agent.state;
 
-import java.rmi.RemoteException;
 import java.util.Date;
 import java.util.List;
 
@@ -177,8 +176,6 @@ public abstract class AgentState {
         } catch (IllegalArgumentException e) {
             LOGGER.error("Could not execute command.", e);
             agentConsole.writeLine(ILLEGAL_COMMAND_MESSAGE);
-        } catch (RemoteException e) {
-            LOGGER.error("Could not fetch list with device's serial numbers due to connection problems.", e);
         }
     }
 

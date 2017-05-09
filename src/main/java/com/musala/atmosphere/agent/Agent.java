@@ -2,8 +2,6 @@ package com.musala.atmosphere.agent;
 
 import java.io.IOException;
 import java.net.InetAddress;
-import java.rmi.RemoteException;
-import java.rmi.server.UnicastRemoteObject;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
@@ -79,7 +77,6 @@ public class Agent {
         this.agentRmiPort = agentRmiPort;
 
         try {
-            // Registry registry = LocateRegistry.createRegistry(agentRmiPort);
             String pathToAdb = AgentPropertiesLoader.getAdbPath();
             androidDebugBridgeManager = new AndroidDebugBridgeManager();
             androidDebugBridgeManager.setAndroidDebugBridgePath(pathToAdb);
@@ -102,7 +99,7 @@ public class Agent {
             LOGGER.info("Agent created on port: " + agentRmiPort);
             String agentStartedMessage = "The Agent has started successfully.";
             agentConsole.writeLine(agentStartedMessage);
-        } catch (RemoteException | ADBridgeFailException e) {
+        } catch (ADBridgeFailException e) {
             LOGGER.fatal("Could not create agent manager.", e);
             throw new RuntimeException("Creation of agent manager failed.", e);
         }
@@ -222,10 +219,8 @@ public class Agent {
      * Gets the unique identifier of the current Agent.
      *
      * @return Unique identifier for the current Agent.
-     * @throws RemoteException
-     *         - required when implementing {@link UnicastRemoteObject}
      */
-    public String getId() throws RemoteException {
+    public String getId() {
         return agentManager.getAgentId();
     }
 
