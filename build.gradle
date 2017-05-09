@@ -49,6 +49,9 @@ dependencies {
     compile 'org.seleniumhq.selenium:selenium-java:2.47.1'
     compile 'commons-net:commons-net:3.5'
 
+    compile 'org.glassfish.tyrus:tyrus-client:1.13.1'
+    compile 'org.glassfish.tyrus:tyrus-container-grizzly-client:1.13.1'
+
     runtime 'org.apache.httpcomponents:httpclient:4.4.1'
     runtime 'org.apache.httpcomponents:httpcore:4.4.4'
 
