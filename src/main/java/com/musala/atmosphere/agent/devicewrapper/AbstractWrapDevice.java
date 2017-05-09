@@ -7,8 +7,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.RandomAccessFile;
 import java.nio.channels.FileChannel;
-import java.rmi.RemoteException;
-import java.rmi.server.UnicastRemoteObject;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
@@ -67,7 +65,6 @@ import com.musala.atmosphere.commons.beans.PhoneNumber;
 import com.musala.atmosphere.commons.beans.SwipeDirection;
 import com.musala.atmosphere.commons.exceptions.CommandFailedException;
 import com.musala.atmosphere.commons.gesture.Gesture;
-import com.musala.atmosphere.commons.sa.IWrapDevice;
 import com.musala.atmosphere.commons.ui.UiElementPropertiesContainer;
 import com.musala.atmosphere.commons.ui.selector.UiElementSelector;
 import com.musala.atmosphere.commons.ui.tree.AccessibilityElement;
@@ -76,7 +73,7 @@ import com.musala.atmosphere.commons.webelement.action.WebElementAction;
 import com.musala.atmosphere.commons.webelement.action.WebElementWaitCondition;
 import com.musala.atmosphere.commons.webview.selection.WebViewSelectionCriterion;
 
-public abstract class AbstractWrapDevice extends UnicastRemoteObject implements IWrapDevice {
+public abstract class AbstractWrapDevice implements IWrapDevice {
 
     /**
      * auto generated serialization id
@@ -194,8 +191,6 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
      *        - responsible for removing obsolete files
      * @param ftpFileTransferService
      *        - responsible for file transfers to the FTP server
-     * @throws RemoteException
-     *         - required when implementing {@link UnicastRemoteObject}
      */
     public AbstractWrapDevice(IDevice deviceToWrap,
             ExecutorService executor,
@@ -204,8 +199,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
             UIAutomatorCommunicator automatorCommunicator,
             ChromeDriverService chromeDriverService,
             FileRecycler fileRecycler,
-            FtpFileTransferService ftpFileTransferService)
-        throws RemoteException {
+            FtpFileTransferService ftpFileTransferService) {
         // TODO: Use a dependency injection mechanism here.
         this.wrappedDevice = deviceToWrap;
         this.executor = executor;
@@ -225,7 +219,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
     }
 
     @Override
-    public Object route(RoutingAction action, Object... args) throws RemoteException, CommandFailedException {
+    public Object route(RoutingAction action, Object... args) throws CommandFailedException {
         try {
             action.validateArguments(args);
         } catch (IllegalArgumentException e) {
@@ -1174,7 +1168,7 @@ public abstract class AbstractWrapDevice extends UnicastRemoteObject implements 
     }
 
     @Override
-    public void unbindWrapper() throws RemoteException {
+    public void unbindWrapper() {
         try {
             serviceCommunicator.stopComponent();
             automatorCommunicator.stopComponent();

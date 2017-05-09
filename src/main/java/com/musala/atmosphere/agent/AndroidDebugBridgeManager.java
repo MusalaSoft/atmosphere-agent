@@ -1,7 +1,5 @@
 package com.musala.atmosphere.agent;
 
-import java.rmi.RemoteException;
-import java.rmi.server.UnicastRemoteObject;
 import java.util.Arrays;
 import java.util.List;
 
@@ -69,10 +67,8 @@ public class AndroidDebugBridgeManager {
      *
      * @param deviceChangeListener
      *        - the new {@link DeviceChangeListener} to be set.
-     * @throws RemoteException
-     *         - required when implementing {@link UnicastRemoteObject}
      */
-    public void setListener(DeviceChangeListener deviceChangeListener) throws RemoteException {
+    public void setListener(DeviceChangeListener deviceChangeListener) {
         AndroidDebugBridge.removeDeviceChangeListener(currentDeviceChangeListener);
         currentDeviceChangeListener = deviceChangeListener;
         AndroidDebugBridge.addDeviceChangeListener(currentDeviceChangeListener);

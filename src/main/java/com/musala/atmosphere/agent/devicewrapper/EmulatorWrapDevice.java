@@ -1,7 +1,5 @@
 package com.musala.atmosphere.agent.devicewrapper;
 
-import java.rmi.RemoteException;
-import java.rmi.server.UnicastRemoteObject;
 import java.util.concurrent.ExecutorService;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -65,8 +63,6 @@ public class EmulatorWrapDevice extends AbstractWrapDevice {
      *        - responsible for file transfers to the FTP server
      * @throws NotPossibleForDeviceException
      *         - thrown when cannot create emulator wrap device.
-     * @throws RemoteException
-     *         required when implementing {@link UnicastRemoteObject}
      */
     public EmulatorWrapDevice(IDevice deviceToWrap,
             ExecutorService executor,
@@ -76,8 +72,7 @@ public class EmulatorWrapDevice extends AbstractWrapDevice {
             ChromeDriverService chromeDriverService,
             FileRecycler fileRecycler,
             FtpFileTransferService ftpFileTransferService)
-        throws NotPossibleForDeviceException,
-            RemoteException {
+        throws NotPossibleForDeviceException {
         super(deviceToWrap,
               executor,
               shellCommandExecutor,
