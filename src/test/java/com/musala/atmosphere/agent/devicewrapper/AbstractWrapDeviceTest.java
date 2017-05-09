@@ -5,7 +5,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-import java.rmi.RemoteException;
 import java.util.concurrent.ExecutorService;
 
 import org.junit.BeforeClass;
@@ -62,7 +61,7 @@ public class AbstractWrapDeviceTest {
                 UIAutomatorCommunicator automatorCommunicator,
                 ChromeDriverService chromeDriverService,
                 FileRecycler fileRecycler,
-                FtpFileTransferService ftpFileTransferService) throws RemoteException {
+                FtpFileTransferService ftpFileTransferService) {
             super(deviceToWrap,
                   executor,
                   shellCommandExecutor,
