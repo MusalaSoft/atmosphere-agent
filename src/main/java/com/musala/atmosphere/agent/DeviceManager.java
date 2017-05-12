@@ -99,7 +99,7 @@ public class DeviceManager {
     public DeviceManager() {
     }
 
-    public DeviceManager(int rmiPort, FileRecycler fileRecycler) {
+    public DeviceManager(FileRecycler fileRecycler) {
         if (AgentPropertiesLoader.hasFtpServer() && ftpFileTransferService == null) {
             boolean isSecuredFtp = FtpServerPropertiesLoader.isFtps();
             FtpConnectionManager ftpConnectionManager = new FtpConnectionManager(isSecuredFtp);

@@ -32,7 +32,7 @@ public class DeviceCompatibilityTest {
 
     private static DeviceManager deviceManager;
 
-    private static final int RMI_PORT = AgentPropertiesLoader.getAgentRmiPort();
+    // private static final int RMI_PORT = AgentPropertiesLoader.getAgentRmiPort();
 
     private static FileRecycler fileRecycler;
 
@@ -45,8 +45,8 @@ public class DeviceCompatibilityTest {
 
         fileRecycler = mock(FileRecycler.class);
 
-        agentManager = new AgentManager(RMI_PORT, fileRecycler);
-        deviceManager = new DeviceManager(RMI_PORT, fileRecycler);
+        agentManager = new AgentManager(fileRecycler);
+        deviceManager = new DeviceManager(fileRecycler);
     }
 
     @AfterClass

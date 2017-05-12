@@ -53,7 +53,7 @@ public class AgentManager {
      * @param fileRecycler
      *        {@link FileRecycler FileRecycler} object
      */
-    public AgentManager(int rmiPort, FileRecycler fileRecycler) {
+    public AgentManager(FileRecycler fileRecycler) {
         systemSpecificationLoader = new SystemSpecificationLoader();
         systemSpecificationLoader.getSpecification();
         androidDebugBridgeManager = new AndroidDebugBridgeManager();
@@ -63,7 +63,7 @@ public class AgentManager {
         AgentIdCalculator agentIdCalculator = new AgentIdCalculator();
         agentId = agentIdCalculator.getId();
 
-        deviceManager = new DeviceManager(rmiPort, fileRecycler);
+        deviceManager = new DeviceManager(fileRecycler);
 
         dispatcher = AgentWebSocketDispatcher.getInstance();
         dispatcher.setDeviceManager(deviceManager);

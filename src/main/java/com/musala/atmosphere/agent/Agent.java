@@ -49,8 +49,6 @@ public class Agent {
 
     private AgentState currentAgentState;
 
-    private int agentRmiPort;
-
     private Date startDate;
 
     private boolean isRunning;
@@ -60,21 +58,13 @@ public class Agent {
     private FileRecycler fileRecycler;
 
     /**
-     * Creates an Agent component bound on the specified in <i>agent.properties</i> file port.
-     */
-    public Agent() {
-        this(AgentPropertiesLoader.getAgentRmiPort());
-    }
-
-    /**
      * Creates an Agent component bound on the given port.
      *
      * @param agentRmiPort
      *        - RMI port number, on which agent is to be created.
      */
-    public Agent(int agentRmiPort) {
+    public Agent() {
         isRunning = true;
-        this.agentRmiPort = agentRmiPort;
 
         try {
             String pathToAdb = AgentPropertiesLoader.getAdbPath();
@@ -90,13 +80,13 @@ public class Agent {
                                                              FILE_RECYCLER_DELAY,
                                                              TimeUnit.SECONDS);
 
-            agentManager = new AgentManager(agentRmiPort, fileRecycler);
+            agentManager = new AgentManager(fileRecycler);
 
             agentConsole = new ConsoleControl();
             startDate = new Date();
             currentAgentState = new DisconnectedAgent(this, agentManager, agentConsole);
 
-            LOGGER.info("Agent created on port: " + agentRmiPort);
+            LOGGER.info("Agent created.");
             String agentStartedMessage = "The Agent has started successfully.";
             agentConsole.writeLine(agentStartedMessage);
         } catch (ADBridgeFailException e) {
@@ -111,14 +101,6 @@ public class Agent {
      */
     public Date getStartDate() {
         return startDate;
-    }
-
-    /**
-     *
-     * @return - the number of the port under which the agent is registered in RMI.
-     */
-    public int getAgentRmiPort() {
-        return agentRmiPort;
     }
 
     /**
@@ -262,9 +244,7 @@ public class Agent {
             }
         }
 
-        int portToCreateAgentOn = AgentPropertiesLoader.getAgentRmiPort();
-
-        Agent localAgent = new Agent(portToCreateAgentOn);
+        Agent localAgent = new Agent();
 
         if (hasServerAddress) {
             localAgent.connectToServer(serverAddress.getHostAddress(), serverPortNumber);
