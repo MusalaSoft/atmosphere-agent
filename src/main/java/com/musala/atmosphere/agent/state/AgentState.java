@@ -168,7 +168,7 @@ public abstract class AgentState {
             validateAndVerifyCommand(AgentConsoleCommands.AGENT_DEVICES, commandForExecution);
 
             DeviceManager deviceManager = new DeviceManager();
-            List<String> deviceWrapperIDs = deviceManager.getAllDeviceRmiIdentifiers();
+            List<String> deviceWrapperIDs = deviceManager.getAllDeviceSerialNumbers();
             agentConsole.writeLine("Number of devices, attached to this agent: " + deviceWrapperIDs.size());
             for (String deviceWrapper : deviceWrapperIDs) {
                 agentConsole.writeLine(deviceWrapper);

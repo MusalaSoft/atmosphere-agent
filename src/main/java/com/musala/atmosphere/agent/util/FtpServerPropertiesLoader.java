@@ -60,7 +60,7 @@ public class FtpServerPropertiesLoader {
     }
 
     /**
-     * Gets the FTP Server RMI port from the properties file.
+     * Gets the FTP Server port from the properties file.
      *
      * @return - int, the specified FTP server port or the default FTP Server port(21) if the port is not specified in
      *         the config file.

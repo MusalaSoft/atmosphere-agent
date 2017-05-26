@@ -1,32 +1,23 @@
 package com.musala.atmosphere.agent;
 
 import java.io.IOException;
-import java.rmi.AccessException;
-import java.rmi.NoSuchObjectException;
-import java.rmi.NotBoundException;
-import java.rmi.Remote;
-import java.rmi.RemoteException;
-import java.rmi.registry.LocateRegistry;
-import java.rmi.registry.Registry;
-import java.rmi.server.RemoteServer;
-import java.rmi.server.ServerNotActiveException;
-import java.rmi.server.UnicastRemoteObject;
+import java.net.URISyntaxException;
 import java.util.List;
+
+import javax.websocket.DeploymentException;
 
 import org.apache.log4j.Logger;
 
 import com.android.ddmlib.AndroidDebugBridge;
+import com.musala.atmosphere.agent.devicewrapper.IWrapDevice;
 import com.musala.atmosphere.agent.exception.IllegalPortException;
 import com.musala.atmosphere.agent.util.AgentIdCalculator;
 import com.musala.atmosphere.agent.util.AgentPropertiesLoader;
 import com.musala.atmosphere.agent.util.FileRecycler;
 import com.musala.atmosphere.agent.util.SystemSpecificationLoader;
+import com.musala.atmosphere.agent.websocket.AgentDispatcher;
 import com.musala.atmosphere.commons.exceptions.CommandFailedException;
 import com.musala.atmosphere.commons.sa.EmulatorParameters;
-import com.musala.atmosphere.commons.sa.IAgentManager;
-import com.musala.atmosphere.commons.sa.IConnectionRequestReceiver;
-import com.musala.atmosphere.commons.sa.IWrapDevice;
-import com.musala.atmosphere.commons.sa.RmiStringConstants;
 import com.musala.atmosphere.commons.sa.SystemSpecification;
 import com.musala.atmosphere.commons.sa.exceptions.DeviceBootTimeoutReachedException;
 import com.musala.atmosphere.commons.sa.exceptions.DeviceNotFoundException;
@@ -39,12 +30,7 @@ import com.musala.atmosphere.commons.sa.exceptions.TimeoutReachedException;
  * @author georgi.gaydarov
  *
  */
-public class AgentManager extends UnicastRemoteObject implements IAgentManager {
-    /**
-     * Automatically generated serialization id
-     */
-    private static final long serialVersionUID = 8467038223162311366L;
-
+public class AgentManager {
     private static final Logger LOGGER = Logger.getLogger(AgentManager.class.getCanonicalName());
 
     private AndroidDebugBridgeManager androidDebugBridgeManager;
@@ -53,25 +39,19 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager {
 
     private DeviceManager deviceManager;
 
-    private Registry rmiRegistry;
-
     private final String agentId;
 
     private SystemSpecificationLoader systemSpecificationLoader;
 
-    private int rmiRegistryPort;
+    private AgentDispatcher dispatcher;
 
     /**
      * Creates a new AgentManager on this computer.
      *
-     * @param rmiPort
-     *        Port, which will be used for the RMI Registry
      * @param fileRecycler
      *        {@link FileRecycler FileRecycler} object
-     * @throws RemoteException
-     *         - required when implementing {@link UnicastRemoteObject}
      */
-    public AgentManager(int rmiPort, FileRecycler fileRecycler) throws RemoteException {
+    public AgentManager(FileRecycler fileRecycler) {
         systemSpecificationLoader = new SystemSpecificationLoader();
         systemSpecificationLoader.getSpecification();
         androidDebugBridgeManager = new AndroidDebugBridgeManager();
@@ -81,21 +61,11 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager {
         AgentIdCalculator agentIdCalculator = new AgentIdCalculator();
         agentId = agentIdCalculator.getId();
 
-        // Publish this AgentManager in the RMI registry
-        try {
-            rmiRegistry = LocateRegistry.createRegistry(rmiPort);
-            rmiRegistry.rebind(RmiStringConstants.AGENT_MANAGER.toString(), this);
-        } catch (RemoteException e) {
-            close();
-            throw e;
-        }
+        deviceManager = new DeviceManager(fileRecycler);
 
-        // publish AgentEventReceiver class in the same RMI registry
-        AgentEventReceiver agentEventReceiver = new AgentEventReceiver();
-        rmiRegistry.rebind(RmiStringConstants.AGENT_EVENT_RECEIVER.toString(), agentEventReceiver);
-
-        rmiRegistryPort = rmiPort;
-        deviceManager = new DeviceManager(rmiPort, fileRecycler);
+        dispatcher = AgentDispatcher.getInstance();
+        dispatcher.setDeviceManager(deviceManager);
+        dispatcher.setAgentManager(this);
 
         LOGGER.info("AgentManager created successfully.");
     }
@@ -121,21 +91,7 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager {
             // Terminate the bridge connection
             AndroidDebugBridge.terminate();
 
-            // Remove all items in the registry so the RMI threads will be closed
-            if (rmiRegistry != null) {
-                String[] rmiIds = rmiRegistry.list();
-                for (String currentRmiIdObject : rmiIds) {
-                    Object registeredObject = rmiRegistry.lookup(currentRmiIdObject);
-                    rmiRegistry.unbind(currentRmiIdObject);
-                    try {
-                        UnicastRemoteObject.unexportObject((Remote) registeredObject, true);
-                    } catch (NoSuchObjectException e) {
-                        LOGGER.warn("Could not unexport RMI object with ID: " + currentRmiIdObject);
-                    }
-                }
-
-                UnicastRemoteObject.unexportObject(rmiRegistry, true);
-            }
+            dispatcher.close();
 
             // Stops the chrome driver started as a service
             deviceManager.stopChromeDriverService();
@@ -151,8 +107,17 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager {
         }
     }
 
-    @Override
-    public String createAndStartEmulator(EmulatorParameters parameters) throws RemoteException, IOException {
+    /**
+     * Creates and starts a new emulator with specific DeviceParameters or just starts an emulator with the
+     * DeviceParameters if such an emulator already exists.
+     *
+     * @param parameters
+     *        DeviceParameters of the device we want created.
+     * @return Device wrapper identifier.
+     * @throws IOException
+     *         thrown when an I/O exception of some sort has occurred.
+     */
+    public String createAndStartEmulator(EmulatorParameters parameters) throws IOException {
         String emulatorName = null;
         try {
             emulatorName = emulatorManager.createAndStartEmulator(parameters);
@@ -162,37 +127,52 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager {
         return emulatorName;
     }
 
-    @Override
+    /**
+     * Closes the process of an emulator specified by it's serial number.
+     *
+     * @param serialNumber
+     *        Serial number of the emulator we want closed.
+     *
+     * @throws DeviceNotFoundException
+     *         Thrown when a method an Agent method was invoked with serial number of a device that is not present on
+     *         the Agent.
+     * @throws IOException
+     *         thrown when an I/O exception of some sort has occurred.
+     * @throws NotPossibleForDeviceException
+     *         thrown when a command for real devices only was attempted on an emulator and vice versa.
+     *
+     */
     public void closeAndEraseEmulator(String serialNumber)
-        throws DeviceNotFoundException,
+            throws DeviceNotFoundException,
             NotPossibleForDeviceException,
             IOException {
         emulatorManager.closeAndEraseEmulator(serialNumber);
     }
 
-    @Override
-    public String getAgentId() throws RemoteException {
+    /**
+     * Gets the unique identifier of the current Agent.
+     *
+     * @return Unique identifier for the current Agent.
+     */
+    public String getAgentId() {
         return agentId;
     }
 
-    @Override
-    public String getInvokerIpAddress() throws RemoteException {
-        try {
-            return RemoteServer.getClientHost();
-        } catch (ServerNotActiveException e) {
-            // Thrown when this method is not invoked by RMI. Nothing to do here, this should not happen.
-            LOGGER.warn("The getInvokerIpAddress method was invoked locally and resulted in exception.");
-        }
-        return "";
-    }
-
-    @Override
-    public void registerServer(String serverIPAddress, int serverRmiPort) throws RemoteException {
+    /**
+     * Registers the server for events, related to changes in the devices on the agent. Should be called after the
+     * server has published it's IAgentEventSender.
+     *
+     * @param serverIpAddress
+     *        The server's IP address.
+     * @param serverPort
+     *        Port on which the WebSocket connection is opened.
+     */
+    public void registerServer(String serverIpAddress, int serverPort) {
         // Try to construct a new device change listener that will notify the newly set server
-        DeviceChangeListener newDeviceChangeListener = new DeviceChangeListener(serverIPAddress, serverRmiPort);
+        DeviceChangeListener newDeviceChangeListener = new DeviceChangeListener(true);
         androidDebugBridgeManager.setListener(newDeviceChangeListener);
 
-        LOGGER.info("Server with IP (" + serverIPAddress + ":" + serverRmiPort + ") registered.");
+        LOGGER.info("Server with IP (" + serverIpAddress + ":" + serverPort + ") registered.");
     }
 
     /**
@@ -201,43 +181,49 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager {
      * @param ipAddress
      *        server's IP address.
      * @param port
-     *        server's RMI port.
-     * @throws NotBoundException
-     *         - thrown if an attempt is made to lookup or unbind in the registry a name that has no associated binding.
-     * @throws RemoteException
-     *         - required when implementing {@link UnicastRemoteObject}
-     * @throws AccessException
-     *         thrown when accessing the server's method fails
+     *        server's port.
      * @throws IllegalPortException
      *         thrown when the given port is not valid
+     * @throws URISyntaxException
+     * @throws IOException
+     * @throws DeploymentException
      */
     public void connectToServer(String ipAddress, int port)
-        throws AccessException,
-            RemoteException,
-            NotBoundException,
-            IllegalPortException {
+            throws IllegalPortException,
+            DeploymentException,
+            IOException,
+            URISyntaxException {
         if (!isPortValueValid(port)) {
             throw new IllegalPortException("Given port " + port + " is not valid.");
         }
-        Registry serverRegistry = LocateRegistry.getRegistry(ipAddress, port);
-        IConnectionRequestReceiver requestReceiver = (IConnectionRequestReceiver) serverRegistry.lookup(RmiStringConstants.CONNECTION_REQUEST_RECEIVER.toString());
-        requestReceiver.postConnectionRequest(rmiRegistryPort);
+
+        dispatcher.connectToServer(ipAddress, port, agentId);
         LOGGER.info("Connection request sent to Server with address (" + ipAddress + ":" + port + ")");
     }
 
-    private boolean isPortValueValid(int rmiPort) {
-        boolean isPortOk = (rmiPort > 0 && rmiPort <= 65535);
+    private boolean isPortValueValid(int port) {
+        boolean isPortOk = (port > 0 && port <= 65535);
         return isPortOk;
     }
 
-    @Override
-    public SystemSpecification getSpecification() throws RemoteException {
+    /**
+     * Gets the hardware specifications of the device the agent is running on.
+     *
+     * @return {@link SystemSpecification} object describing the specifications of the device the agent is running on.
+     */
+    public SystemSpecification getSpecification() {
         SystemSpecification agentParameters = systemSpecificationLoader.getSpecification();
         return agentParameters;
     }
 
-    @Override
-    public double getPerformanceScore(EmulatorParameters requiredDeviceParameters) throws RemoteException {
+    /**
+     * Returns a score based on how well an emulator with given parameters will perform on the agent.
+     *
+     * @param requiredDeviceParameters
+     *        - the parameters of the emulator device.
+     * @return a score based on how well the emulator will perform on the agent.
+     */
+    public double getPerformanceScore(EmulatorParameters requiredDeviceParameters) {
         double score = 0d;
 
         SystemSpecification systemSpecification = getSpecification();
@@ -264,61 +250,110 @@ public class AgentManager extends UnicastRemoteObject implements IAgentManager {
         return score;
     }
 
-    @Override
+    /**
+     * Gets the serial number of an emulator with given AVD name.
+     *
+     * @param emulatorName
+     *        - the AVD name of the emulator.
+     * @return the serial number of the emulator.
+     * @throws DeviceNotFoundException
+     *         Thrown when a method an Agent method was invoked with serial number of a device that is not present on
+     *         the Agent.
+     */
     public String getSerialNumberOfEmulator(String emulatorName) throws DeviceNotFoundException {
         return emulatorManager.getSerialNumberOfEmulator(emulatorName);
     }
 
-    @Override
+    /**
+     * Waits until an emulator device with given AVD name is present on the agent or the timeout is reached.
+     *
+     * @param emulatorName
+     *        - the AVD name of the emulator.
+     * @param timeout
+     *        - the timeout in milliseconds.
+     * @throws TimeoutReachedException
+     *         Thrown when the timeout for an action is reached.
+     */
     public void waitForEmulatorExists(String emulatorName, long timeout)
-        throws RemoteException,
-            TimeoutReachedException {
+            throws TimeoutReachedException {
         emulatorManager.waitForEmulatorExists(emulatorName, timeout);
     }
 
-    @Override
-    public boolean isAnyEmulatorPresent() throws RemoteException {
+    public boolean isAnyEmulatorPresent() {
         return emulatorManager.isAnyEmulatorPresent();
     }
 
-    @Override
+    /**
+     * Waits until an emulator device with given AVD name boots or the timeout is reached. Make sure you have called
+     * {@link #waitForEmulatorExists(String, long)} first.
+     *
+     * @param emulatorName
+     *        - the AVD name of the emulator.
+     * @param timeout
+     *        - the timeout in milliseconds.
+     * @throws CommandFailedException
+     *         thrown when a command failed
+     * @throws DeviceBootTimeoutReachedException
+     *         thrown when a device boot timeout is reached
+     * @throws DeviceNotFoundException
+     *         thrown when a method an Agent method was invoked with serial number of a device that is not present on
+     *         the Agent.
+     */
     public void waitForEmulatorToBoot(String emulatorName, long timeout)
-        throws RemoteException,
-            CommandFailedException,
+            throws CommandFailedException,
             DeviceBootTimeoutReachedException,
             DeviceNotFoundException {
         emulatorManager.waitForEmulatorToBoot(emulatorName, timeout);
     }
 
-    @Override
-    public List<String> getAllDeviceRmiIdentifiers() throws RemoteException {
-        return deviceManager.getAllDeviceRmiIdentifiers();
+    /**
+     * Gets a list of all published and available device identifiers on the current Agent.
+     *
+     * @return List of the DeviceInformation objects, one for every available device on the current Agent.
+     */
+    public List<String> getAllDeviceIdentifiers() {
+        return deviceManager.getAllDeviceSerialNumbers();
     }
 
-    @Override
-    public void waitForDeviceExists(String serialNumber, long timeout) throws RemoteException, TimeoutReachedException {
+    /**
+     * Waits until a device with given serial number is present on the agent or the timeout is reached.
+     *
+     * @param serialNumber
+     *        - the serial number of the device.
+     * @param timeout
+     *        - the timeout in milliseconds.
+     * @throws TimeoutReachedException
+     *         Thrown when the timeout for an action is reached.
+     */
+    public void waitForDeviceExists(String serialNumber, long timeout) throws TimeoutReachedException {
         deviceManager.waitForDeviceExists(serialNumber, timeout);
     }
 
-    @Override
-    public boolean isAnyDevicePresent() throws RemoteException {
+    /**
+     * Checks if any device is present on the agent (current machine).
+     *
+     * @return true if a device is present, false otherwise.
+     */
+    public boolean isAnyDevicePresent() {
         return deviceManager.isAnyDevicePresent();
     }
 
-    @Override
-    public IWrapDevice getFirstAvailableDeviceWrapper() throws RemoteException, NotBoundException {
+    /**
+     * Gets the first available device that is present on the agent (current machine).
+     *
+     * @return the first available device wrapper ({@link IWrapDevice} interface).
+     */
+    public IWrapDevice getFirstAvailableDeviceWrapper() {
         return deviceManager.getFirstAvailableDeviceWrapper();
     }
 
-    @Override
-    public IWrapDevice getFirstAvailableEmulatorDeviceWrapper() throws RemoteException, NotBoundException {
+    /**
+     * Gets the first available emulator device that is present on the agent (current machine).
+     *
+     * @return the first available emulator wrapper ({@link IWrapDevice} interface).
+     */
+    public IWrapDevice getFirstAvailableEmulatorDeviceWrapper() {
         return deviceManager.getFirstAvailableEmulatorDeviceWrapper();
     }
 
-    @Override
-    public String getRmiWrapperBindingIdentifier(String deviceSerialNumber)
-        throws RemoteException,
-            DeviceNotFoundException {
-        return deviceManager.getRmiWrapperBindingIdentifier(deviceSerialNumber);
-    }
 }

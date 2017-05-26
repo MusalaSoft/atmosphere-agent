@@ -9,6 +9,7 @@ import java.io.RandomAccessFile;
 import java.nio.channels.FileChannel;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
@@ -248,7 +249,8 @@ public abstract class AbstractWrapDevice implements IWrapDevice {
                 apkInstaller.initAPKInstall();
                 break;
             case APK_APPEND_DATA:
-                apkInstaller.appendToAPK((byte[]) args[0], (int) args[1]);
+                byte[] bytes = Base64.getDecoder().decode((String) args[0]);
+                apkInstaller.appendToAPK(bytes, (int) args[1]);
                 break;
             case APK_BUILD_AND_INSTALL:
                 apkInstaller.buildAndInstallAPK((boolean) args[0]);
@@ -635,7 +637,7 @@ public abstract class AbstractWrapDevice implements IWrapDevice {
      * @throws CommandFailedException
      *         if LogCat command fails
      */
-    private byte[] getDeviceLogcat(String logFilter) throws CommandFailedException {
+    private String getDeviceLogcat(String logFilter) throws CommandFailedException {
         String deviceLogcatFileName = String.format("device_%s.log", this.getDeviceInformation().getSerialNumber());
         String externalStorage = serviceCommunicator.getExternalStorage();
         String remoteLogParentDir = externalStorage != null ? externalStorage : FALLBACK_COMPONENT_PATH;
@@ -658,7 +660,9 @@ public abstract class AbstractWrapDevice implements IWrapDevice {
             String removeFileCommand = String.format("rm %s", remoteLogDir);
             shellCommandExecutor.execute(removeFileCommand);
 
-            return logData;
+            String base64LogData = Base64.getEncoder().encodeToString(logData);
+
+            return base64LogData;
         } catch (SyncException | IOException | AdbCommandRejectedException | TimeoutException e) {
             String errorMessage = String.format("Getting log for device %s failed.", wrappedDevice.getSerialNumber());
             LOGGER.error(errorMessage, e);
@@ -804,7 +808,7 @@ public abstract class AbstractWrapDevice implements IWrapDevice {
      * @throws CommandFailedException
      *         In case of an error in the execution
      */
-    private byte[] getScreenshot() throws CommandFailedException {
+    private String getScreenshot() throws CommandFailedException {
         shellCommandExecutor.execute(SCREENSHOT_COMMAND);
 
         FileInputStream fileReader = null;
@@ -820,7 +824,9 @@ public abstract class AbstractWrapDevice implements IWrapDevice {
             fileReader.read(screenshotData);
             fileReader.close();
 
-            return screenshotData;
+            String screenshotBase64String = Base64.getEncoder().encodeToString(screenshotData);
+
+            return screenshotBase64String;
         } catch (IOException | AdbCommandRejectedException | TimeoutException | SyncException e) {
             LOGGER.error("Screenshot fetching failed.", e);
             throw new CommandFailedException("Screenshot fetching failed.", e);

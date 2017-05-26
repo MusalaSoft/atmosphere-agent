@@ -74,17 +74,6 @@ public class AgentPropertiesLoader {
     }
 
     /**
-     * Returns the Agent RMI port from the config file.
-     *
-     * @return - the port on which the Agent is published in RMI.
-     */
-    public static int getAgentRmiPort() {
-        String returnValueString = getPropertyString(AgentProperties.AGENT_RMI_PORT);
-        int returnValue = Integer.parseInt(returnValueString);
-        return returnValue;
-    }
-
-    /**
      * Returns the timeout for the creation of the emulator form the config file.
      *
      * @return - the creation wait timeout for an emulator
