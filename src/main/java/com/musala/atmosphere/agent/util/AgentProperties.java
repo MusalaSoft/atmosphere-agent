@@ -8,7 +8,6 @@ package com.musala.atmosphere.agent.util;
  */
 public enum AgentProperties {
     ADB_CONNECTION_TIMEOUT("adb.connection.timeout"),
-    AGENT_RMI_PORT("agent.rmi.port"),
     EMULATOR_CREATION_WAIT_TIMEOUT("emulator.creation.wait.timeout"),
     EMULATOR_ABI("emulator.abi"),
     EMULATOR_EXECUTABLE_PATH("emulator.executable.path"),

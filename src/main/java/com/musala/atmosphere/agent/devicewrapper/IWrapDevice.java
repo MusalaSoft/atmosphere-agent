@@ -4,9 +4,7 @@ import com.musala.atmosphere.commons.RoutingAction;
 import com.musala.atmosphere.commons.exceptions.CommandFailedException;
 
 /**
- * <p>
- * Common interface for all device wrappers, used in RMI.
- * </p>
+ * Common interface for all device wrappers.
  *
  * @author georgi.gaydarov
  *

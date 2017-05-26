@@ -37,8 +37,6 @@ public class AgentManagerTest {
 
     private static DeviceManager deviceManager;
 
-    private static final int RMI_PORT = AgentPropertiesLoader.getAgentRmiPort();
-
     private static FileRecycler fileRecycler;
 
     @BeforeClass
@@ -53,8 +51,8 @@ public class AgentManagerTest {
 
         fileRecycler = mock(FileRecycler.class);
 
-        agentManager = new AgentManager(RMI_PORT, fileRecycler);
-        deviceManager = new DeviceManager(RMI_PORT, fileRecycler);
+        agentManager = new AgentManager(fileRecycler);
+        deviceManager = new DeviceManager(fileRecycler);
     }
 
     @AfterClass
@@ -66,7 +64,7 @@ public class AgentManagerTest {
 
     @Test
     public void testGetAllDeviceWrappers() {
-        List<String> list = deviceManager.getAllDeviceRmiIdentifiers();
+        List<String> list = deviceManager.getAllDeviceSerialNumbers();
         assertNotNull("The devices information list should never be 'null'.", list);
     }
 
@@ -104,7 +102,7 @@ public class AgentManagerTest {
                                                                            anyInt());
 
         deviceManager.registerDevice(mockDevice);
-        
+
         IWrapDevice device = deviceManager.getDeviceWrapperByDeviceId(mockDevice.getSerialNumber());
 
         // TODO getting device information fails for the not mocked data such as Ram and Camera.
