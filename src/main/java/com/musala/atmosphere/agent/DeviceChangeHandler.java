@@ -131,7 +131,9 @@ public class DeviceChangeHandler {
                 try {
                     onDeviceListChanged(publishId, false /* device disconnected */);
                 } catch (CommandFailedException e) {
-
+                    String errorMessage = String.format("Failed to unregister a device with serial number %s.",
+                                                        device.getSerialNumber());
+                    LOGGER.error(errorMessage, e);
                 }
             }
 

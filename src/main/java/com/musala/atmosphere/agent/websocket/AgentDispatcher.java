@@ -90,8 +90,9 @@ public class AgentDispatcher {
 
         LOGGER.debug("Connected to server address: " + uriAddress);
 
-        // Register the server for event notifications
-        agentManager.registerServer(serverAddress, webSocketPort);
+        agentManager.registerServer();
+        LOGGER.info("The Server(" + serverAddress + ":" + webSocketPort
+                + ") is registered for the device changed event notifications.");
     }
 
     /**
@@ -159,8 +160,7 @@ public class AgentDispatcher {
                             LOGGER.error(ACTION_FAILD_MESSAGE, e);
                         }
                     }
-                }) {
-                }.start();
+                }) {}.start();
             }
         } catch (CommandFailedException e) {
             sendErrorResponseMessage(e, session, request.getSessionId());
@@ -204,7 +204,7 @@ public class AgentDispatcher {
             try {
                 session.close();
             } catch (IOException e) {
-                e.printStackTrace();
+                LOGGER.error("The connection is closed with an error.", e);
             }
         }
     }
