@@ -162,17 +162,11 @@ public class AgentManager {
      * Registers the server for events, related to changes in the devices on the agent. Should be called after the
      * server has published it's IAgentEventSender.
      *
-     * @param serverIpAddress
-     *        The server's IP address.
-     * @param serverPort
-     *        Port on which the WebSocket connection is opened.
      */
-    public void registerServer(String serverIpAddress, int serverPort) {
+    public void registerServer() {
         // Try to construct a new device change listener that will notify the newly set server
         DeviceChangeListener newDeviceChangeListener = new DeviceChangeListener(true);
         androidDebugBridgeManager.setListener(newDeviceChangeListener);
-
-        LOGGER.info("Server with IP (" + serverIpAddress + ":" + serverPort + ") registered.");
     }
 
     /**
