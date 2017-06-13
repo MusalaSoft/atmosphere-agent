@@ -141,7 +141,7 @@ public class FtpConnectionManager {
                 ftpClient.changeToParentDirectory();
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.error("Faild to change a directory.", e);
         }
 
         return exist;

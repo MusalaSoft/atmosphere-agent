@@ -62,7 +62,6 @@ public class DdmLibLogListener implements ILogOutput {
                 break;
         }
         LOGGER.log(loggerInputLevel, arg1 + " " + arg2);
-        // System.out.println(arg0.toString() + " " + arg1 + " " + arg2);
     }
 
     @Override
@@ -92,7 +91,6 @@ public class DdmLibLogListener implements ILogOutput {
                 break;
         }
         LOGGER.log(loggerInputLevel, arg1 + " " + arg2);
-        // System.out.println(arg0.toString() + " " + arg1 + " " + arg2);
     }
 
 }

@@ -36,8 +36,6 @@ import com.musala.atmosphere.commons.util.Pair;
  *
  */
 public class EmulatorWrapDevice extends AbstractWrapDevice {
-    private static final long serialVersionUID = -112607818622127351L;
-
     private final static Logger LOGGER = Logger.getLogger(EmulatorWrapDevice.class.getCanonicalName());
 
     private final static int SET_MAGNETIC_FIELD_MAXIMUM_API_LEVEL_SUPPORT = 18;
@@ -236,7 +234,7 @@ public class EmulatorWrapDevice extends AbstractWrapDevice {
                     + "See the enclosed exception for more information.", e);
         } catch (NotPossibleForDeviceException e) {
             // would not have gotten this far.
-            e.printStackTrace();
+            LOGGER.error("A command for real devices only was attempted on an emulator.", e);
         }
         return emulatorConsole;
     }
