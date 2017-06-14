@@ -124,6 +124,7 @@ task wrapper(type: Wrapper) {
 }
 
 test {
+    forkEvery = 1
     systemProperty 'java.library.path', file('natives')
 }
 
