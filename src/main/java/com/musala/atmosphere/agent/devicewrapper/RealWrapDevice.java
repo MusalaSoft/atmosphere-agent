@@ -35,9 +35,6 @@ import com.musala.atmosphere.commons.util.Pair;
  *
  */
 public class RealWrapDevice extends AbstractWrapDevice {
-
-    private static final long serialVersionUID = 8940498776944070469L;
-
     private final static Logger LOGGER = Logger.getLogger(RealWrapDevice.class.getCanonicalName());
 
     private final static int BATTERY_LEVEL_THRESHOLD = 15;

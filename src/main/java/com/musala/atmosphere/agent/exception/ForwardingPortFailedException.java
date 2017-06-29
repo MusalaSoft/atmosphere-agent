@@ -4,14 +4,11 @@ import com.musala.atmosphere.commons.exceptions.AtmosphereRuntimeException;
 
 /**
  * Thrown when the forwarding of port to an ATMOSPHERE on-device application fails.
- * 
+ *
  * @author yordan.petrov
- * 
+ *
  */
 public class ForwardingPortFailedException extends AtmosphereRuntimeException {
-    /**
-     * auto-generated serialization id
-     */
     private static final long serialVersionUID = 1281842250823943876L;
 
     public ForwardingPortFailedException() {

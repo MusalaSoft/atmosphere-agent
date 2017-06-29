@@ -75,12 +75,6 @@ import com.musala.atmosphere.commons.webelement.action.WebElementWaitCondition;
 import com.musala.atmosphere.commons.webview.selection.WebViewSelectionCriterion;
 
 public abstract class AbstractWrapDevice implements IWrapDevice {
-
-    /**
-     * auto generated serialization id
-     */
-    private static final long serialVersionUID = -9122701818928360023L;
-
     private static final Logger LOGGER = Logger.getLogger(AbstractWrapDevice.class.getCanonicalName());
 
     // WARNING : do not change the remote folder unless you really know what you
