@@ -52,8 +52,6 @@ import com.musala.atmosphere.commons.util.telephony.SimState;
 public class AbstractWrapDeviceTest {
     private static class FakeWrapDevice extends AbstractWrapDevice {
 
-        private static final long serialVersionUID = 1941712619444651820L;
-
         public FakeWrapDevice(IDevice deviceToWrap,
                 ExecutorService executor,
                 BackgroundShellCommandExecutor shellCommandExecutor,
