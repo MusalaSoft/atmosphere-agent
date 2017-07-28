@@ -11,7 +11,10 @@ import com.musala.atmosphere.agent.DeviceManager;
 import com.musala.atmosphere.agent.command.AgentCommand;
 import com.musala.atmosphere.agent.command.AgentConsoleCommands;
 import com.musala.atmosphere.agent.util.date.DateClockUtil;
+import com.musala.atmosphere.commons.DeviceInformation;
 import com.musala.atmosphere.commons.sa.ConsoleControl;
+import com.musala.atmosphere.commons.sa.Table;
+import com.musala.atmosphere.commons.util.Pair;
 
 /**
  * Common abstract class for each agent state.
@@ -167,16 +170,42 @@ public abstract class AgentState {
         try {
             validateAndVerifyCommand(AgentConsoleCommands.AGENT_DEVICES, commandForExecution);
 
+            String[] columnNames = new String[] {"Model", "Serial Number", "MFR", "API", "OS", "CPU", "RAM", "DPI",
+                    "Resolution", "Emulator", "Tablet"};
+
             DeviceManager deviceManager = new DeviceManager();
-            List<String> deviceWrapperIDs = deviceManager.getAllDeviceSerialNumbers();
-            agentConsole.writeLine("Number of devices, attached to this agent: " + deviceWrapperIDs.size());
-            for (String deviceWrapper : deviceWrapperIDs) {
-                agentConsole.writeLine(deviceWrapper);
+            List<DeviceInformation> deviceInfos = deviceManager.getDevicesInformation();
+            String[][] data = new String[deviceInfos.size()][columnNames.length];
+            agentConsole.writeLine("Number of devices, attached to this agent: " + deviceInfos.size());
+            for (int i = 0; i < deviceInfos.size(); i++) {
+                DeviceInformation deviceInformation = deviceInfos.get(i);
+
+                Pair<Integer, Integer> res = deviceInformation.getResolution();
+                data[i][0] = toStr(deviceInformation.getModel());
+                data[i][1] = toStr(deviceInformation.getSerialNumber());
+                data[i][2] = toStr(deviceInformation.getManufacturer());
+                data[i][3] = toStr(String.valueOf(deviceInformation.getApiLevel()));
+                data[i][4] = toStr(deviceInformation.getOS());
+                data[i][5] = toStr(deviceInformation.getCpu());
+                data[i][6] = toStr(String.valueOf(deviceInformation.getRam()));
+                data[i][7] = toStr(String.valueOf(deviceInformation.getDpi()));
+                data[i][8] = toStr(String.format("%sx%s",
+                                                 String.valueOf(res.getKey()),
+                                                 String.valueOf(res.getValue())));
+                data[i][9] = toStr(String.valueOf(deviceInformation.isEmulator()));
+                data[i][10] = toStr(String.valueOf(deviceInformation.isTablet()));
             }
+
+            Table table = new Table(columnNames, data);
+            table.printTable(agentConsole);
         } catch (IllegalArgumentException e) {
             LOGGER.error("Could not execute command.", e);
             agentConsole.writeLine(ILLEGAL_COMMAND_MESSAGE);
         }
+    }
+
+    private String toStr(String data) {
+        return data != null ? data : "unknown";
     }
 
     /**
