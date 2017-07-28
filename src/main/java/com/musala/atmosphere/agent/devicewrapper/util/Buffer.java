@@ -18,130 +18,141 @@ package com.musala.atmosphere.agent.devicewrapper.util;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /**
- * A class that holds a {@link BufferProperties} buffer for a specified key.
+ * A class that holds a buffer with a generic data.
  *
  * @author dimcho.nedev
  *
  */
-public class Buffer<T, E> {
-    private static final int THRESHOLD = 1024;
+public final class Buffer<T> {
+    /**
+     * The maximum size of the buffer.
+     */
+    private static final short THRESHOLD = 1024;
 
-    private HashMap<T, BufferProperties<E>> logBuffer;
+    /**
+     * The minimum size that can be taken from the buffer.
+     */
+    private static final byte MIN_STEP = 4;
+
+    private static final byte COUNT_DOWN_NUMBER = 1;
+
+    /**
+     * The time in milliseconds for wait until a certain condition.
+     */
+    private int waitUntilConditionTimeout = 4000;
+
+    /**
+     * The start position on the buffer.
+     */
+    private volatile int startPosition = 0;
+
+    /**
+     * The end position on the buffer.
+     */
+    private volatile int endPosition = 0;
+
+    /**
+     * Provides the synchronization.
+     */
+    private CountDownLatch bufferDone;
+
+    /**
+     * Contains the elements of the buffer.
+     */
+    private List<T> buffer;
+
+    private boolean isActive = false;
 
     public Buffer() {
-        this.logBuffer = new HashMap<>();
+        this.buffer = Collections.synchronizedList(new ArrayList<T>());
+        bufferDone = new CountDownLatch(COUNT_DOWN_NUMBER);
+        isActive = true;
+    }
+
+    public Buffer(int waitUntilConditionTimeout) {
+        this();
+        this.waitUntilConditionTimeout = waitUntilConditionTimeout;
     }
 
     /**
      * Gets the new arrival part of the buffer.
      *
-     * @param key
-     *            - the key with which a specified {@link BufferProperties} buffer is associated
      * @return the new arrival part of the buffer
      */
-    public List<E> getBuffer(T key) {
-        if (logBuffer.get(key) == null) {
-            return new ArrayList<E>();
-        }
+    public List<T> getBuffer() {
+        List<T> requestedBuffer = null;
 
-        List<E> requestedBuffer = null;
         try {
-            // waits until the buffer size is changed or the operation is terminated
-            while (logBuffer.get(key).buffer.size() == logBuffer.get(key).startPosition) {
-                if (this.logBuffer.get(key) == null) {
-                    return new ArrayList<E>();
-                }
-            }
+            bufferDone.await(waitUntilConditionTimeout, TimeUnit.MILLISECONDS);
 
-            List<E> buffer = logBuffer.get(key).buffer;
             synchronized (buffer) {
-                BufferProperties<E> properties = logBuffer.get(key);
-                int startPosition = properties.startPosition;
-                int endPosition = properties.buffer.size();
+                endPosition = buffer.size();
 
-                requestedBuffer = new ArrayList<E>(buffer.subList(startPosition, endPosition));
+                requestedBuffer = new ArrayList<T>(buffer.subList(startPosition, endPosition));
 
-                properties.startPosition = endPosition;
+                startPosition = endPosition;
 
                 // clears the buffer and resets the start position
                 if (buffer.size() >= THRESHOLD) {
-                    logBuffer.get(key).buffer.clear();
-                    logBuffer.get(key).startPosition = 0;
+                    buffer.clear();
+                    startPosition = 0;
                 }
             }
-        } catch (NullPointerException e) {
-            return new ArrayList<E>();
+        } catch (InterruptedException e) {
+            return new ArrayList<T>();
         }
 
         return requestedBuffer;
     }
 
     /**
-     * Adds a buffer for a specified key.
+     * Adds a value to the buffer that is associated with specified key.
      *
      * @param key
-     *            - key with which a new {@link BufferProperties} buffer will be
-     *            associated
-     */
-    public synchronized void addKey(T key) {
-        logBuffer.put(key, new BufferProperties<E>());
-    }
-
-    /**
-     * Adds a value to the {@link BufferProperties} buffer that is associated with specified key.
-     *
-     * @param key
-     *            - key with which the specified value is to be associated
+     *        - key with which the specified value is to be associated
      * @param value
-     *            - value to be associated with the specified key
+     *        - value to be associated with the specified key
      */
-    public synchronized void addValue(T key, E value) {
-        if (logBuffer.containsKey(key)) {
-            logBuffer.get(key).buffer.add(value);
+    public void addValue(T value) {
+        synchronized (buffer) {
+            buffer.add(value);
+            if (buffer.size() - startPosition >= MIN_STEP) {
+                bufferDone.countDown();
+                bufferDone = new CountDownLatch(COUNT_DOWN_NUMBER);
+            }
         }
     }
 
     /**
-     * Removes the {@link BufferProperties}} value associated with a specified
-     * key.
-     *
-     * @param key
-     *            - the key with which a specified value is associated
+     * Clears the buffer and resets the positions.
      */
-    public synchronized void remove(T key) {
-        logBuffer.remove(key);
+    public synchronized void terminate() {
+        buffer.clear();
+        isActive = false;
+        startPosition = 0;
+        endPosition = 0;
     }
 
     /**
-     * Returns <code>true</code> if the buffer contains a mapping for the specified key.
+     * Gets the current size of the buffer
      *
-     * @param key
-     *            - the key whose presence in this map is to be tested
-     * @return <code>true</code> if the buffer contains a mapping for the specified key
+     * @return size of the buffer
      */
-    public synchronized boolean contains(T key) {
-        return logBuffer.get(key) != null;
+    public synchronized int size() {
+        return buffer.size() - startPosition;
     }
 
     /**
-     * A private class that contains the properties for the buffer.
+     * Checks whether the buffer is active.
      *
-     * @author dimcho.nedev
-     *
+     * @return <code>true</code> if the buffer is active; <code>false</code> otherwise
      */
-    private class BufferProperties<V> {
-        public int startPosition = 0;
-
-        public List<V> buffer;
-
-        public BufferProperties() {
-            this.buffer = Collections.synchronizedList(new ArrayList<V>());
-        }
-
+    public boolean isActive() {
+        return isActive;
     }
-
 }

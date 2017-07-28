@@ -156,9 +156,9 @@ public abstract class AbstractWrapDevice implements IWrapDevice {
 
     private static final String CLEAR_APP_DATA_COMMAND = "pm clear";
 
-    private static final String GET_DEVICE_LOGCAT = "logcat -d -f ";
+    private static final String GET_DEVICE_LOGCAT_COMMAND = "logcat -d -f ";
 
-    private static final String CLEAR_DEVICE_LOGCAT = "logcat -c";
+    private static final String CLEAR_DEVICE_LOGCAT_COMMAND = "logcat -c";
 
     private CompletionService<Boolean> pullFileCompletionService;
 
@@ -182,7 +182,7 @@ public abstract class AbstractWrapDevice implements IWrapDevice {
 
     private WebElementManager webElementManager;
 
-    private Buffer<String, Pair<Integer, String>> logcatBuffer;
+    private Buffer<Pair<Integer, String>> logcatBuffer;
 
     private FtpFileTransferService ftpFileTransferService;
 
@@ -232,7 +232,7 @@ public abstract class AbstractWrapDevice implements IWrapDevice {
         this.serviceCommunicator = serviceCommunicator;
         this.automatorCommunicator = automatorCommunicator;
         this.fileRecycler = fileRecycler;
-        this.logcatBuffer = new Buffer<String, Pair<Integer, String>>();
+        this.logcatBuffer = new Buffer<Pair<Integer, String>>();
         this.ftpFileTransferService = ftpFileTransferService;
 
         transferService = new FileTransferService(wrappedDevice);
@@ -363,7 +363,7 @@ public abstract class AbstractWrapDevice implements IWrapDevice {
                 returnValue = getDeviceLogcat((String) args[0]);
                 break;
             case CLEAR_LOGCAT:
-                clearDeviceLogcat(CLEAR_DEVICE_LOGCAT);
+                clearDeviceLogcat(CLEAR_DEVICE_LOGCAT_COMMAND);
                 break;
             case START_DEVICE_LOGCAT:
                 startDeviceLogcat((String) args[0], (String) args[1]);
@@ -675,7 +675,9 @@ public abstract class AbstractWrapDevice implements IWrapDevice {
      *        - the serial number of the device
      */
     private void stopLogcat(String deviceSerialNumber) {
-        logcatBuffer.remove(deviceSerialNumber);
+        // TODO: run adb command to stop the logcat?
+        // logcatBuffer.remove(deviceSerialNumber); // original: only this line
+        logcatBuffer.terminate();
     }
 
     /**
@@ -686,7 +688,7 @@ public abstract class AbstractWrapDevice implements IWrapDevice {
      * @return a list of string lines
      */
     public List<Pair<Integer, String>> getNewOutputFromLogcatBuffer(String deviceSerialNumber) {
-        return logcatBuffer.getBuffer(deviceSerialNumber);
+        return logcatBuffer.getBuffer();
     }
 
     /**
@@ -701,8 +703,8 @@ public abstract class AbstractWrapDevice implements IWrapDevice {
      */
     private void startDeviceLogcat(String deviceSerialNumber, final String startLogcatCommand)
         throws CommandFailedException {
-        logcatBuffer.addKey(deviceSerialNumber);
-
+        //logcatBuffer.addKey(deviceSerialNumber);
+        logcatBuffer = new Buffer<>();
         Runtime runtime = Runtime.getRuntime();
         Process adbProcess = null;
 
@@ -712,11 +714,11 @@ public abstract class AbstractWrapDevice implements IWrapDevice {
             BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(adbProcess.getInputStream()));
             String currentLine = null;
 
-            while (logcatBuffer.contains(deviceSerialNumber)) {
+            while (logcatBuffer.isActive()) {
                 currentLine = bufferedReader.readLine();
                 if (!currentLine.isEmpty()) {
                     Pair<Integer, String> idToLogLine = new Pair<Integer, String>(controlLineId, currentLine);
-                    logcatBuffer.addValue(deviceSerialNumber, idToLogLine);
+                    logcatBuffer.addValue(idToLogLine);
                     controlLineId++;
                 }
             }
@@ -756,7 +758,7 @@ public abstract class AbstractWrapDevice implements IWrapDevice {
         String remoteLogParentDir = externalStorage != null ? externalStorage : FALLBACK_COMPONENT_PATH;
         String remoteLogDir = String.format("%s/%s", remoteLogParentDir, deviceLogcatFileName);
 
-        shellCommandExecutor.execute(GET_DEVICE_LOGCAT + remoteLogDir + logFilter);
+        shellCommandExecutor.execute(GET_DEVICE_LOGCAT_COMMAND + remoteLogDir + logFilter);
 
         try {
             wrappedDevice.pullFile(remoteLogDir, deviceLogcatFileName);
