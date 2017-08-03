@@ -167,6 +167,8 @@ public abstract class AbstractWrapDevice implements IWrapDevice {
 
     protected final IDevice wrappedDevice;
 
+    protected final DeviceInformation deviceInformation;
+
     protected FileRecycler fileRecycler;
 
     private final ApkInstaller apkInstaller;
@@ -233,8 +235,14 @@ public abstract class AbstractWrapDevice implements IWrapDevice {
         apkInstaller = new ApkInstaller(wrappedDevice);
         imeManager = new ImeManager(shellCommandExecutor);
         pullFileCompletionService = new ExecutorCompletionService<>(executor);
-
         webElementManager = new WebElementManager(chromeDriverService, deviceToWrap.getSerialNumber());
+        deviceInformation = getDeviceInformation();
+
+        try {
+            setupDeviceEntities(deviceInformation);
+        } catch (UnresolvedEntityTypeException e) {
+            LOGGER.warn(e.getMessage());
+        }
     }
 
     @Override
@@ -279,7 +287,7 @@ public abstract class AbstractWrapDevice implements IWrapDevice {
 
             // Getters
             case GET_DEVICE_INFORMATION:
-                returnValue = getDeviceInformation();
+                returnValue = deviceInformation;
                 break;
             case GET_SCREENSHOT:
                 returnValue = imageEntity.getScreenshot();
@@ -739,7 +747,7 @@ public abstract class AbstractWrapDevice implements IWrapDevice {
      *         if LogCat command fails
      */
     private String getDeviceLogcat(String logFilter) throws CommandFailedException {
-        String deviceLogcatFileName = String.format("device_%s.log", this.getDeviceInformation().getSerialNumber());
+        String deviceLogcatFileName = String.format("device_%s.log", deviceInformation.getSerialNumber());
         String externalStorage = serviceCommunicator.getExternalStorage();
         String remoteLogParentDir = externalStorage != null ? externalStorage : FALLBACK_COMPONENT_PATH;
         String remoteLogDir = String.format("%s/%s", remoteLogParentDir, deviceLogcatFileName);
@@ -797,6 +805,10 @@ public abstract class AbstractWrapDevice implements IWrapDevice {
      * @return The populated {@link DeviceInformation} instance.
      */
     public DeviceInformation getDeviceInformation() {
+        if (this.deviceInformation != null) {
+            return this.deviceInformation;
+        }
+
         DeviceInformation deviceInformation = new DeviceInformation();
 
         // Serial number
@@ -897,14 +909,6 @@ public abstract class AbstractWrapDevice implements IWrapDevice {
             LOGGER.error("Shell command execution failed.", e);
         } catch (StringIndexOutOfBoundsException e) {
             LOGGER.warn("Parsing shell response failed when attempting to get device screen size.");
-        }
-
-        try {
-            setupDeviceEntities(deviceInformation);
-        } catch (UnresolvedEntityTypeException e) {
-            LOGGER.warn(e.getMessage());
-
-            return null;
         }
 
         return deviceInformation;
@@ -1098,7 +1102,7 @@ public abstract class AbstractWrapDevice implements IWrapDevice {
      *         if the shell command fails
      */
     private boolean setApplicationPermission(boolean grantPermission, String packageName, String permission) throws CommandFailedException {
-        if (getDeviceInformation().getApiLevel() < 23) { // Runtime permissions were added in Android 6.0
+        if (deviceInformation.getApiLevel() < 23) { // Runtime permissions were added in Android 6.0
             serviceCommunicator.showToast("Runtime permissions are not supported on this device.");
             return false;
         }
@@ -1217,7 +1221,7 @@ public abstract class AbstractWrapDevice implements IWrapDevice {
         String externalStorage = serviceCommunicator.getExternalStorage();
         String recordsParentDir = externalStorage != null ? externalStorage : FALLBACK_COMPONENT_PATH;
 
-        Pair<Integer, Integer> resolution = getDeviceInformation().getResolution();
+        Pair<Integer, Integer> resolution = deviceInformation.getResolution();
         int width = Math.max(resolution.getKey(), resolution.getValue());
         int height = Math.min(resolution.getKey(), resolution.getValue());
 
@@ -1241,7 +1245,7 @@ public abstract class AbstractWrapDevice implements IWrapDevice {
         String recordsParentDir = externalStorage != null ? externalStorage : FALLBACK_COMPONENT_PATH;
 
         String processNamePrefix = "";
-        if (getDeviceInformation().getApiLevel() >= 23) { // Android M
+        if (deviceInformation.getApiLevel() >= 23) { // Android M
             processNamePrefix = "/system/bin/";
         }
 
