@@ -156,14 +156,14 @@ public class AgentDispatcher {
                         try {
                             deviceWrapper.route(requestAction, arguments);
                         } catch (CommandFailedException e) {
-                            sendErrorResponseMessage(e, session, request.getSessionId());
+                            sendErrorResponseMessage(e, session, request);
                             LOGGER.error(ACTION_FAILD_MESSAGE, e);
                         }
                     }
                 }) {}.start();
             }
-        } catch (CommandFailedException e) {
-            sendErrorResponseMessage(e, session, request.getSessionId());
+        } catch (CommandFailedException | IllegalArgumentException e) {
+            sendErrorResponseMessage(e, session, request);
             LOGGER.error(ACTION_FAILD_MESSAGE, e);
         }
     }
@@ -217,9 +217,10 @@ public class AgentDispatcher {
         this.deviceManager = deviceManager;
     }
 
-    private void sendErrorResponseMessage(Exception ex, Session session, String requestSessionId) {
+    private void sendErrorResponseMessage(Exception ex, Session session, RequestMessage request) {
         ResponseMessage errorResponse = new ResponseMessage(MessageAction.ERROR, null, null);
-        errorResponse.setSessionId(requestSessionId);
+        errorResponse.setSessionId(request.getSessionId());
+        errorResponse.setDeviceId(request.getDeviceId());
         errorResponse.setException(ex);
 
         sendText(jsonUtil.serialize(errorResponse), session);
