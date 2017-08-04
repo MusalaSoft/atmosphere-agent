@@ -97,10 +97,6 @@ public abstract class AbstractWrapDevice implements IWrapDevice {
 
     private static final String XMLDUMP_LOCAL_FILE_NAME = "uidump-%s.xml";
 
-    private static final String SCREENSHOT_REMOTE_FILE_NAME = "/data/local/tmp/remote_screen.png";
-
-    private static final String SCREENSHOT_COMMAND = "screencap -p " + SCREENSHOT_REMOTE_FILE_NAME;
-
     private static final String LIST_RUNNING_PROCESSES_COMMAND = "ps";
 
     private static final String FORCE_STOP_PROCESS_COMMAND = "am force-stop ";
@@ -115,8 +111,6 @@ public abstract class AbstractWrapDevice implements IWrapDevice {
     private static final String GET_PID_FORMAT = "ps %s %s";
 
     private static final String GET_PID_PATTERN = "| grep -Eo [0-9]+ | grep -m 1 -Eo [0-9]+";
-
-    private static final String SCREENSHOT_LOCAL_FILE_NAME = "local_screen.png";
 
     private static final String FIRST_SCREEN_RECORD_NAME = "100.mp4";
 
@@ -975,38 +969,6 @@ public abstract class AbstractWrapDevice implements IWrapDevice {
                 | IllegalArgumentException | InvocationTargetException e) {
             throw new UnresolvedEntityTypeException("Failed to find the correct set of entities implementations matching the given device information.",
                                                     e);
-        }
-    }
-
-    /**
-     * Returns a JPEG compressed display screenshot.
-     *
-     * @return Image in an array of bytes that, when dumped to a file, shows the device display.
-     * @throws CommandFailedException
-     *         In case of an error in the execution
-     */
-    private String getScreenshot() throws CommandFailedException {
-        shellCommandExecutor.execute(SCREENSHOT_COMMAND);
-
-        FileInputStream fileReader = null;
-
-        try {
-            wrappedDevice.pullFile(SCREENSHOT_REMOTE_FILE_NAME, SCREENSHOT_LOCAL_FILE_NAME);
-
-            File localScreenshotFile = new File(SCREENSHOT_LOCAL_FILE_NAME);
-            fileReader = new FileInputStream(localScreenshotFile);
-
-            final long sizeOfScreenshotFile = localScreenshotFile.length();
-            byte[] screenshotData = new byte[(int) sizeOfScreenshotFile];
-            fileReader.read(screenshotData);
-            fileReader.close();
-
-            String screenshotBase64String = Base64.getEncoder().encodeToString(screenshotData);
-
-            return screenshotBase64String;
-        } catch (IOException | AdbCommandRejectedException | TimeoutException | SyncException e) {
-            LOGGER.error("Screenshot fetching failed.", e);
-            throw new CommandFailedException("Screenshot fetching failed.", e);
         }
     }
 
