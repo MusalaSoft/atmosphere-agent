@@ -3,6 +3,7 @@ package com.musala.atmosphere.agent.entity;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.Base64;
 
 import org.apache.log4j.Logger;
 
@@ -50,10 +51,11 @@ public class ImageEntity {
     /**
      * Returns a JPEG compressed display screenshot.
      *
-     * @return Image in an array of bytes that, when dumped to a file, shows the device display.
+     * @return Image as base64 encoded {@link String}
      * @throws CommandFailedException
+     *         In case of an error in the execution
      */
-    public byte[] getScreenshot() throws CommandFailedException {
+    public String getScreenshot() throws CommandFailedException {
         shellCommandExecutor.execute(SCREENSHOT_COMMAND);
 
         FileInputStream fileReader = null;
@@ -69,7 +71,9 @@ public class ImageEntity {
             fileReader.read(screenshotData);
             fileReader.close();
 
-            return screenshotData;
+            String screenshotBase64String = Base64.getEncoder().encodeToString(screenshotData);
+
+            return screenshotBase64String;
         } catch (IOException | AdbCommandRejectedException | TimeoutException | SyncException e) {
             LOGGER.error("Screenshot fetching failed.", e);
             throw new CommandFailedException("Screenshot fetching failed.", e);
