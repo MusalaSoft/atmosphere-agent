@@ -179,8 +179,11 @@ public class AgentManager {
      * @throws IllegalPortException
      *         thrown when the given port is not valid
      * @throws URISyntaxException
+     *         thrown when a string could not be parsed as a URI reference
      * @throws IOException
+     *         thrown when an I/O exception of some sort has occurred
      * @throws DeploymentException
+     *         thrown when failed to connect to the Server
      */
     public void connectToServer(String ipAddress, int port)
             throws IllegalPortException,

@@ -187,7 +187,7 @@ public class GestureCreator {
     }
 
     /**
-     * Defines a {@link Timeline) for a drag and drop gesture. A {@link Timeline} represents a single finger gesture
+     * Defines a {@link Timeline} for a drag and drop gesture. A {@link Timeline} represents a single finger gesture
      * which contains the {$link Anchor Anchor} points that the current pointer will traverse and represent drag and
      * drop on a Device.
      *

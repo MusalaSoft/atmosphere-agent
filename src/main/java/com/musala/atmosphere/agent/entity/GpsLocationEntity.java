@@ -56,8 +56,8 @@ public abstract class GpsLocationEntity {
      * @return the widget that should be used for setting the GPS location state.
      * @throws UiElementFetchingException
      *         if the required widget is not present on the screen
-     * @throws MultipleElementsFoundException
-     *         if there are more than one widgets present on the screen
+     * @throws CommandFailedException
+     *         if getting the widget failed
      */
     protected abstract UiElementPropertiesContainer getChangeStateWidget()
         throws UiElementFetchingException, CommandFailedException;
@@ -67,6 +67,7 @@ public abstract class GpsLocationEntity {
      *
      * @return <code>true</code> if the GPS location enabling is successful, <code>false</code> if it fails
      * @throws CommandFailedException
+     *         when failed to enable the GPS location
      */
     public boolean enableGpsLocation() throws CommandFailedException {
         return setGpsLocationState(true);
@@ -77,6 +78,7 @@ public abstract class GpsLocationEntity {
      *
      * @return <code>true</code> if the GPS location disabling is successful, <code>false</code> if it fails
      * @throws CommandFailedException
+     *         when failed to disable the GPS location
      */
     public boolean disableGpsLocation() throws CommandFailedException {
         return setGpsLocationState(false);
@@ -87,6 +89,7 @@ public abstract class GpsLocationEntity {
      *
      * @return <code>true</code> if the GPS location is enabled, <code>false</code> if it's disabled
      * @throws CommandFailedException
+     *         when failed to get the GPS location status
      */
     public boolean isGpsLocationEnabled() throws CommandFailedException {
         return serviceCommunicator.isGpsLocationEnabled();

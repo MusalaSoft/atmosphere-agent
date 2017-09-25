@@ -26,9 +26,7 @@ public class ImeEntity {
     }
 
     /**
-     * Simulates text typing in the element on focus for this device. It is user's responsibility to focus an editable
-     * android widget using {@link Device#tapScreenLocation(Point) Device.tapScreenLocation()}, {@link UiElement#tap()
-     * UiElement.tap()} or {@link UiElement#focus() UiElement.focus()} methods.
+     * Simulates text typing in the element on focus for this device.
      *
      * @param text
      *        - text to be input

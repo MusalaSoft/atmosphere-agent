@@ -14,7 +14,7 @@ import com.musala.atmosphere.commons.gesture.Gesture;
 import com.musala.atmosphere.commons.util.Pair;
 
 /**
- * Entity that contains the base gesture functionalities that can be executed on {@link UiElement}.
+ * Entity that contains the base gesture functionalities that can be executed on UiElement(Client project).
  *
  * @author yavor.stankov
  *

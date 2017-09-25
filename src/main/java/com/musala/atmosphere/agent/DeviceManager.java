@@ -537,7 +537,7 @@ public class DeviceManager {
     /**
      * Gets the wrapper of a device with the given Id.
      *
-     * @param wrapperId
+     * @param deviceId
      *        - id of the wrapper we want to get.
      * @return {@link IWrapDevice} of a device containing given id.
      *

@@ -48,8 +48,6 @@ public class DeviceChangeHandler {
     /**
      * Creates a new {@link DeviceChangeHandler} that handles all on device change actions that occur.
      *
-     * @param agentEventSender
-     *        - agent event sender that sends events to the Server
      * @param isServerSet
      *        - the state of the Server
      */
