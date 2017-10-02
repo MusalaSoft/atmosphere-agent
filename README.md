@@ -1,3 +1,6 @@
+[![Build Status](https://travis-ci.org/MusalaSoft/atmosphere-agent.svg?branch=master)](https://travis-ci.org/MusalaSoft/atmosphere-agent)
+[![Download](https://api.bintray.com/packages/musala/atmosphere/atmosphere-agent/images/download.svg)](https://bintray.com/musala/atmosphere/atmosphere-agent/_latestVersion)  
+
 See our site for better context of this readme. [Click here](http://atmosphereframework.com/)
 
 # atmosphere-agent
