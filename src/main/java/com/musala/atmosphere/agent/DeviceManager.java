@@ -70,8 +70,6 @@ public class DeviceManager {
 
     private static final String QUEUE_FILE_NAME = "pending_transfers.txt";
 
-    private static final String SELENIUM_WEBDRIVER_VERSION = "2.27";
-
     private static String agentId;
 
     private static AndroidDebugBridgeManager androidDebugBridgeManager;
@@ -161,7 +159,9 @@ public class DeviceManager {
                 });
             }
 
-            ChromeDriverManager.getInstance().setup(SELENIUM_WEBDRIVER_VERSION);
+            String version = AgentPropertiesLoader.getChromeDriverVersion();
+            ChromeDriverManager.getInstance().setup(version);
+
             chromeDriverService = ChromeDriverService.createDefaultService();
             try {
                 chromeDriverService.start();

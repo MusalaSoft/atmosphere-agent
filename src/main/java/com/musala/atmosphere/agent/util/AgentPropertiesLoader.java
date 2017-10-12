@@ -200,4 +200,14 @@ public class AgentPropertiesLoader {
         boolean hasFtpServer = Boolean.parseBoolean(getPropertyString(AgentProperties.FTP_SERVER));
         return hasFtpServer;
     }
+
+    /**
+     * Returns the ChromeDriver version - "latest" or specific(e. g. "2.27").
+     *
+     * @return ChromeDriver version
+     */
+    public static String getChromeDriverVersion() {
+        String chromeDriverVersion = getPropertyString(AgentProperties.CHROMEDRIVER_VERSION);
+        return chromeDriverVersion;
+    }
 }

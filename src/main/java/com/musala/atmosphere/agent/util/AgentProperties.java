@@ -19,7 +19,8 @@ public enum AgentProperties {
     DEVICE_AUTOMATIC_SETUP("device.automatic.setup"),
     ON_DEVICE_COMPONENT_FILES_PATH("ondevicecomponent.files.path"),
     SDK_DIR("sdk.dir"),
-    FTP_SERVER("ftp.server");
+    FTP_SERVER("ftp.server"),
+    CHROMEDRIVER_VERSION("chromedriver.version");
 
     private String value;
 
