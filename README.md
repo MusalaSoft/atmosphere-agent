@@ -42,3 +42,12 @@ Now you need to run `connect <yourServerIPAddress> <serverPort>`. By default the
 07 II 2017 15:37:29 - Connection request sent to Server with address (127.0.0.1:1980)
 >> 07 II 2017 15:37:30 - Server with IP (169.254.121.202:1980) registered.
 ```
+
+## Exit from the Agent
+To exit properly from the `Agent` use the `exit` command. Otherwise an instance of the `Agent` may still run.
+
+```
+>> exit
+14 May 2018 11:24:50 - Closing the AgentManager.
+14 May 2018 11:24:51 - Agent stopped successfully.
+```
