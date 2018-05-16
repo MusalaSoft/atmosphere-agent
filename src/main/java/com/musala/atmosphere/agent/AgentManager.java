@@ -100,6 +100,8 @@ public class AgentManager {
     public void close() {
         LOGGER.info("Closing the AgentManager.");
         try {
+            deviceManager.releaseAllOnDeviceComponents();
+
             // We close the bridge and adb service, so bridge creation wont fail next time we try. This is a workaround,
             // ddmlib is bugged.
             AndroidDebugBridge.disconnectBridge();

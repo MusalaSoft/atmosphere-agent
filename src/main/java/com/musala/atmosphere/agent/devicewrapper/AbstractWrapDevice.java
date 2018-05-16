@@ -1332,7 +1332,8 @@ public abstract class AbstractWrapDevice implements IWrapDevice {
     public void unbindWrapper() {
         try {
             serviceCommunicator.stopComponent();
-            automatorCommunicator.stopComponent();
+            // TODO: Stopping the automatorCommunicator component fails - fix it!
+            // automatorCommunicator.stopComponent();
         } catch (OnDeviceServiceTerminationException e) {
             String loggerMessage = String.format("Stopping ATMOSPHERE on-device component failed for %s.",
                                                  wrappedDevice.getSerialNumber());

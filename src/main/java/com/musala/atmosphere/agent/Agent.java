@@ -184,6 +184,7 @@ public class Agent {
         }
 
         LOGGER.info("Agent stopped successfully.");
+        System.exit(0);
     }
 
     /**

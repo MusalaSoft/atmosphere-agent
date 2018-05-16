@@ -315,10 +315,10 @@ public class DeviceManager {
             return null;
         }
 
-        String publishId = releaseWrapperForDevice(disconnectedDevice);
         connectedDevicesList.remove(disconnectedDeviceSerialNumber);
+        LOGGER.info("Device with Id [" + disconnectedDeviceSerialNumber + "] is unregistered.");
 
-        return publishId;
+        return disconnectedDeviceSerialNumber;
     }
 
     /**
@@ -419,25 +419,21 @@ public class DeviceManager {
     }
 
     /**
-     * Release a device wrapper
-     *
-     * @param device
-     *        the device with the wrapper to be released.
-     * @return identifier of the wrapper.
-     *
+     * Release all onDeviceComponents
      */
-    private String releaseWrapperForDevice(IDevice device) {
-        // IWrapDevice deviceWrapper = getDeviceWrapper(wrapperId);
-        /*
-         * TODO: The method 'unbindWrapper()' fails because the physical device is missing (if is disconnected manually
-         * by removing the USB cable). Find an another solution for future work. Maybe is a good idea to stop the
-         * onDeviceComponents from the service.
-         */
-        // deviceWrapper.unbindWrapper();
-        String wrapperId = getSerialNumber(device);
-        LOGGER.info("Released wrapper for device with Id [" + wrapperId + "].");
-
-        return wrapperId;
+    void releaseAllOnDeviceComponents() {
+        for (Entry<String, IDevice> entry : connectedDevicesList.entrySet()) {
+            String wrapperId = entry.getKey();
+            IWrapDevice deviceWrapper = getDeviceWrapperByDeviceId(wrapperId);
+            /*
+             * TODO: The method 'unbindWrapper()' fails if the device is disconnected manually
+             * by removing the USB cable. Find an another solution for future work. Maybe is a good idea to stop the
+             * onDeviceComponents from the service.
+             * NOTE: Currently this method is used only for connected devices and this problem should not occur.
+             */
+            deviceWrapper.unbindWrapper();
+            LOGGER.info("Released wrapper for device with Id [" + wrapperId + "].");
+        }
     }
 
     /**
