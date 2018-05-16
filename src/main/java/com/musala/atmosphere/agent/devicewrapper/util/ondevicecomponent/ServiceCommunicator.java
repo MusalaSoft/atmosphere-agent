@@ -18,6 +18,8 @@ package com.musala.atmosphere.agent.devicewrapper.util.ondevicecomponent;
 
 import java.io.IOException;
 
+import org.apache.log4j.Logger;
+
 import com.musala.atmosphere.agent.devicewrapper.util.BackgroundShellCommandExecutor;
 import com.musala.atmosphere.agent.exception.OnDeviceComponentStartingException;
 import com.musala.atmosphere.agent.exception.OnDeviceServiceTerminationException;
@@ -41,6 +43,7 @@ import com.musala.atmosphere.commons.util.IntentBuilder.IntentAction;
  *
  */
 public class ServiceCommunicator extends DeviceCommunicator<ServiceRequest> {
+    private final static Logger LOGGER = Logger.getLogger(ServiceCommunicator.class.getCanonicalName());
     private static final String ATMOSPHERE_SERVICE_COMPONENT = "com.musala.atmosphere.service/com.musala.atmosphere.service.AtmosphereService";
 
     /**
@@ -716,6 +719,7 @@ public class ServiceCommunicator extends DeviceCommunicator<ServiceRequest> {
 
         try {
             shellCommandExecutor.execute(stopServiceIntentCommand);
+            LOGGER.info("ATMOSPHERE service intent has stopped.");
         } catch (CommandFailedException e) {
             String errorMessage = String.format("Stopping ATMOSPHERE service failed for %s.", deviceSerialNumber);
             throw new OnDeviceServiceTerminationException(errorMessage, e);

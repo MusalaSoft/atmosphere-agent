@@ -68,7 +68,7 @@ public abstract class DeviceCommunicator<T extends RequestType> {
     public abstract void startComponent();
 
     /**
-     * Starts the on-device component on the device.
+     * Stops the on-device component on the device.
      */
     public abstract void stopComponent();
 
