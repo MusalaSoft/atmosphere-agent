@@ -30,6 +30,7 @@ import com.musala.atmosphere.commons.exceptions.ArgumentParseException;
  * @author yordan.petrov
  * 
  */
+@SuppressWarnings("unused")
 public class AgentArgumentParserTest {
     private AgentArgumentParser argumentParser = new AgentArgumentParser();
 

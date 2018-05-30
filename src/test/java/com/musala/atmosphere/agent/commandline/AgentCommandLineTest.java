@@ -135,6 +135,16 @@ public class AgentCommandLineTest {
         assertEquals("Parsed port did not match expected value.", expectedParsedPort, commandLine.getPort());
     }
 
+    @Test
+    public void testParseValidLongArguments() throws Exception {
+        commandLine.parseArguments(validLongArguments);
+
+        assertEquals("Parsed host name did not match expected value.",
+                     expectedParsedHostname,
+                     commandLine.getHostname());
+        assertEquals("Parsed port did not match expected value.", expectedParsedPort, commandLine.getPort());
+    }
+
     @Test(expected = ArgumentParseException.class)
     public void testGetHostnameFromInvalidOptionArgumentsThrowsException() throws Exception {
         commandLine.parseArguments(invalidOptionArguments);

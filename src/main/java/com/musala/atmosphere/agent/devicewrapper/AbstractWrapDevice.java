@@ -109,8 +109,6 @@ public abstract class AbstractWrapDevice implements IWrapDevice {
     // are doing.
     private static final String XMLDUMP_REMOTE_FILE_NAME = "/data/local/tmp/uidump-%s.xml";
 
-    private static final String XMLDUMP_COMMAND = "uiautomator dump %s";
-
     private static final String XMLDUMP_LOCAL_FILE_NAME = "uidump-%s.xml";
 
     private static final String LIST_RUNNING_PROCESSES_COMMAND = "ps";
@@ -161,9 +159,6 @@ public abstract class AbstractWrapDevice implements IWrapDevice {
     private static final String GET_DEVICE_LOGCAT = "logcat -d -f ";
 
     private static final String CLEAR_DEVICE_LOGCAT = "logcat -c";
-
-    // TODO: Consider to remove field because is not used directly
-    private ExecutorService executor;
 
     private CompletionService<Boolean> pullFileCompletionService;
 
@@ -233,7 +228,6 @@ public abstract class AbstractWrapDevice implements IWrapDevice {
             FtpFileTransferService ftpFileTransferService) {
         // TODO: Use a dependency injection mechanism here.
         this.wrappedDevice = deviceToWrap;
-        this.executor = executor;
         this.shellCommandExecutor = shellCommandExecutor;
         this.serviceCommunicator = serviceCommunicator;
         this.automatorCommunicator = automatorCommunicator;
@@ -834,51 +828,34 @@ public abstract class AbstractWrapDevice implements IWrapDevice {
         }
 
         // Attempt to get the device properties only if the device is online.
-        Map<String, String> devicePropertiesMap = wrappedDevice.getProperties();
-
         // CPU
-        if (devicePropertiesMap.containsKey(DevicePropertyStringConstants.PROPERTY_CPU_TYPE.toString())) {
-            String cpu = devicePropertiesMap.get(DevicePropertyStringConstants.PROPERTY_CPU_TYPE.toString());
-            deviceInformation.setCpu(cpu);
-        }
+        String cpu = getDeviceProperty(wrappedDevice, DevicePropertyStringConstants.PROPERTY_CPU_TYPE);
+        if (cpu != null) deviceInformation.setCpu(cpu);
 
         // Density
         String lcdDensityString = DeviceInformation.FALLBACK_DISPLAY_DENSITY.toString();
         if (wrappedDevice.isEmulator()) {
-            if (devicePropertiesMap.containsKey(DevicePropertyStringConstants.PROPERTY_EMUDEVICE_LCD_DENSITY.toString())) {
-                lcdDensityString = devicePropertiesMap.get(DevicePropertyStringConstants.PROPERTY_EMUDEVICE_LCD_DENSITY.toString());
-            }
+            lcdDensityString = getDeviceProperty(wrappedDevice, DevicePropertyStringConstants.PROPERTY_EMUDEVICE_LCD_DENSITY);
         } else {
-            if (devicePropertiesMap.containsKey(DevicePropertyStringConstants.PROPERTY_REALDEVICE_LCD_DENSITY.toString())) {
-                lcdDensityString = devicePropertiesMap.get(DevicePropertyStringConstants.PROPERTY_REALDEVICE_LCD_DENSITY.toString());
-            }
+            lcdDensityString = getDeviceProperty(wrappedDevice, DevicePropertyStringConstants.PROPERTY_REALDEVICE_LCD_DENSITY);
         }
-        deviceInformation.setDpi(Integer.parseInt(lcdDensityString));
+        if (lcdDensityString != null) deviceInformation.setDpi(Integer.parseInt(lcdDensityString));
 
         // Model
-        if (devicePropertiesMap.containsKey(DevicePropertyStringConstants.PROPERTY_PRODUCT_MODEL.toString())) {
-            String productModel = devicePropertiesMap.get(DevicePropertyStringConstants.PROPERTY_PRODUCT_MODEL.toString());
-            deviceInformation.setModel(productModel);
-        }
+        String productModel = getDeviceProperty(wrappedDevice, DevicePropertyStringConstants.PROPERTY_PRODUCT_MODEL);
+        if (productModel != null) deviceInformation.setModel(productModel);
 
         // OS
-        if (devicePropertiesMap.containsKey(DevicePropertyStringConstants.PROPERTY_OS_VERSION.toString())) {
-            String deviceOs = devicePropertiesMap.get(DevicePropertyStringConstants.PROPERTY_OS_VERSION.toString());
-            deviceInformation.setOs(deviceOs);
-        }
+        String deviceOs = getDeviceProperty(wrappedDevice, DevicePropertyStringConstants.PROPERTY_OS_VERSION);
+        if (deviceOs != null) deviceInformation.setOs(deviceOs);
 
         // API level
-        if (devicePropertiesMap.containsKey(DevicePropertyStringConstants.PROPERTY_API_LEVEL.toString())) {
-            String apiLevelString = devicePropertiesMap.get(DevicePropertyStringConstants.PROPERTY_API_LEVEL.toString());
-            int deviceApiLevel = Integer.parseInt(apiLevelString);
-            deviceInformation.setApiLevel(deviceApiLevel);
-        }
+        String apiLevelString = getDeviceProperty(wrappedDevice, DevicePropertyStringConstants.PROPERTY_API_LEVEL);
+        deviceInformation.setApiLevel(Integer.parseInt(apiLevelString));
 
         // Manufacturer
-        if (devicePropertiesMap.containsKey(DevicePropertyStringConstants.PROPERTY_MANUFACTURER_NAME.toString())) {
-            String manufacturerName = devicePropertiesMap.get(DevicePropertyStringConstants.PROPERTY_MANUFACTURER_NAME.toString());
-            deviceInformation.setManufacturer(manufacturerName);
-        }
+        String manufacturerName = getDeviceProperty(wrappedDevice, DevicePropertyStringConstants.PROPERTY_MANUFACTURER_NAME);
+        if (manufacturerName != null) deviceInformation.setManufacturer(manufacturerName);
 
         // RAM
         try {
@@ -891,8 +868,8 @@ public abstract class AbstractWrapDevice implements IWrapDevice {
         }
 
         // isTablet
-        if (devicePropertiesMap.containsKey(DevicePropertyStringConstants.PROPERTY_CHARACTERISTICS.toString())) {
-            String deviceCharacteristics = devicePropertiesMap.get(DevicePropertyStringConstants.PROPERTY_CHARACTERISTICS.toString());
+        String deviceCharacteristics = getDeviceProperty(wrappedDevice, DevicePropertyStringConstants.PROPERTY_CHARACTERISTICS);
+        if (deviceCharacteristics != null) {
             boolean isTablet = deviceCharacteristics.contains(DEVICE_TYPE);
             deviceInformation.setTablet(isTablet);
         }
@@ -922,6 +899,22 @@ public abstract class AbstractWrapDevice implements IWrapDevice {
         }
 
         return deviceInformation;
+    }
+
+    private String getDeviceProperty(IDevice wrappedDevice, DevicePropertyStringConstants deviceProperty) {
+        String property = null;
+        Future<String> fu = wrappedDevice.getSystemProperty(deviceProperty.toString());
+        if (fu != null) {
+            try {
+                property = fu.get();
+            } catch (InterruptedException | ExecutionException e) {
+                LOGGER.error(String.format("Can not get system property: %s", deviceProperty.toString()), e);
+            }
+        } else {
+            LOGGER.error(String.format("The \"%s\" property can not be retrieved", deviceProperty.toString()));
+        }
+
+        return property;
     }
 
     private void setupDeviceEntities(DeviceInformation deviceInformation) {

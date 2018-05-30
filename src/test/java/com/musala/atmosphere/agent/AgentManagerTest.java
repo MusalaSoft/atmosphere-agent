@@ -23,9 +23,9 @@ import static org.mockito.Matchers.anyInt;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
 import org.junit.AfterClass;
@@ -58,7 +58,7 @@ public class AgentManagerTest {
     @BeforeClass
     public static void setUp() throws Exception {
         DdmPreferences.setLogLevel("warn");
-        Log.setLogOutput(new DdmLibLogListener(Level.ALL, false /* do no log to a file */));
+        Log.addLogger(new DdmLibLogListener(Level.ALL, false /* do no log to a file */));
 
         String pathToAdb = AgentPropertiesLoader.getAdbPath();
         AndroidDebugBridgeManager androidDebugBridgeManager = new AndroidDebugBridgeManager();
@@ -84,6 +84,7 @@ public class AgentManagerTest {
         assertNotNull("The devices information list should never be 'null'.", list);
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     public void testGetDeviceInformationWithValidSerialNumber() throws Exception {
         // FIXME: I'm not really an unit test >:)
@@ -94,28 +95,43 @@ public class AgentManagerTest {
         String mockDeviceApi = "19";
         String mockDeviceCpu = "megacpu";
 
-        Map<String, String> mockPropMap = new HashMap<>();
-        mockPropMap.put(DevicePropertyStringConstants.PROPERTY_REALDEVICE_LCD_DENSITY.toString(),
-                        mockDeviceLcdDensity.toString());
-        mockPropMap.put(DevicePropertyStringConstants.PROPERTY_PRODUCT_MODEL.toString(), mockDeviceModel);
-        mockPropMap.put(DevicePropertyStringConstants.PROPERTY_API_LEVEL.toString(), mockDeviceApi);
-        mockPropMap.put(DevicePropertyStringConstants.PROPERTY_CPU_TYPE.toString(), mockDeviceCpu);
-
         IDevice mockDevice = mock(IDevice.class);
         when(mockDevice.getSerialNumber()).thenReturn(mockDeviceSerialNumber);
         when(mockDevice.getProperty(IDevice.PROP_BUILD_API_LEVEL)).thenReturn(mockDeviceApi);
         when(mockDevice.isEmulator()).thenReturn(mockDeviceEmulator);
         when(mockDevice.arePropertiesSet()).thenReturn(true);
-        when(mockDevice.getProperties()).thenReturn(mockPropMap);
+
+        // Model
+        Future<String> mockDeviceModelFuture = mock(Future.class);
+        when(mockDevice.getSystemProperty(DevicePropertyStringConstants.PROPERTY_PRODUCT_MODEL.toString())).thenReturn(mockDeviceModelFuture);
+        when(mockDeviceModelFuture.get()).thenReturn(mockDeviceModel.toString());
+
+        // API level
+        Future<String> mockDeviceApiFuture = mock(Future.class);
+        when(mockDevice.getSystemProperty(DevicePropertyStringConstants.PROPERTY_API_LEVEL.toString())).thenReturn(mockDeviceApiFuture);
+        when(mockDeviceApiFuture.get()).thenReturn(mockDeviceApi);
+
+        // CPU type
+        Future<String> mockDeviceCpuFuture = mock(Future.class);
+        when(mockDevice.getSystemProperty(DevicePropertyStringConstants.PROPERTY_CPU_TYPE.toString())).thenReturn(mockDeviceCpuFuture);
+        when(mockDeviceCpuFuture.get()).thenReturn(mockDeviceCpu);
+
+        // Device density
+        Future<String> mockDeviceLcdDensityFuture = mock(Future.class);
+        when(mockDevice.getSystemProperty(DevicePropertyStringConstants.PROPERTY_REALDEVICE_LCD_DENSITY.toString())).thenReturn(mockDeviceLcdDensityFuture);
+        when(mockDeviceLcdDensityFuture.get()).thenReturn(mockDeviceLcdDensity.toString());
 
         FakeOnDeviceComponentAnswer onDeviceAnswer = new FakeOnDeviceComponentAnswer();
         FakeDeviceShellAnswer shellAnswer = new FakeDeviceShellAnswer();
         Mockito.doAnswer(onDeviceAnswer).when(mockDevice).createForward(anyInt(), anyInt());
         Mockito.doAnswer(shellAnswer).when(mockDevice).executeShellCommand(Matchers.anyString(),
-                                                                           Matchers.any(IShellOutputReceiver.class));
+                                                                           Matchers.any(IShellOutputReceiver.class),
+                                                                           anyInt(),
+                                                                           Matchers.any(TimeUnit.class));
         Mockito.doAnswer(shellAnswer).when(mockDevice).executeShellCommand(Matchers.anyString(),
                                                                            Matchers.any(IShellOutputReceiver.class),
-                                                                           anyInt());
+                                                                           anyInt(),
+                                                                           Matchers.any(TimeUnit.class));
 
         deviceManager.registerDevice(mockDevice);
 
