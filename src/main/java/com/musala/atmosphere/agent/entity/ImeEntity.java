@@ -20,11 +20,8 @@ import org.apache.log4j.Logger;
 
 import com.musala.atmosphere.agent.devicewrapper.util.ondevicecomponent.ServiceCommunicator;
 import com.musala.atmosphere.commons.exceptions.CommandFailedException;
-import com.musala.atmosphere.commons.geometry.Point;
 import com.musala.atmosphere.commons.ime.KeyboardAction;
 import com.musala.atmosphere.commons.util.AtmosphereIntent;
-
-import android.bluetooth.BluetoothClass.Device;
 
 /**
  * Entity responsible for operations related with the input method engine.

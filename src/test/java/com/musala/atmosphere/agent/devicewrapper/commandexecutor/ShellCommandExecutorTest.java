@@ -29,7 +29,6 @@ import org.junit.Test;
 
 import com.android.ddmlib.AdbCommandRejectedException;
 import com.android.ddmlib.Client;
-import com.android.ddmlib.CollectingOutputReceiver;
 import com.android.ddmlib.FileListingService;
 import com.android.ddmlib.IDevice;
 import com.android.ddmlib.IShellOutputReceiver;
@@ -58,8 +57,6 @@ public class ShellCommandExecutorTest {
     private ShellCommandExecutor shellCommandExecutor;
 
     private IDevice device;
-
-    private CollectingOutputReceiver outputReceiver;
 
     private class MockedDevice implements IDevice {
         private int expectedCommandExecutionTimeout;

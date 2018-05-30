@@ -53,11 +53,6 @@ public class PreconditionsManager {
     private static final int BOOT_ANIMATION_REVALIDATION_SLEEP_TIME = 1000;
 
     /**
-     * The timeout for command execution from the config file.
-     */
-    private static final int COMMAND_EXECUTION_TIMEOUT = AgentPropertiesLoader.getCommandExecutionTimeout();
-
-    /**
      * The path to the on-device components' files from the config file.
      */
     private static final String ON_DEVICE_COMPONENT_FILES_PATH = AgentPropertiesLoader.getOnDeviceComponentFilesPath();

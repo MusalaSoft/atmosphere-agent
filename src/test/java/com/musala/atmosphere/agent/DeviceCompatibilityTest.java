@@ -22,8 +22,8 @@ import static org.mockito.Matchers.anyInt;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -71,21 +71,22 @@ public class DeviceCompatibilityTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void testRegisteringUncompatibleDevice() throws Exception {
         // FIXME: This is not really an unit test
         String mockDeviceSerialNumber = "UncompatibleDevice";
         boolean mockDeviceEmulator = false;
         String mockDeviceApiNotCompatibleApiVersion = "16";
 
-        Map<String, String> mockPropMap = new HashMap<>();
-        mockPropMap.put(DevicePropertyStringConstants.PROPERTY_API_LEVEL.toString(),
-                        mockDeviceApiNotCompatibleApiVersion);
-
         IDevice mockDevice = mock(IDevice.class);
         when(mockDevice.getSerialNumber()).thenReturn(mockDeviceSerialNumber);
         when(mockDevice.isEmulator()).thenReturn(mockDeviceEmulator);
         when(mockDevice.arePropertiesSet()).thenReturn(true);
-        when(mockDevice.getProperties()).thenReturn(mockPropMap);
+
+        // API level
+        Future<String> mockApiVersionFuture = mock(Future.class);
+        when(mockDevice.getSystemProperty(DevicePropertyStringConstants.PROPERTY_API_LEVEL.toString())).thenReturn(mockApiVersionFuture);
+        when(mockApiVersionFuture.get()).thenReturn(mockDeviceApiNotCompatibleApiVersion);
 
         FakeOnDeviceComponentAnswer onDeviceAnswer = new FakeOnDeviceComponentAnswer();
         FakeDeviceShellAnswer shellAnswer = new FakeDeviceShellAnswer();
@@ -94,12 +95,14 @@ public class DeviceCompatibilityTest {
                                                                            Matchers.any(IShellOutputReceiver.class));
         Mockito.doAnswer(shellAnswer).when(mockDevice).executeShellCommand(Matchers.anyString(),
                                                                            Matchers.any(IShellOutputReceiver.class),
-                                                                           anyInt());
+                                                                           anyInt(),
+                                                                           Matchers.any(TimeUnit.class));
 
         assertNull("Successfully registered device with API Level lower than 17.",
                    deviceManager.registerDevice(mockDevice));
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     public void testRegisteringCompatibleDevice() throws Exception {
         // FIXME: This is not really an unit test
@@ -107,15 +110,16 @@ public class DeviceCompatibilityTest {
         boolean mockDeviceEmulator = false;
         String mockDeviceApiCompatibleApiVersion = "17";
 
-        Map<String, String> mockPropMap = new HashMap<>();
-        mockPropMap.put(DevicePropertyStringConstants.PROPERTY_API_LEVEL.toString(), mockDeviceApiCompatibleApiVersion);
-
         IDevice mockDevice = mock(IDevice.class);
         when(mockDevice.getSerialNumber()).thenReturn(mockDeviceSerialNumber);
         when(mockDevice.getProperty(IDevice.PROP_BUILD_API_LEVEL)).thenReturn(mockDeviceApiCompatibleApiVersion);
         when(mockDevice.isEmulator()).thenReturn(mockDeviceEmulator);
         when(mockDevice.arePropertiesSet()).thenReturn(true);
-        when(mockDevice.getProperties()).thenReturn(mockPropMap);
+
+        // API level
+        Future<String> mockApiVersionFuture = mock(Future.class);
+        when(mockDevice.getSystemProperty(DevicePropertyStringConstants.PROPERTY_API_LEVEL.toString())).thenReturn(mockApiVersionFuture);
+        when(mockApiVersionFuture.get()).thenReturn(mockDeviceApiCompatibleApiVersion);
 
         FakeOnDeviceComponentAnswer onDeviceAnswer = new FakeOnDeviceComponentAnswer();
         FakeDeviceShellAnswer shellAnswer = new FakeDeviceShellAnswer();
@@ -124,7 +128,8 @@ public class DeviceCompatibilityTest {
                                                                            Matchers.any(IShellOutputReceiver.class));
         Mockito.doAnswer(shellAnswer).when(mockDevice).executeShellCommand(Matchers.anyString(),
                                                                            Matchers.any(IShellOutputReceiver.class),
-                                                                           anyInt());
+                                                                           anyInt(),
+                                                                           Matchers.any(TimeUnit.class));
 
         assertEquals("The mocked device was not successfully wrapped.",
                      mockDevice.getSerialNumber(),

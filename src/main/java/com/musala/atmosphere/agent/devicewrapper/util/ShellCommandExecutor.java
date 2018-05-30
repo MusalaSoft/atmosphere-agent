@@ -19,6 +19,7 @@ package com.musala.atmosphere.agent.devicewrapper.util;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import com.android.ddmlib.AdbCommandRejectedException;
 import com.android.ddmlib.CollectingOutputReceiver;
@@ -35,6 +36,9 @@ import com.musala.atmosphere.commons.exceptions.CommandFailedException;
  *
  */
 public class ShellCommandExecutor {
+    /**
+     * The timeout for command execution from the config file.
+     */
     private static final int COMMAND_EXECUTION_TIMEOUT = AgentPropertiesLoader.getCommandExecutionTimeout();
 
     protected final IDevice device;
@@ -68,7 +72,7 @@ public class ShellCommandExecutor {
 
         try {
             CollectingOutputReceiver outputReceiver = new CollectingOutputReceiver();
-            device.executeShellCommand(command, outputReceiver, commandExecutionTimeout);
+            device.executeShellCommand(command, outputReceiver, commandExecutionTimeout, TimeUnit.MILLISECONDS);
 
             response = outputReceiver.getOutput();
         } catch (TimeoutException | AdbCommandRejectedException | ShellCommandUnresponsiveException | IOException e) {
