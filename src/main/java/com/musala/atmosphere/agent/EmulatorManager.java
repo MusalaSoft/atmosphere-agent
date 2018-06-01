@@ -35,9 +35,10 @@ import com.musala.atmosphere.agent.util.AndroidToolCommandBuilder;
 import com.musala.atmosphere.agent.util.EmulatorToolCommandBuilder;
 import com.musala.atmosphere.agent.util.SdkToolCommandSender;
 import com.musala.atmosphere.commons.exceptions.CommandFailedException;
+import com.musala.atmosphere.commons.exceptions.DeviceNotFoundException;
 import com.musala.atmosphere.commons.sa.EmulatorParameters;
 import com.musala.atmosphere.commons.sa.exceptions.DeviceBootTimeoutReachedException;
-import com.musala.atmosphere.commons.sa.exceptions.DeviceNotFoundException;
+
 import com.musala.atmosphere.commons.sa.exceptions.NotPossibleForDeviceException;
 import com.musala.atmosphere.commons.sa.exceptions.TimeoutReachedException;
 
