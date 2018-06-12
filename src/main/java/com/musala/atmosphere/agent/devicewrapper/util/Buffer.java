@@ -111,12 +111,10 @@ public final class Buffer<T> {
     }
 
     /**
-     * Adds a value to the buffer that is associated with specified key.
+     * Adds a value to the buffer.
      *
-     * @param key
-     *        - key with which the specified value is to be associated
      * @param value
-     *        - value to be associated with the specified key
+     *        - the value
      */
     public void addValue(T value) {
         synchronized (buffer) {
