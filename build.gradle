@@ -22,7 +22,7 @@ plugins {
 }
 
 // bintray publishing parameters
-version = '0.1.0'
+version = '0.1.1'
 def organizationName = 'musala'
 def repoName = 'atmosphere'
 def projectName = 'atmosphere-agent'
